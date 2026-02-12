@@ -14,6 +14,32 @@ async function verifyHost(quizId: number, key: string) {
   return { quiz };
 }
 
+// 問題の並べ替え（/:id より前に定義しないとマッチしない）
+questionRoutes.put("/reorder", async (c) => {
+  const body = await c.req.json<{
+    quizId: number;
+    key: string;
+    questionIds: number[];
+  }>();
+
+  const auth = await verifyHost(body.quizId, body.key);
+  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
+
+  for (let i = 0; i < body.questionIds.length; i++) {
+    await db
+      .update(schema.questions)
+      .set({ order_index: i })
+      .where(
+        and(
+          eq(schema.questions.id, body.questionIds[i]),
+          eq(schema.questions.quiz_id, body.quizId)
+        )
+      );
+  }
+
+  return c.json({ success: true });
+});
+
 // 問題追加
 questionRoutes.post("/", async (c) => {
   const body = await c.req.json<{
@@ -123,28 +149,3 @@ questionRoutes.delete("/:id", async (c) => {
   return c.json({ success: true });
 });
 
-// 問題の並べ替え
-questionRoutes.put("/reorder", async (c) => {
-  const body = await c.req.json<{
-    quizId: number;
-    key: string;
-    questionIds: number[];
-  }>();
-
-  const auth = await verifyHost(body.quizId, body.key);
-  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
-
-  for (let i = 0; i < body.questionIds.length; i++) {
-    await db
-      .update(schema.questions)
-      .set({ order_index: i })
-      .where(
-        and(
-          eq(schema.questions.id, body.questionIds[i]),
-          eq(schema.questions.quiz_id, body.quizId)
-        )
-      );
-  }
-
-  return c.json({ success: true });
-});
