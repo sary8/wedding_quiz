@@ -1,0 +1,98 @@
+export const QuizStatus = {
+  Draft: "draft",
+  Lobby: "lobby",
+  InProgress: "in_progress",
+  Finished: "finished",
+} as const;
+export type QuizStatus = (typeof QuizStatus)[keyof typeof QuizStatus];
+
+export const MediaType = {
+  None: "none",
+  Image: "image",
+  Video: "video",
+} as const;
+export type MediaType = (typeof MediaType)[keyof typeof MediaType];
+
+export type ParticipantInfo = {
+  id: number;
+  nickname: string;
+  selfieUrl: string | null;
+};
+
+export type QuestionData = {
+  questionId: number;
+  questionIndex: number;
+  totalQuestions: number;
+  text: string;
+  mediaType: MediaType;
+  mediaUrl: string | null;
+  choices: string[];
+  timeLimitSeconds: number;
+  points: number;
+};
+
+export type QuestionResultData = {
+  questionId: number;
+  correctChoice: number;
+  distribution: number[];
+  yourAnswer?: {
+    choiceIndex: number;
+    isCorrect: boolean;
+    scoreAwarded: number;
+    responseTimeMs: number;
+    currentRank: number;
+    totalScore: number;
+  };
+};
+
+export type RankingEntry = {
+  participantId: number;
+  nickname: string;
+  selfieUrl: string | null;
+  totalScore: number;
+  rank: number;
+  previousRank: number;
+  lastResponseTimeMs: number | null;
+};
+
+export type RankingData = {
+  rankings: RankingEntry[];
+};
+
+export type FinalRankingEntry = RankingEntry & {
+  correctCount: number;
+  totalQuestions: number;
+  averageResponseTimeMs: number;
+  fastestResponseTimeMs: number;
+};
+
+export type FinalResultData = {
+  rankings: FinalRankingEntry[];
+};
+
+export type Quiz = {
+  id: number;
+  room_code: string;
+  host_secret: string;
+  title: string;
+  status: QuizStatus;
+  current_question_index: number;
+  created_at: string;
+  questions?: Question[];
+};
+
+export type Question = {
+  id: number;
+  quiz_id: number;
+  order_index: number;
+  text: string;
+  media_type: MediaType;
+  media_url: string | null;
+  choice1: string;
+  choice2: string;
+  choice3: string;
+  choice4: string;
+  correct_choice: number;
+  time_limit_seconds: number;
+  points: number;
+};
