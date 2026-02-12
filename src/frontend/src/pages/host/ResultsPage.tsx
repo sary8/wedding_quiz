@@ -1,14 +1,15 @@
-import type { QuestionResultData } from "../../types";
+import type { QuestionResultData, QuestionData } from "../../types";
 
 type Props = {
   result: QuestionResultData | null;
+  question: QuestionData | null;
   onShowRanking: () => void;
   onNextQuestion: () => void;
 };
 
 const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 
-export function ResultsPage({ result, onShowRanking, onNextQuestion }: Props) {
+export function ResultsPage({ result, question, onShowRanking, onNextQuestion }: Props) {
   if (!result) return null;
 
   const totalAnswers = result.distribution.reduce((s, n) => s + n, 0);
@@ -24,12 +25,13 @@ export function ResultsPage({ result, onShowRanking, onNextQuestion }: Props) {
           const isCorrect = i + 1 === result.correctChoice;
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
           const barWidth = (count / maxCount) * 100;
+          const choiceText = question?.choices[i] || `選択肢${i + 1}`;
 
           return (
             <div key={i} style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span style={{ fontSize: 16, fontWeight: isCorrect ? "bold" : "normal" }}>
-                  選択肢{i + 1} {isCorrect && "✓ 正解"}
+                  {choiceText} {isCorrect && "✓ 正解"}
                 </span>
                 <span>{count}人 ({percentage}%)</span>
               </div>

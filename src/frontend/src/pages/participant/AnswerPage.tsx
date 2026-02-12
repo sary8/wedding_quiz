@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { QuestionData } from "../../types";
 
 type Props = {
@@ -11,6 +12,8 @@ const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
 export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: Props) {
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+
   if (!question) return null;
 
   if (hasAnswered) {
@@ -21,6 +24,12 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
         <p style={{ fontSize: 16, color: "#aaa", marginTop: 8 }}>結果をお待ちください...</p>
       </div>
     );
+  }
+
+  function handleChoiceClick(choiceIndex: number) {
+    if (selectedChoice !== null) return; // 連打防止
+    setSelectedChoice(choiceIndex);
+    onAnswer(choiceIndex);
   }
 
   return (
@@ -43,28 +52,37 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
 
       {/* 4色回答ボタン */}
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: 8 }}>
-        {question.choices.map((choice, i) => (
-          <button
-            key={i}
-            onClick={() => onAnswer(i + 1)}
-            style={{
-              borderRadius: 12,
-              background: CHOICE_COLORS[i],
-              color: "#fff",
-              fontSize: 18,
-              fontWeight: "bold",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              padding: 12,
-            }}
-          >
-            <span style={{ fontSize: 32 }}>{CHOICE_ICONS[i]}</span>
-            <span>{choice}</span>
-          </button>
-        ))}
+        {question.choices.map((choice, i) => {
+          const choiceIndex = i + 1;
+          const isSelected = selectedChoice === choiceIndex;
+
+          return (
+            <button
+              key={i}
+              onClick={() => handleChoiceClick(choiceIndex)}
+              disabled={selectedChoice !== null}
+              style={{
+                borderRadius: 12,
+                background: isSelected ? `${CHOICE_COLORS[i]}` : CHOICE_COLORS[i],
+                color: "#fff",
+                fontSize: 18,
+                fontWeight: "bold",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: 12,
+                opacity: selectedChoice !== null && !isSelected ? 0.4 : 1,
+                transform: isSelected ? "scale(0.95)" : "scale(1)",
+                transition: "opacity 0.2s, transform 0.2s",
+              }}
+            >
+              <span style={{ fontSize: 32 }}>{CHOICE_ICONS[i]}</span>
+              <span>{choice}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

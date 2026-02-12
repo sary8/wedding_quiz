@@ -20,12 +20,15 @@ export async function verifyHostSecret(roomCode: string, hostSecret: string) {
   return quiz;
 }
 
-// ルーム開設 (draft → lobby)
+// ルーム開設 (draft/finished → lobby)
 export async function openRoom(quizId: number, hostSecret: string) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
   });
   if (!quiz || quiz.host_secret !== hostSecret) return null;
+
+  // in_progress中の再openを防止
+  if (quiz.status !== "draft" && quiz.status !== "finished") return null;
 
   await db
     .update(schema.quizzes)
@@ -282,8 +285,18 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
   // 前回のランクを保持して比較用に
   const previousRanks = new Map(participants.map((p) => [p.id, p.current_rank]));
 
-  // 現在の問題のresponse_timeを取得
+  // 現在の問題のresponse_timeを一括取得（N+1解消）
   const currentQuestionId = await getCurrentQuestionId(quiz.id, quiz.current_question_index);
+  const answerMap = new Map<number, number>();
+  if (currentQuestionId) {
+    const answers = await db
+      .select()
+      .from(schema.answers)
+      .where(eq(schema.answers.question_id, currentQuestionId));
+    for (const a of answers) {
+      answerMap.set(a.participant_id, a.response_time_ms);
+    }
+  }
 
   const rankings: RankingEntry[] = [];
   for (let i = 0; i < participants.length; i++) {
@@ -296,17 +309,6 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
       .set({ current_rank: rank })
       .where(eq(schema.participants.id, p.id));
 
-    let lastResponseTimeMs: number | null = null;
-    if (currentQuestionId) {
-      const answer = await db.query.answers.findFirst({
-        where: and(
-          eq(schema.answers.question_id, currentQuestionId),
-          eq(schema.answers.participant_id, p.id)
-        ),
-      });
-      lastResponseTimeMs = answer?.response_time_ms ?? null;
-    }
-
     rankings.push({
       participantId: p.id,
       nickname: p.nickname,
@@ -314,7 +316,7 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
       totalScore: p.total_score,
       rank,
       previousRank: previousRanks.get(p.id) || rank,
-      lastResponseTimeMs,
+      lastResponseTimeMs: answerMap.get(p.id) ?? null,
     });
   }
 
@@ -339,14 +341,29 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
     .where(eq(schema.participants.quiz_id, quiz.id))
     .orderBy(desc(schema.participants.total_score));
 
+  // 全参加者の回答を一括取得（N+1解消）
+  const participantIds = participants.map((p) => p.id);
+  const allAnswers = participantIds.length > 0
+    ? await db
+        .select()
+        .from(schema.answers)
+        .where(
+          sql`${schema.answers.participant_id} IN (${sql.join(participantIds.map((id) => sql`${id}`), sql`, `)})`
+        )
+    : [];
+
+  // participantId → answers のマップ
+  const answersMap = new Map<number, typeof allAnswers>();
+  for (const a of allAnswers) {
+    const list = answersMap.get(a.participant_id) ?? [];
+    list.push(a);
+    answersMap.set(a.participant_id, list);
+  }
+
   const rankings = [];
   for (let i = 0; i < participants.length; i++) {
     const p = participants[i];
-
-    const answers = await db
-      .select()
-      .from(schema.answers)
-      .where(eq(schema.answers.participant_id, p.id));
+    const answers = answersMap.get(p.id) ?? [];
 
     const correctCount = answers.filter((a) => a.is_correct).length;
     const responseTimes = answers.map((a) => a.response_time_ms);

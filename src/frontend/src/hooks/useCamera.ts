@@ -58,8 +58,20 @@ export function useCamera() {
   const [isActive, setIsActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedFrame, setSelectedFrame] = useState<FrameType>("none");
+  const [error, setError] = useState<string | null>(null);
+
+  const isSupported = typeof navigator !== "undefined"
+    && !!navigator.mediaDevices
+    && !!navigator.mediaDevices.getUserMedia;
 
   const startCamera = useCallback(async () => {
+    setError(null);
+
+    if (!isSupported) {
+      setError("このブラウザではカメラを利用できません。HTTPSでアクセスしてください。");
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 400, height: 400 },
@@ -69,10 +81,17 @@ export function useCamera() {
         videoRef.current.srcObject = stream;
       }
       setIsActive(true);
-    } catch {
-      console.error("カメラの起動に失敗しました");
+    } catch (e) {
+      const err = e as DOMException;
+      if (err.name === "NotAllowedError") {
+        setError("カメラの使用が許可されていません。ブラウザの設定からカメラを許可してください。");
+      } else if (err.name === "NotFoundError") {
+        setError("カメラが見つかりません。カメラが接続されているか確認してください。");
+      } else {
+        setError("カメラの起動に失敗しました。カメラの許可を確認してください。");
+      }
     }
-  }, []);
+  }, [isSupported]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -115,6 +134,7 @@ export function useCamera() {
 
   const retake = useCallback(() => {
     setCapturedImage(null);
+    setError(null);
     startCamera();
   }, [startCamera]);
 
@@ -136,6 +156,8 @@ export function useCamera() {
     stopCamera,
     capture,
     retake,
+    error,
+    isSupported,
     frameOptions: Object.entries(FRAME_CONFIGS).map(([key, config]) => ({
       type: key as FrameType,
       label: config.label,

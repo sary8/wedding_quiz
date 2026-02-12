@@ -12,6 +12,45 @@ const socketMeta = new Map<string, { participantId: number; roomCode: string }>(
 // roomCode → 現在の問題ID
 const activeQuestions = new Map<string, number>();
 
+// 結果配信ヘルパー: closeQuestion と タイマー自動終了 で共通利用
+async function distributeQuestionResult(
+  io: QuizIO,
+  roomCode: string,
+  questionId: number,
+  hostSocketId?: string
+) {
+  // 各参加者に個別結果を送信
+  const sockets = await io.in(roomCode).fetchSockets();
+  for (const s of sockets) {
+    const meta = socketMeta.get(s.id);
+    if (meta && meta.participantId > 0) {
+      const result = await quizService.getQuestionResult(
+        questionId,
+        meta.participantId
+      );
+      s.emit("questionResult", result);
+    }
+  }
+
+  // ホストには全体結果を送信
+  const hostResult = await quizService.getQuestionResult(questionId);
+  if (hostSocketId) {
+    const hostSocket = sockets.find((s) => s.id === hostSocketId);
+    if (hostSocket) {
+      hostSocket.emit("questionResult", hostResult);
+    }
+  } else {
+    // タイマー自動終了時: ホストのsocketIdが不明なので、participantId === -1 のソケットに送信
+    for (const s of sockets) {
+      const meta = socketMeta.get(s.id);
+      if (meta && meta.participantId === -1 && meta.roomCode === roomCode) {
+        s.emit("questionResult", hostResult);
+        break;
+      }
+    }
+  }
+}
+
 export function setupQuizSocket(io: QuizIO) {
   io.on("connection", (socket: QuizSocket) => {
     console.log(`Connected: ${socket.id}`);
@@ -86,6 +125,12 @@ export function setupQuizSocket(io: QuizIO) {
         const questionId = activeQuestions.get(meta.roomCode);
         if (questionId !== data.questionId) {
           callback({ success: false, error: "この問題の回答期間は終了しました" });
+          return;
+        }
+
+        // choiceIndex バリデーション (1-4)
+        if (data.choiceIndex < 1 || data.choiceIndex > 4) {
+          callback({ success: false, error: "不正な選択肢です" });
           return;
         }
 
@@ -175,16 +220,23 @@ export function setupQuizSocket(io: QuizIO) {
         io.to(data.roomCode).emit("questionStarted", question);
 
         // サーバーサイドタイマー開始
+        const roomCode = data.roomCode;
+        const questionId = question.questionId;
         startTimer(
-          `question_${data.roomCode}`,
+          `question_${roomCode}`,
           question.timeLimitSeconds,
           (remaining) => {
-            io.to(data.roomCode).emit("timeUpdate", { remaining });
+            io.to(roomCode).emit("timeUpdate", { remaining });
           },
-          () => {
-            // タイムアップ時に自動クローズ
-            activeQuestions.delete(data.roomCode);
-            io.to(data.roomCode).emit("questionClosed");
+          async () => {
+            // タイムアップ時に自動クローズ + 結果配信
+            activeQuestions.delete(roomCode);
+            io.to(roomCode).emit("questionClosed");
+            try {
+              await distributeQuestionResult(io, roomCode, questionId);
+            } catch (e) {
+              console.error("Timer auto-close result distribution error:", e);
+            }
           }
         );
 
@@ -210,23 +262,7 @@ export function setupQuizSocket(io: QuizIO) {
 
         if (questionId) {
           io.to(data.roomCode).emit("questionClosed");
-
-          // 各参加者に個別結果を送信
-          const sockets = await io.in(data.roomCode).fetchSockets();
-          for (const s of sockets) {
-            const meta = socketMeta.get(s.id);
-            if (meta && meta.participantId > 0) {
-              const result = await quizService.getQuestionResult(
-                questionId,
-                meta.participantId
-              );
-              s.emit("questionResult", result);
-            }
-          }
-
-          // ホストには全体結果を送信
-          const hostResult = await quizService.getQuestionResult(questionId);
-          socket.emit("questionResult", hostResult);
+          await distributeQuestionResult(io, data.roomCode, questionId, socket.id);
         }
 
         callback({ success: true });

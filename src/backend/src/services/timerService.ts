@@ -23,6 +23,9 @@ export function startTimer(
   const durationMs = durationSeconds * 1000;
   const startTime = process.hrtime.bigint();
 
+  // 初回tickを即時発火（クライアントに初期値を送信）
+  onTick(durationSeconds);
+
   const intervalId = setInterval(() => {
     const elapsed = Number(process.hrtime.bigint() - startTime) / 1_000_000;
     const remaining = Math.max(0, durationSeconds - elapsed / 1000);

@@ -38,7 +38,7 @@ export function LobbyPage({ roomCode, participants, onStartGame }: Props) {
                 <img src={p.selfieUrl} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
               ) : (
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                  {p.nickname[0]}
+                  {p.nickname?.[0] || "?"}
                 </div>
               )}
               <span style={{ fontSize: 14 }}>{p.nickname}</span>

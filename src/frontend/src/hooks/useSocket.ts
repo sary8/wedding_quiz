@@ -64,14 +64,25 @@ type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 export function useSocket() {
   const socketRef = useRef<TypedSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     const socket: TypedSocket = io({
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
 
-    socket.on("connect", () => setIsConnected(true));
+    socket.on("connect", () => {
+      setIsConnected(true);
+      setConnectionError(null);
+    });
     socket.on("disconnect", () => setIsConnected(false));
+    socket.on("connect_error", (err) => {
+      setConnectionError(`接続エラー: ${err.message}`);
+    });
 
     socketRef.current = socket;
 
@@ -103,5 +114,5 @@ export function useSocket() {
     []
   );
 
-  return { socket: socketRef, isConnected, emit, on };
+  return { socket: socketRef, isConnected, connectionError, emit, on };
 }

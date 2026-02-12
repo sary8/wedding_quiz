@@ -44,7 +44,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
                   <img src={entry.selfieUrl} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff" }} />
                 ) : (
                   <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#667eea", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: "bold" }}>
-                    {entry.nickname[0]}
+                    {entry.nickname?.[0] || "?"}
                   </div>
                 )}
 

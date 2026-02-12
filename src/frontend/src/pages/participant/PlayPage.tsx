@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type { QuestionData, QuestionResultData, FinalResultData } from "../../types";
@@ -23,6 +23,10 @@ export function PlayPage() {
   const [questionResult, setQuestionResult] = useState<QuestionResultData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
 
+  // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
+  const hasAnsweredRef = useRef(hasAnswered);
+  hasAnsweredRef.current = hasAnswered;
+
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
@@ -31,11 +35,15 @@ export function PlayPage() {
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setHasAnswered(false);
+        setQuestionResult(null);
         setPhase("answer");
       }),
       on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
       on("questionClosed", () => {
-        if (!hasAnswered) setPhase("result");
+        // 未回答の場合のみ結果画面へ遷移（questionResultが来ない可能性があるため）
+        if (!hasAnsweredRef.current) {
+          setPhase("result");
+        }
       }),
       on("questionResult", (data) => {
         setQuestionResult(data);
@@ -53,7 +61,7 @@ export function PlayPage() {
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [on, hasAnswered]);
+  }, [on]);
 
   const handleJoin = useCallback(
     async (nickname: string, selfieData?: string) => {

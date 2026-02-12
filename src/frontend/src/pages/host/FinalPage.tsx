@@ -9,6 +9,13 @@ type Props = {
 
 type RevealPhase = "scroll" | "top3" | "winner" | "done";
 
+function getScrollDelay(rank: number): number {
+  if (rank > 20) return 200;
+  if (rank > 10) return 500;
+  if (rank > 3) return 1000;
+  return 1000;
+}
+
 export function FinalPage({ data }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
@@ -18,32 +25,40 @@ export function FinalPage({ data }: Props) {
   const rankings = data?.rankings ?? [];
   const reversed = [...rankings].reverse(); // 下位からスクロール
 
-  // スクロール演出
+  // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
     if (rankings.length === 0) return;
 
+    let cancelled = false;
     let index = 0;
-    const timer = setInterval(() => {
-      if (index >= reversed.length) {
-        clearInterval(timer);
-        setPhase("top3");
-        return;
-      }
+
+    function showNext() {
+      if (cancelled || index >= reversed.length) return;
 
       const entry = reversed[index];
-      setVisibleIndex(index);
 
-      // Top10に近づくほど遅く
+      // Top3に達したらスクロール停止 → top3フェーズへ
       if (entry.rank <= 3) {
-        clearInterval(timer);
         setPhase("top3");
         return;
       }
 
+      setVisibleIndex(index);
       index++;
-    }, reversed[index]?.rank <= 10 ? 800 : 300);
 
-    return () => clearInterval(timer);
+      // 次のエントリの rank でディレイを決定
+      const nextEntry = reversed[index];
+      const delay = nextEntry ? getScrollDelay(nextEntry.rank) : 300;
+      setTimeout(showNext, delay);
+    }
+
+    // 初回は少し待ってから開始
+    const initTimer = setTimeout(showNext, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(initTimer);
+    };
   }, [rankings.length]);
 
   // Top3演出
@@ -129,7 +144,7 @@ export function FinalPage({ data }: Props) {
             />
           ) : (
             <div style={{ width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 80, fontWeight: "bold", marginBottom: 24 }}>
-              {spotlightEntry.nickname[0]}
+              {spotlightEntry.nickname?.[0] || "?"}
             </div>
           )}
 
@@ -175,7 +190,7 @@ export function FinalPage({ data }: Props) {
               <img src={entry.selfieUrl} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
             ) : (
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#667eea", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {entry.nickname[0]}
+                {entry.nickname?.[0] || "?"}
               </div>
             )}
             <span style={{ width: 120 }}>{entry.nickname}</span>

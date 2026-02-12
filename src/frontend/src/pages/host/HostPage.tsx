@@ -21,7 +21,7 @@ export function HostPage() {
   const [searchParams] = useSearchParams();
   const hostSecret = searchParams.get("key") || "";
   const quizId = Number(searchParams.get("quizId")) || 0;
-  const { emit, on, isConnected } = useSocket();
+  const { emit, on, isConnected, connectionError } = useSocket();
 
   const [phase, setPhase] = useState<HostPhase>("lobby");
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
@@ -31,6 +31,7 @@ export function HostPage() {
   const [questionResult, setQuestionResult] = useState<QuestionResultData | null>(null);
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -40,6 +41,7 @@ export function HostPage() {
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setAnswerCount(0);
+        setQuestionResult(null);
         setPhase("question");
       }),
       on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
@@ -65,83 +67,130 @@ export function HostPage() {
   useEffect(() => {
     if (!isConnected || !roomCode) return;
     emit("openRoom", { quizId, hostSecret }, (res) => {
-      if (!res.success) console.error(res.error);
+      if (!res.success) setError(res.error || "ルームの開設に失敗しました");
     });
   }, [isConnected, roomCode, hostSecret, emit]);
 
+  // ゲーム開始 → 成功後に即 nextQuestion で最初の問題を配信
   const handleStartGame = useCallback(() => {
     if (!roomCode) return;
+    setError(null);
     emit("startGame", { roomCode, hostSecret }, (res) => {
-      if (!res.success) console.error(res.error);
+      if (!res.success) {
+        setError(res.error || "ゲームの開始に失敗しました");
+        return;
+      }
+      // 開始成功 → 最初の問題を自動配信
+      emit("nextQuestion", { roomCode, hostSecret }, (nextRes) => {
+        if (!nextRes.success) {
+          setError(nextRes.error || "最初の問題の配信に失敗しました");
+        }
+      });
     });
   }, [roomCode, hostSecret, emit]);
 
   const handleNextQuestion = useCallback(() => {
     if (!roomCode) return;
+    setError(null);
     emit("nextQuestion", { roomCode, hostSecret }, (res) => {
-      if (!res.success) alert(res.error);
+      if (!res.success) setError(res.error || "問題の配信に失敗しました");
     });
   }, [roomCode, hostSecret, emit]);
 
   const handleCloseQuestion = useCallback(() => {
     if (!roomCode) return;
     emit("closeQuestion", { roomCode, hostSecret }, (res) => {
-      if (!res.success) console.error(res.error);
+      if (!res.success) setError(res.error || "問題の締め切りに失敗しました");
     });
   }, [roomCode, hostSecret, emit]);
 
   const handleShowRanking = useCallback(() => {
     if (!roomCode) return;
     emit("showRanking", { roomCode, hostSecret }, (res) => {
-      if (!res.success) console.error(res.error);
+      if (!res.success) setError(res.error || "ランキングの表示に失敗しました");
     });
   }, [roomCode, hostSecret, emit]);
 
   const handleEndGame = useCallback(() => {
     if (!roomCode) return;
     emit("endGame", { roomCode, hostSecret }, (res) => {
-      if (!res.success) console.error(res.error);
+      if (!res.success) setError(res.error || "ゲーム終了に失敗しました");
     });
   }, [roomCode, hostSecret, emit]);
 
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
+  // 接続エラー表示
+  if (connectionError) {
+    return (
+      <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a2e", color: "#fff", flexDirection: "column", gap: 16 }}>
+        <p style={{ fontSize: 20, color: "#ef5350" }}>{connectionError}</p>
+        <p style={{ fontSize: 14, color: "#aaa" }}>ページを再読み込みしてください</p>
+      </div>
+    );
+  }
+
+  // エラーバナー
+  const errorBanner = error ? (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, padding: "12px 24px", background: "#ef5350", color: "#fff", textAlign: "center", fontSize: 14, zIndex: 1000 }} onClick={() => setError(null)}>
+      {error}（タップで閉じる）
+    </div>
+  ) : null;
+
   switch (phase) {
     case "lobby":
       return (
-        <LobbyPage
-          roomCode={roomCode}
-          participants={participants}
-          onStartGame={handleStartGame}
-        />
+        <>
+          {errorBanner}
+          <LobbyPage
+            roomCode={roomCode}
+            participants={participants}
+            onStartGame={handleStartGame}
+          />
+        </>
       );
     case "question":
       return (
-        <QuestionPage
-          question={currentQuestion}
-          timeRemaining={timeRemaining}
-          answerCount={answerCount}
-          totalParticipants={participants.length}
-          onCloseQuestion={handleCloseQuestion}
-        />
+        <>
+          {errorBanner}
+          <QuestionPage
+            question={currentQuestion}
+            timeRemaining={timeRemaining}
+            answerCount={answerCount}
+            totalParticipants={participants.length}
+            onCloseQuestion={handleCloseQuestion}
+          />
+        </>
       );
     case "results":
       return (
-        <ResultsPage
-          result={questionResult}
-          onShowRanking={handleShowRanking}
-          onNextQuestion={handleNextQuestion}
-        />
+        <>
+          {errorBanner}
+          <ResultsPage
+            result={questionResult}
+            question={currentQuestion}
+            onShowRanking={handleShowRanking}
+            onNextQuestion={handleNextQuestion}
+          />
+        </>
       );
     case "ranking":
       return (
-        <RankingPage
-          data={rankingData}
-          onNextQuestion={handleNextQuestion}
-          onEndGame={handleEndGame}
-        />
+        <>
+          {errorBanner}
+          <RankingPage
+            data={rankingData}
+            onNextQuestion={handleNextQuestion}
+            onEndGame={handleEndGame}
+          />
+        </>
       );
     case "final":
-      return <FinalPage data={finalData} />;
+      return (
+        <>
+          {errorBanner}
+          <FinalPage data={finalData} />
+        </>
+      );
   }
 }

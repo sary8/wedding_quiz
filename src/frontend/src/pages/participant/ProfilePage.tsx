@@ -39,6 +39,15 @@ export function ProfilePage({ onJoin }: Props) {
 
       {/* 自撮りエリア */}
       <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>自撮り（任意）</p>
+
+        {/* カメラエラー表示 */}
+        {camera.error && (
+          <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "rgba(239,83,80,0.3)", color: "#fff", fontSize: 13, maxWidth: 280 }}>
+            {camera.error}
+          </div>
+        )}
+
         {camera.capturedImage ? (
           // 撮影済み
           <div>
@@ -100,7 +109,7 @@ export function ProfilePage({ onJoin }: Props) {
                 fontWeight: "bold",
               }}
             >
-              📸 撮影
+              撮影
             </button>
           </div>
         ) : (
