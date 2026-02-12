@@ -39,7 +39,7 @@ export function SetupPage() {
 
   async function handleStartLobby() {
     if (!selectedQuiz) return;
-    navigate(`/host/${selectedQuiz.room_code}?key=${selectedQuiz.host_secret}`);
+    navigate(`/host/${selectedQuiz.room_code}?key=${selectedQuiz.host_secret}&quizId=${selectedQuiz.id}`);
   }
 
   return (

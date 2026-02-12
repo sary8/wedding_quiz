@@ -22,7 +22,7 @@ export function setupQuizSocket(io: QuizIO) {
         const result = await quizService.joinRoom(
           data.roomCode,
           data.nickname,
-          null,
+          data.selfieData || null,
           socket.id,
           data.token
         );
