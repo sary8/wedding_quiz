@@ -36,9 +36,18 @@ quizRoutes.post("/", async (c) => {
   return c.json(result[0], 201);
 });
 
-// クイズ一覧
+// クイズ一覧（host_secretは除外）
 quizRoutes.get("/", async (c) => {
-  const rows = await db.select().from(schema.quizzes);
+  const rows = await db
+    .select({
+      id: schema.quizzes.id,
+      room_code: schema.quizzes.room_code,
+      title: schema.quizzes.title,
+      status: schema.quizzes.status,
+      current_question_index: schema.quizzes.current_question_index,
+      created_at: schema.quizzes.created_at,
+    })
+    .from(schema.quizzes);
   return c.json(rows);
 });
 

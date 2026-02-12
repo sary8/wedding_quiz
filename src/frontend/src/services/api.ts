@@ -1,3 +1,5 @@
+import type { Quiz, QuizSummary } from "../types";
+
 const API_BASE = "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -14,18 +16,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 // Quiz
 export function createQuiz(title: string) {
-  return request<{ id: number; room_code: string; host_secret: string }>(
+  return request<Quiz>(
     "/quizzes",
     { method: "POST", body: JSON.stringify({ title }) }
   );
 }
 
 export function getQuiz(id: number, key: string) {
-  return request<any>(`/quizzes/${id}?key=${key}`);
+  return request<Quiz>(`/quizzes/${id}?key=${key}`);
 }
 
 export function listQuizzes() {
-  return request<any[]>("/quizzes");
+  return request<QuizSummary[]>("/quizzes");
 }
 
 export function deleteQuiz(id: number, key: string) {

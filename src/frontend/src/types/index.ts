@@ -70,14 +70,17 @@ export type FinalResultData = {
   rankings: FinalRankingEntry[];
 };
 
-export type Quiz = {
+export type QuizSummary = {
   id: number;
   room_code: string;
-  host_secret: string;
   title: string;
   status: QuizStatus;
   current_question_index: number;
   created_at: string;
+};
+
+export type Quiz = QuizSummary & {
+  host_secret: string;
   questions?: Question[];
 };
 

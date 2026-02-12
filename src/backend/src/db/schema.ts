@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
 
 export const quizzes = sqliteTable("quizzes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -76,3 +77,25 @@ export const answers = sqliteTable(
     ),
   ]
 );
+
+// --- Relations ---
+
+export const quizzesRelations = relations(quizzes, ({ many }) => ({
+  questions: many(questions),
+  participants: many(participants),
+}));
+
+export const questionsRelations = relations(questions, ({ one, many }) => ({
+  quiz: one(quizzes, { fields: [questions.quiz_id], references: [quizzes.id] }),
+  answers: many(answers),
+}));
+
+export const participantsRelations = relations(participants, ({ one, many }) => ({
+  quiz: one(quizzes, { fields: [participants.quiz_id], references: [quizzes.id] }),
+  answers: many(answers),
+}));
+
+export const answersRelations = relations(answers, ({ one }) => ({
+  question: one(questions, { fields: [answers.question_id], references: [questions.id] }),
+  participant: one(participants, { fields: [answers.participant_id], references: [participants.id] }),
+}));
