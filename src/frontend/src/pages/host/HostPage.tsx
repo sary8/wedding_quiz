@@ -20,6 +20,7 @@ export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const [searchParams] = useSearchParams();
   const hostSecret = searchParams.get("key") || "";
+  const quizId = Number(searchParams.get("quizId")) || 0;
   const { emit, on, isConnected } = useSocket();
 
   const [phase, setPhase] = useState<HostPhase>("lobby");
@@ -63,7 +64,7 @@ export function HostPage() {
   // ルーム開設
   useEffect(() => {
     if (!isConnected || !roomCode) return;
-    emit("openRoom", { quizId: 0, hostSecret }, (res) => {
+    emit("openRoom", { quizId, hostSecret }, (res) => {
       if (!res.success) console.error(res.error);
     });
   }, [isConnected, roomCode, hostSecret, emit]);

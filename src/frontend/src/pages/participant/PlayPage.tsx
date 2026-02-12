@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type { QuestionData, QuestionResultData, FinalResultData } from "../../types";
+import { uploadSelfie } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
@@ -55,10 +56,22 @@ export function PlayPage() {
   }, [on, hasAnswered]);
 
   const handleJoin = useCallback(
-    (nickname: string, selfieData?: string) => {
+    async (nickname: string, selfieData?: string) => {
       if (!roomCode) return;
+
+      // 自撮りデータがあればアップロード
+      let selfieFileName: string | undefined;
+      if (selfieData) {
+        try {
+          const res = await uploadSelfie(selfieData);
+          selfieFileName = res.filename;
+        } catch {
+          console.error("自撮りアップロード失敗");
+        }
+      }
+
       const token = localStorage.getItem(`quiz_token_${roomCode}`) || undefined;
-      emit("joinRoom", { roomCode, nickname, selfieData, token }, (res) => {
+      emit("joinRoom", { roomCode, nickname, selfieData: selfieFileName, token }, (res) => {
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
           localStorage.setItem(`quiz_token_${roomCode}`, res.token);
