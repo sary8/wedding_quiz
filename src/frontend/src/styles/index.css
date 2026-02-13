@@ -1,35 +1,50 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply min-h-screen bg-gray-50 text-dark;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  button {
+    @apply cursor-pointer border-none font-sans;
+  }
+
+  input,
+  textarea {
+    @apply font-sans;
+  }
 }
 
-html {
-  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  min-height: 100dvh;
-  background: #f8f9fa;
-  color: #1a1a2e;
-}
-
-#root {
-  min-height: 100dvh;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
-}
-
-input,
-textarea {
-  font-family: inherit;
+/* Utility: visually hidden but accessible to screen readers */
+@layer utilities {
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }
