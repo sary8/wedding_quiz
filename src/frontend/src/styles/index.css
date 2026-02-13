@@ -36,7 +36,8 @@
 
 /* Utility: visually hidden but accessible to screen readers */
 @layer utilities {
-  .visually-hidden {
+  .visually-hidden,
+  .sr-only {
     position: absolute;
     width: 1px;
     height: 1px;

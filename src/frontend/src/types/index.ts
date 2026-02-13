@@ -26,6 +26,7 @@ export type QuestionData = {
   text: string;
   mediaType: MediaType;
   mediaUrl: string | null;
+  mediaAltText?: string;
   choices: string[];
   timeLimitSeconds: number;
   points: number;
@@ -91,6 +92,7 @@ export type Question = {
   text: string;
   media_type: MediaType;
   media_url: string | null;
+  media_alt_text?: string;
   choice1: string;
   choice2: string;
   choice3: string;
