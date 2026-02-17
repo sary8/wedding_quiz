@@ -11,12 +11,12 @@ type Props = {
 const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion }: Props) {
-  if (!result) return null;
-
   const { totalAnswers, maxCount } = useMemo(() => ({
-    totalAnswers: result.distribution.reduce((s, n) => s + n, 0),
-    maxCount: result.distribution.reduce((max, n) => Math.max(max, n), 1),
-  }), [result.distribution]);
+    totalAnswers: result?.distribution.reduce((s, n) => s + n, 0) ?? 0,
+    maxCount: result?.distribution.reduce((max, n) => Math.max(max, n), 1) ?? 1,
+  }), [result?.distribution]);
+
+  if (!result) return null;
 
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">

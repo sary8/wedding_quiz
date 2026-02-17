@@ -9,10 +9,10 @@ type Props = {
 };
 
 export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
-  if (!data) return null;
-
-  const top10 = useMemo(() => data.rankings.slice(0, 10), [data.rankings]);
+  const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data?.rankings]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
+
+  if (!data) return null;
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-dark to-[#16213e] text-white p-6">
