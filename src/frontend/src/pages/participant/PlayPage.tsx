@@ -25,7 +25,9 @@ export function PlayPage() {
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
   const hasAnsweredRef = useRef(hasAnswered);
-  hasAnsweredRef.current = hasAnswered;
+  useEffect(() => {
+    hasAnsweredRef.current = hasAnswered;
+  });
 
   // Socket.ioイベント登録
   useEffect(() => {

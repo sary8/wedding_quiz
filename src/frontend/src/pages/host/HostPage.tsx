@@ -69,7 +69,7 @@ export function HostPage() {
     emit("openRoom", { quizId, hostSecret }, (res) => {
       if (!res.success) setError(res.error || "ルームの開設に失敗しました");
     });
-  }, [isConnected, roomCode, hostSecret, emit]);
+  }, [isConnected, roomCode, quizId, hostSecret, emit]);
 
   // ゲーム開始 → 成功後に即 nextQuestion で最初の問題を配信
   const handleStartGame = useCallback(() => {

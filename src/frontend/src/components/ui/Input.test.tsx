@@ -49,18 +49,27 @@ describe("Input", () => {
     expect(label).toHaveAttribute("for", "email-input");
   });
 
-  it("generates unique id if not provided", () => {
+  it("generates a stable id if not provided", () => {
+    // useId() は同一インスタンスでは安定したIDを返す
     const { rerender } = render(<Input label="Field 1" />);
-    const input1 = screen.getByRole("textbox");
-    const id1 = input1.getAttribute("id");
-
-    rerender(<Input label="Field 2" />);
-    const input2 = screen.getByRole("textbox");
-    const id2 = input2.getAttribute("id");
+    const id1 = screen.getByRole("textbox").getAttribute("id");
+    rerender(<Input label="Field 1 updated" />);
+    const id2 = screen.getByRole("textbox").getAttribute("id");
 
     expect(id1).toBeTruthy();
-    expect(id2).toBeTruthy();
-    expect(id1).not.toBe(id2);
+    expect(id1).toBe(id2); // 同一インスタンス → 同じIDを維持
+  });
+
+  it("generates unique ids for separate instances", () => {
+    // 同時にレンダーされた別インスタンスは異なるIDを持つ
+    render(
+      <>
+        <Input label="Field A" data-testid="a" />
+        <Input label="Field B" data-testid="b" />
+      </>
+    );
+    const inputs = screen.getAllByRole("textbox");
+    expect(inputs[0].getAttribute("id")).not.toBe(inputs[1].getAttribute("id"));
   });
 
   it("handles onChange event", async () => {

@@ -7,11 +7,24 @@ type Props = {
 
 export function ProfilePage({ onJoin }: Props) {
   const [nickname, setNickname] = useState("");
-  const camera = useCamera();
+  // ref と非ref を分割代入して ESLint の react-hooks/refs 誤検知を回避
+  const {
+    videoRef,
+    canvasRef,
+    isActive,
+    capturedImage,
+    selectedFrame,
+    setSelectedFrame,
+    startCamera,
+    capture,
+    retake,
+    error: cameraError,
+    frameOptions,
+  } = useCamera();
 
   function handleSubmit() {
     if (!nickname.trim()) return;
-    onJoin(nickname.trim(), camera.capturedImage || undefined);
+    onJoin(nickname.trim(), capturedImage || undefined);
   }
 
   return (
@@ -42,35 +55,35 @@ export function ProfilePage({ onJoin }: Props) {
         <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>自撮り（任意）</p>
 
         {/* カメラエラー表示 */}
-        {camera.error && (
+        {cameraError !== null ? (
           <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "rgba(239,83,80,0.3)", color: "#fff", fontSize: 13, maxWidth: 280 }}>
-            {camera.error}
+            {cameraError}
           </div>
-        )}
+        ) : null}
 
-        {camera.capturedImage ? (
+        {capturedImage !== null ? (
           // 撮影済み
           <div>
             <img
-              src={camera.capturedImage}
+              src={capturedImage}
               alt="自撮り"
               style={{ width: 200, height: 200, borderRadius: "50%", objectFit: "cover", border: "4px solid rgba(255,255,255,0.5)" }}
             />
             <div style={{ marginTop: 8 }}>
               <button
-                onClick={camera.retake}
+                onClick={retake}
                 style={{ padding: "6px 16px", borderRadius: 8, background: "rgba(255,255,255,0.3)", color: "#fff", fontSize: 14 }}
               >
                 撮り直す
               </button>
             </div>
           </div>
-        ) : camera.isActive ? (
+        ) : isActive ? (
           // カメラ起動中
           <div>
             <div style={{ position: "relative", width: 200, height: 200, borderRadius: "50%", overflow: "hidden", margin: "0 auto", border: "4px solid rgba(255,255,255,0.5)" }}>
               <video
-                ref={camera.videoRef}
+                ref={videoRef}
                 autoPlay
                 playsInline
                 muted
@@ -80,14 +93,14 @@ export function ProfilePage({ onJoin }: Props) {
 
             {/* フレーム選択 */}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12 }}>
-              {camera.frameOptions.map((frame) => (
+              {frameOptions.map((frame) => (
                 <button
                   key={frame.type}
-                  onClick={() => camera.setSelectedFrame(frame.type)}
+                  onClick={() => setSelectedFrame(frame.type)}
                   style={{
                     padding: "4px 12px",
                     borderRadius: 16,
-                    background: camera.selectedFrame === frame.type ? "#e91e63" : "rgba(255,255,255,0.2)",
+                    background: selectedFrame === frame.type ? "#e91e63" : "rgba(255,255,255,0.2)",
                     color: "#fff",
                     fontSize: 12,
                   }}
@@ -98,7 +111,7 @@ export function ProfilePage({ onJoin }: Props) {
             </div>
 
             <button
-              onClick={camera.capture}
+              onClick={capture}
               style={{
                 marginTop: 12,
                 padding: "10px 32px",
@@ -115,7 +128,7 @@ export function ProfilePage({ onJoin }: Props) {
         ) : (
           // カメラ未起動
           <button
-            onClick={camera.startCamera}
+            onClick={startCamera}
             style={{
               width: 200,
               height: 200,
@@ -136,7 +149,7 @@ export function ProfilePage({ onJoin }: Props) {
         )}
       </div>
 
-      <canvas ref={camera.canvasRef} style={{ display: "none" }} />
+      <canvas ref={canvasRef} style={{ display: "none" }} />
 
       <button
         onClick={handleSubmit}

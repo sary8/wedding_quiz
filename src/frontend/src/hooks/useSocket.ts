@@ -96,7 +96,8 @@ export function useSocket() {
       event: E,
       ...args: Parameters<ClientToServerEvents[E]>
     ) => {
-      socketRef.current?.emit(event, ...args as any);
+      // Socket.io のジェネリック可変長引数は TypeScript が直接検証できないため unknown 経由でキャスト
+      (socketRef.current?.emit as unknown as (...a: unknown[]) => void)?.(event, ...args);
     },
     []
   );
@@ -106,9 +107,9 @@ export function useSocket() {
       event: E,
       handler: ServerToClientEvents[E]
     ) => {
-      socketRef.current?.on(event, handler as any);
+      socketRef.current?.on(event, handler as (...args: unknown[]) => void);
       return () => {
-        socketRef.current?.off(event, handler as any);
+        socketRef.current?.off(event, handler as (...args: unknown[]) => void);
       };
     },
     []

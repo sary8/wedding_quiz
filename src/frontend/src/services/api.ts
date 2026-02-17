@@ -1,4 +1,4 @@
-import type { Quiz, QuizSummary } from "../types";
+import type { Quiz, QuizSummary, Question } from "../types";
 
 const API_BASE = "/api";
 
@@ -48,14 +48,14 @@ export function addQuestion(data: {
   mediaUrl?: string;
   timeLimitSeconds?: number;
 }) {
-  return request<any>("/questions", {
+  return request<Question>("/questions", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export function updateQuestion(id: number, data: Record<string, unknown>) {
-  return request<any>(`/questions/${id}`, {
+  return request<Question>(`/questions/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });

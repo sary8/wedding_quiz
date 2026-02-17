@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { FinalResultData, FinalRankingEntry } from "../../types";
@@ -22,13 +22,13 @@ export function FinalPage({ data }: Props) {
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const rankings = data?.rankings ?? [];
-  const reversed = [...rankings].reverse(); // 下位からスクロール
+  const rankings = useMemo(() => data?.rankings ?? [], [data]);
 
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
     if (rankings.length === 0) return;
 
+    const reversed = [...rankings].reverse(); // エフェクト内で定義して依存配列から除外
     let cancelled = false;
     let index = 0;
 
@@ -59,7 +59,7 @@ export function FinalPage({ data }: Props) {
       cancelled = true;
       clearTimeout(initTimer);
     };
-  }, [rankings.length]);
+  }, [rankings]);
 
   // Top3演出
   useEffect(() => {
@@ -93,7 +93,7 @@ export function FinalPage({ data }: Props) {
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [phase]);
+  }, [phase, rankings]);
 
   if (!data || rankings.length === 0) return null;
 
