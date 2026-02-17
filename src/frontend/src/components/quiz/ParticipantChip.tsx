@@ -3,7 +3,7 @@ import { cn } from "../../utils/cn";
 
 type Props = {
   nickname: string;
-  selfieUrl?: string;
+  selfieUrl?: string | null;
   className?: string;
 };
 
@@ -17,7 +17,7 @@ export function ParticipantChip({ nickname, selfieUrl, className }: Props) {
       )}
     >
       <Avatar
-        src={selfieUrl}
+        src={selfieUrl ?? undefined}
         alt={`${nickname}のアバター`}
         fallback={nickname}
         size="sm"

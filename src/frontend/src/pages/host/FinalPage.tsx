@@ -23,12 +23,12 @@ export function FinalPage({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const rankings = useMemo(() => data?.rankings ?? [], [data]);
+  const reversed = useMemo(() => [...rankings].reverse(), [rankings]);
 
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
-    if (rankings.length === 0) return;
+    if (reversed.length === 0) return;
 
-    const reversed = [...rankings].reverse(); // エフェクト内で定義して依存配列から除外
     let cancelled = false;
     let index = 0;
 
@@ -59,7 +59,7 @@ export function FinalPage({ data }: Props) {
       cancelled = true;
       clearTimeout(initTimer);
     };
-  }, [rankings]);
+  }, [reversed]);
 
   // Top3演出
   useEffect(() => {

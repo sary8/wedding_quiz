@@ -61,6 +61,13 @@ type ClientToServerEvents = {
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
+// socket.io の FallbackToUntypedListener が unknown[] を受け付けないため、
+// on/off 呼び出し時にソケット自体を緩い型にキャストして回避する
+type AnySocket = {
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  off: (event: string, handler: (...args: unknown[]) => void) => void;
+};
+
 export function useSocket() {
   const socketRef = useRef<TypedSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -107,9 +114,9 @@ export function useSocket() {
       event: E,
       handler: ServerToClientEvents[E]
     ) => {
-      socketRef.current?.on(event, handler as (...args: unknown[]) => void);
+      (socketRef.current as unknown as AnySocket)?.on(event as string, handler as (...args: unknown[]) => void);
       return () => {
-        socketRef.current?.off(event, handler as (...args: unknown[]) => void);
+        (socketRef.current as unknown as AnySocket)?.off(event as string, handler as (...args: unknown[]) => void);
       };
     },
     []
