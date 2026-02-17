@@ -31,5 +31,11 @@ src/backend/coverage/
 src/frontend/playwright-report/
 src/frontend/test-results/
 
+# Load test artifacts
+tests/load/node_modules/
+tests/load/.env.load
+tests/load/report.json
+tests/load/report.html
+
 # Windows garbage
 nul

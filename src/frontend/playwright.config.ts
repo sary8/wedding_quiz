@@ -10,7 +10,7 @@ export default defineConfig({
   reporter: [["html", { open: "never" }]],
 
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: "http://localhost:5174",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -31,7 +31,7 @@ export default defineConfig({
   // バックエンドは別途起動が必要（npm run dev in src/backend）
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:5173",
+    url: "http://localhost:5174",
     reuseExistingServer: true,
     timeout: 10000,
   },

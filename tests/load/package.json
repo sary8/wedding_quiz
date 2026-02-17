@@ -1,0 +1,19 @@
+{
+  "name": "wedding-quiz-load-test",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "setup": "node setup.mjs",
+    "test": "artillery run artillery.yml",
+    "test:100": "VIRTUAL_USERS=100 artillery run artillery.yml",
+    "report": "artillery report report.json"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.0",
+    "@artilleryio/plugin-publish-metrics": "^2.0.0"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

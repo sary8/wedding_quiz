@@ -1,0 +1,85 @@
+# Wedding Quiz 負荷テスト設定
+#
+# 使い方:
+#   1. node setup.mjs     # ルーム作成（.env.load に ROOM_CODE が書かれる）
+#   2. npm test           # 負荷テスト実行（デフォルト: 50ユーザー到達）
+#   3. npm run test:100   # 100ユーザー版
+#
+# 前提: バックエンドが localhost:3001 で起動中
+
+config:
+  target: "http://localhost:3001"
+
+  # .env.load から ROOM_CODE を読み込む
+  dotenv:
+    path: ".env.load"
+
+  phases:
+    # ウォームアップ（5秒で10人）
+    - name: "ウォームアップ"
+      duration: 5
+      arrivalRate: 2
+
+    # 段階的増加（20秒で30人追加）
+    - name: "負荷増加"
+      duration: 20
+      arrivalRate: 2
+      rampTo: 5
+
+    # ピーク維持（10秒）
+    - name: "ピーク維持"
+      duration: 10
+      arrivalRate: 5
+
+  # Socket.io プラグイン設定
+  engines:
+    socketio-v3: {}
+
+  # レポート出力
+  output: "report.json"
+
+  # 閾値（これを超えたら失敗とみなす）
+  ensure:
+    thresholds:
+      - http.response_time.p95: 500   # REST API p95 500ms 以内
+      - http.response_time.p99: 1000  # REST API p99 1秒 以内
+
+scenarios:
+  # ── シナリオ1: 参加者フロー（Socket.io）──────────────────────
+  - name: "参加者 Socket.io フロー"
+    engine: socketio-v3
+    weight: 80    # 全ユーザーの80%がこのシナリオ
+    flow:
+      # ルームに参加
+      - emit:
+          channel: "joinRoom"
+          data:
+            roomCode: "{{ ROOM_CODE }}"
+            nickname: "負荷ユーザー{{ $randomNumber(1000, 9999) }}"
+            selfie: null
+          acknowledge:
+            match:
+              value: true
+              expression: "success"
+
+      # ゲーム開始通知を待つ（ホストが開始するまで最大30秒）
+      - think: 3
+
+      # 回答を送信（3問分ループ）
+      - loop:
+          - emit:
+              channel: "submitAnswer"
+              data:
+                questionId: "{{ $loopCount }}"
+                choiceIndex: "{{ $randomNumber(1, 4) }}"
+          - think: 12   # 制限時間（15秒）内に収まる範囲で待機
+        count: 3
+
+  # ── シナリオ2: REST API のみ（ヘルスチェック）─────────────────
+  - name: "API ヘルスチェック"
+    weight: 20    # 全ユーザーの20%
+    flow:
+      - get:
+          url: "/api/quizzes"
+          expect:
+            - statusCode: 200
