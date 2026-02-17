@@ -17,64 +17,66 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
   const isUrgent = timeRemaining <= 5;
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#1a1a2e" }}>
+    <div className="h-[100dvh] flex flex-col bg-dark">
       {/* ヘッダー */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", color: "#fff" }}>
-        <span style={{ fontSize: 16 }}>
+      <div className="flex justify-between items-center px-6 py-4 text-white">
+        <span className="text-base">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
-        <span style={{
-          fontSize: 48,
-          fontWeight: "bold",
-          color: isUrgent ? "#ef5350" : "#fff",
-          transition: "color 0.3s",
-        }}>
+        <span
+          className="text-5xl font-bold transition-colors duration-300"
+          style={{ color: isUrgent ? "#ef5350" : "#fff" }}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="sr-only">残り</span>
           {timeRemaining}
+          <span className="sr-only">秒</span>
         </span>
-        <span style={{ fontSize: 16 }}>
+        <span className="text-base">
           回答: {answerCount} / {totalParticipants}
         </span>
       </div>
 
       {/* 問題文 */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
         {question.mediaUrl !== null && question.mediaType === "image" ? (
-          <img src={question.mediaUrl} alt={question.mediaAltText || "問題の画像"} style={{ maxWidth: "60%", maxHeight: "40vh", borderRadius: 12, marginBottom: 24, objectFit: "contain" }} />
+          <img
+            src={question.mediaUrl}
+            alt={question.mediaAltText || "問題の画像"}
+            className="max-w-[60%] max-h-[40vh] rounded-xl mb-6 object-contain"
+          />
         ) : null}
         {question.mediaUrl !== null && question.mediaType === "video" ? (
-          <video src={question.mediaUrl} autoPlay muted style={{ maxWidth: "60%", maxHeight: "40vh", borderRadius: 12, marginBottom: 24 }} />
+          <video
+            src={question.mediaUrl}
+            autoPlay
+            muted
+            className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
+          />
         ) : null}
-        <h2 style={{ fontSize: 36, color: "#fff", textAlign: "center" }}>{question.text}</h2>
+        <h2 className="text-4xl text-white text-center">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "0 24px 24px" }}>
+      <div className="grid grid-cols-2 gap-2 px-6 pb-4">
         {question.choices.map((choice, i) => (
           <div
             key={i}
-            style={{
-              padding: "20px 24px",
-              borderRadius: 12,
-              background: CHOICE_COLORS[i],
-              color: "#fff",
-              fontSize: 22,
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
+            className="flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold"
+            style={{ background: CHOICE_COLORS[i] }}
           >
-            <span aria-hidden="true" style={{ fontSize: 28 }}>{CHOICE_ICONS[i]}</span>
+            <span aria-hidden="true" className="text-3xl">{CHOICE_ICONS[i]}</span>
             {choice}
           </div>
         ))}
       </div>
 
       {/* 手動締め切りボタン */}
-      <div style={{ padding: "0 24px 24px", textAlign: "center" }}>
+      <div className="px-6 pb-6 text-center">
         <button
           onClick={onCloseQuestion}
-          style={{ padding: "8px 24px", borderRadius: 8, background: "rgba(255,255,255,0.2)", color: "#fff", fontSize: 14 }}
+          className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200"
         >
           回答を締め切る
         </button>

@@ -16,34 +16,36 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
   const maxCount = Math.max(...result.distribution, 1);
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#1a1a2e", color: "#fff", padding: 24 }}>
-      <h2 style={{ fontSize: 32, marginBottom: 32 }}>回答結果</h2>
+    <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">
+      <h2 className="text-3xl font-bold mb-8">回答結果</h2>
 
       {/* 回答分布グラフ */}
-      <div style={{ width: "100%", maxWidth: 600, marginBottom: 48 }}>
+      <div className="w-full max-w-xl mb-12">
         {result.distribution.map((count, i) => {
           const isCorrect = i + 1 === result.correctChoice;
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
           const barWidth = (count / maxCount) * 100;
           const choiceText = question?.choices[i] || `選択肢${i + 1}`;
+          const barColor = isCorrect ? CHOICE_COLORS[i] : `${CHOICE_COLORS[i]}88`;
 
           return (
-            <div key={i} style={{ marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 16, fontWeight: isCorrect ? "bold" : "normal" }}>
-                  {choiceText} {isCorrect && <><span aria-hidden="true">✓</span> 正解</>}
+            <div key={i} className="mb-4">
+              <div className="flex justify-between mb-1">
+                <span className={isCorrect ? "font-bold text-base" : "font-normal text-base"}>
+                  {choiceText}
+                  {isCorrect && (
+                    <>
+                      <span aria-hidden="true"> ✓</span>
+                      <span> 正解</span>
+                    </>
+                  )}
                 </span>
-                <span>{count}人 ({percentage}%)</span>
+                <span className="text-base">{count}人 ({percentage}%)</span>
               </div>
-              <div style={{ height: 40, background: "rgba(255,255,255,0.1)", borderRadius: 8, overflow: "hidden" }}>
+              <div className="h-10 bg-white/10 rounded-lg overflow-hidden">
                 <div
-                  style={{
-                    height: "100%",
-                    width: `${barWidth}%`,
-                    background: isCorrect ? CHOICE_COLORS[i] : `${CHOICE_COLORS[i]}88`,
-                    borderRadius: 8,
-                    transition: "width 0.8s ease-out",
-                  }}
+                  className="h-full rounded-lg transition-[width] duration-700 ease-out"
+                  style={{ width: `${barWidth}%`, background: barColor }}
                 />
               </div>
             </div>
@@ -51,16 +53,16 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
         })}
       </div>
 
-      <div style={{ display: "flex", gap: 16 }}>
+      <div className="flex gap-4">
         <button
           onClick={onShowRanking}
-          style={{ padding: "16px 32px", borderRadius: 12, background: "#e91e63", color: "#fff", fontSize: 18, fontWeight: "bold" }}
+          className="px-8 py-4 rounded-xl bg-accent text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           ランキング表示
         </button>
         <button
           onClick={onNextQuestion}
-          style={{ padding: "16px 32px", borderRadius: 12, background: "#1e88e5", color: "#fff", fontSize: 18, fontWeight: "bold" }}
+          className="px-8 py-4 rounded-xl bg-[#1e88e5] text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           次の問題
         </button>

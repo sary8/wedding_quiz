@@ -41,7 +41,6 @@ export function SetupPage() {
       saveHostSecret(quiz.id, quiz.host_secret);
       setTitle("");
       await loadQuizzes();
-      // 作成直後に選択状態にする
       setSelectedQuiz(quiz);
     } catch {
       setError("クイズの作成に失敗しました");
@@ -71,66 +70,52 @@ export function SetupPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <div className="min-h-screen bg-gray-100">
       {/* ヘッダー */}
-      <div style={{ background: "linear-gradient(135deg, #e91e63, #ff5722)", padding: "24px 0", marginBottom: 32 }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px" }}>
-          <h1 style={{ fontSize: 28, color: "#fff", margin: 0, fontWeight: 800 }}>Wedding Quiz</h1>
-          <p style={{ color: "rgba(255,255,255,0.8)", margin: "4px 0 0", fontSize: 14 }}>問題管理・セットアップ</p>
+      <div className="bg-gradient-to-r from-primary to-primary-dark py-6 mb-8">
+        <div className="max-w-4xl mx-auto px-6">
+          <h1 className="text-3xl font-extrabold text-white m-0">Wedding Quiz</h1>
+          <p className="text-white/80 mt-1 text-sm">問題管理・セットアップ</p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px 48px" }}>
+      <div className="max-w-4xl mx-auto px-6 pb-12">
         {error && (
-          <div style={{ padding: 12, marginBottom: 16, borderRadius: 8, background: "#ffebee", color: "#c62828", fontSize: 14 }}>
+          <div className="p-3 mb-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
             {error}
           </div>
         )}
 
         {/* ステップ表示 */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
+        <div className="flex gap-3 mb-8">
           <StepBadge num={1} label="クイズ作成" active={!selectedQuiz} />
           <StepBadge num={2} label="問題追加" active={!!selectedQuiz} />
           <StepBadge num={3} label="ロビー開始" active={false} />
         </div>
 
         {/* クイズ作成セクション */}
-        <section style={{ background: "#fff", borderRadius: 12, padding: 24, marginBottom: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-          <h2 style={{ fontSize: 18, marginBottom: 16, color: "#333" }}>新しいクイズを作成</h2>
-          <div style={{ display: "flex", gap: 12 }}>
+        <section className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">新しいクイズを作成</h2>
+          <div className="flex gap-3">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例：太郎＆花子 結婚式クイズ…"
               aria-label="クイズのタイトル"
-              style={{
-                flex: 1,
-                padding: "12px 16px",
-                borderRadius: 8,
-                border: "2px solid #e0e0e0",
-                fontSize: 16,
-                outline: "none",
-                transition: "border-color 0.2s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
-              onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+              className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-200 text-base outline-none focus:border-accent transition-colors duration-200"
               onKeyDown={(e) => e.key === "Enter" && handleCreateQuiz()}
             />
             <button
+              type="button"
               onClick={handleCreateQuiz}
               disabled={isLoading || !title.trim()}
-              style={{
-                padding: "12px 28px",
-                borderRadius: 8,
-                background: title.trim() ? "#e91e63" : "#e0e0e0",
-                color: "#fff",
-                fontSize: 16,
-                fontWeight: "bold",
-                cursor: title.trim() ? "pointer" : "default",
-                border: "none",
-                whiteSpace: "nowrap",
-              }}
+              className={[
+                "px-7 py-3 rounded-lg text-base font-bold text-white whitespace-nowrap transition-colors duration-200 min-h-[44px]",
+                title.trim() && !isLoading
+                  ? "bg-accent hover:opacity-90 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed",
+              ].join(" ")}
             >
               {isLoading ? "作成中..." : "作成"}
             </button>
@@ -139,41 +124,35 @@ export function SetupPage() {
 
         {/* 既存クイズ一覧 */}
         {quizList.length > 0 && (
-          <section style={{ background: "#fff", borderRadius: 12, padding: 24, marginBottom: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-            <h2 style={{ fontSize: 18, marginBottom: 16, color: "#333" }}>作成済みクイズ</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <section className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">作成済みクイズ</h2>
+            <div className="flex flex-col gap-2">
               {quizList.map((q) => {
                 const isSelected = selectedQuiz?.id === q.id;
                 const hasKey = !!getHostSecret(q.id);
                 return (
                   <button
                     key={q.id}
+                    type="button"
                     onClick={() => handleSelectQuiz(q)}
                     disabled={!hasKey}
                     aria-pressed={isSelected}
-                    style={{
-                      padding: "14px 16px",
-                      borderRadius: 8,
-                      border: isSelected ? "2px solid #e91e63" : "2px solid transparent",
-                      background: isSelected ? "#fce4ec" : "#fafafa",
-                      opacity: hasKey ? 1 : 0.5,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      transition: "border-color 0.15s, background 0.15s",
-                      width: "100%",
-                      textAlign: "left",
-                      cursor: hasKey ? "pointer" : "not-allowed",
-                    }}
+                    className={[
+                      "px-4 py-3 rounded-lg border-2 flex justify-between items-center text-left w-full transition-all duration-150 min-h-[44px]",
+                      isSelected
+                        ? "border-accent bg-pink-50"
+                        : "border-transparent bg-gray-50 hover:border-gray-200",
+                      !hasKey ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                    ].join(" ")}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 16, color: "#333" }}>{q.title}</div>
-                      <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>
+                      <div className="font-semibold text-base text-gray-800">{q.title}</div>
+                      <div className="text-sm text-gray-500 mt-0.5">
                         ルーム: {q.room_code} ・ {statusLabel(q.status)}
                       </div>
                     </div>
                     {isSelected && (
-                      <span style={{ background: "#e91e63", color: "#fff", padding: "4px 12px", borderRadius: 16, fontSize: 12, fontWeight: 600 }}>
+                      <span className="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold shrink-0">
                         選択中
                       </span>
                     )}
@@ -186,9 +165,9 @@ export function SetupPage() {
 
         {/* 問題編集 */}
         {selectedQuiz && (
-          <section style={{ background: "#fff", borderRadius: 12, padding: 24, marginBottom: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, margin: 0, color: "#333" }}>
+          <section className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-lg font-semibold m-0 text-gray-800">
                 「{selectedQuiz.title}」の問題（{selectedQuiz.questions?.length ?? 0}問）
               </h2>
             </div>
@@ -208,28 +187,18 @@ export function SetupPage() {
         {/* ロビー開始 */}
         {selectedQuiz && (selectedQuiz.questions?.length ?? 0) > 0 && (
           <button
+            type="button"
             onClick={handleStartLobby}
-            style={{
-              width: "100%",
-              padding: 18,
-              borderRadius: 12,
-              background: "linear-gradient(135deg, #e91e63, #ff5722)",
-              color: "#fff",
-              fontSize: 20,
-              fontWeight: "bold",
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(233,30,99,0.4)",
-            }}
+            className="w-full py-5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold shadow-lg hover:opacity-95 transition-opacity duration-200 min-h-[44px]"
           >
             ロビーを開く（参加者受付開始）
           </button>
         )}
 
         {selectedQuiz && (selectedQuiz.questions?.length ?? 0) === 0 && (
-          <div style={{ textAlign: "center", padding: 24, color: "#888", fontSize: 14 }}>
+          <p className="text-center py-6 text-gray-500 text-sm">
             問題を1つ以上追加するとロビーを開始できます
-          </div>
+          </p>
         )}
       </div>
     </div>
@@ -238,24 +207,18 @@ export function SetupPage() {
 
 function StepBadge({ num, label, active }: { num: number; label: string; active: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div className="flex items-center gap-2">
       <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: active ? "#e91e63" : "#e0e0e0",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 14,
-          fontWeight: 700,
-        }}
+        className={[
+          "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white",
+          active ? "bg-accent" : "bg-gray-300",
+        ].join(" ")}
       >
         {num}
       </div>
-      <span style={{ fontSize: 14, color: active ? "#333" : "#999", fontWeight: active ? 600 : 400 }}>{label}</span>
+      <span className={["text-sm font-semibold", active ? "text-gray-800" : "text-gray-400"].join(" ")}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -318,31 +281,23 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
     <div>
       {/* 既存の問題リスト */}
       {(quiz.questions?.length ?? 0) > 0 && (
-        <div style={{ marginBottom: 24 }}>
+        <div className="mb-6">
           {quiz.questions!.map((q: Question, i: number) => (
             <div
               key={q.id}
-              style={{
-                padding: 16,
-                marginBottom: 8,
-                borderRadius: 8,
-                background: "#fafafa",
-                border: "1px solid #eee",
-              }}
+              className="p-4 mb-2 rounded-lg bg-gray-50 border border-gray-100"
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: "#333", marginBottom: 8 }}>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-semibold text-base text-gray-800 mb-2">
                     Q{i + 1}. {q.text}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  <div className="grid grid-cols-2 gap-1.5">
                     {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
                       <div
                         key={ci}
+                        className="px-2.5 py-1 rounded text-sm"
                         style={{
-                          padding: "4px 10px",
-                          borderRadius: 6,
-                          fontSize: 13,
                           background: ci + 1 === q.correct_choice ? choiceColors[ci] : "#f0f0f0",
                           color: ci + 1 === q.correct_choice ? "#fff" : "#555",
                           fontWeight: ci + 1 === q.correct_choice ? 600 : 400,
@@ -352,23 +307,14 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>
+                  <div className="text-xs text-gray-400 mt-1.5">
                     制限時間: {q.time_limit_seconds}秒 ・ 配点: {q.points}点
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDelete(q.id)}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: 6,
-                    background: "transparent",
-                    color: "#e53935",
-                    fontSize: 13,
-                    border: "1px solid #e53935",
-                    cursor: "pointer",
-                    marginLeft: 12,
-                    whiteSpace: "nowrap",
-                  }}
+                  className="px-3.5 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer ml-3 whitespace-nowrap min-h-[44px]"
                 >
                   削除
                 </button>
@@ -379,52 +325,35 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
       )}
 
       {/* 新規問題フォーム */}
-      <div style={{ padding: 20, borderRadius: 8, background: "#f5f5f5", border: "2px dashed #ddd" }}>
-        <h3 style={{ fontSize: 16, marginBottom: 16, color: "#555" }}>
-          + 新しい問題を追加
-        </h3>
+      <div className="p-5 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300">
+        <h3 className="text-base font-semibold mb-4 text-gray-600">+ 新しい問題を追加</h3>
 
         {/* 問題文 */}
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="question-text" style={{ display: "block", fontSize: 13, color: "#666", marginBottom: 4, fontWeight: 600 }}>問題文</label>
+        <div className="mb-4">
+          <label htmlFor="question-text" className="block text-sm text-gray-600 mb-1 font-semibold">問題文</label>
           <input
             id="question-text"
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="例：新郎の出身地はどこ？…"
-            style={{
-              width: "100%",
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "2px solid #e0e0e0",
-              fontSize: 16,
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
-            onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+            className="w-full px-3.5 py-2.5 rounded-lg border-2 border-gray-200 text-base outline-none focus:border-accent transition-colors duration-200"
           />
         </div>
 
         {/* 選択肢 */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", fontSize: 13, color: "#666", marginBottom: 8, fontWeight: 600 }}>
+        <div className="mb-4">
+          <label className="block text-sm text-gray-600 mb-2 font-semibold">
             選択肢（正解をクリックして選択）
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="grid grid-cols-2 gap-2">
             {choices.map((c, i) => (
               <div
                 key={i}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-150"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: `2px solid ${correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0"}`,
+                  borderColor: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0",
                   background: correctChoice === i + 1 ? `${choiceColors[i]}15` : "#fff",
-                  transition: "border-color 0.15s, background 0.15s",
                 }}
               >
                 <button
@@ -432,21 +361,8 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                   onClick={() => setCorrectChoice(i + 1)}
                   aria-label={`選択肢${choiceLabels[i]}を正解に設定`}
                   aria-pressed={correctChoice === i + 1}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0",
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    flexShrink: 0,
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 min-h-[28px]"
+                  style={{ background: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0" }}
                 >
                   {choiceLabels[i]}
                 </button>
@@ -460,17 +376,10 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                   }}
                   placeholder={`選択肢${choiceLabels[i]}…`}
                   aria-label={`選択肢${choiceLabels[i]}のテキスト`}
-                  style={{
-                    flex: 1,
-                    padding: "6px 8px",
-                    border: "none",
-                    background: "transparent",
-                    fontSize: 15,
-                    outline: "none",
-                  }}
+                  className="flex-1 bg-transparent border-none outline-none text-sm py-1"
                 />
                 {correctChoice === i + 1 && (
-                  <span aria-hidden="true" style={{ fontSize: 12, color: choiceColors[i], fontWeight: 700, flexShrink: 0 }}>正解</span>
+                  <span aria-hidden="true" className="text-xs font-bold shrink-0" style={{ color: choiceColors[i] }}>正解</span>
                 )}
               </div>
             ))}
@@ -478,22 +387,20 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
         </div>
 
         {/* 制限時間 */}
-        <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
-          <label style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>制限時間:</label>
-          <div style={{ display: "flex", gap: 6 }}>
+        <div className="flex flex-wrap gap-3 items-center mb-5">
+          <label className="text-sm text-gray-600 font-semibold">制限時間:</label>
+          <div className="flex flex-wrap gap-1.5">
             {[10, 15, 20, 30, 45, 60].map((t) => (
               <button
                 key={t}
+                type="button"
                 onClick={() => setTimeLimit(t)}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: 16,
-                  background: timeLimit === t ? "#e91e63" : "#fff",
-                  color: timeLimit === t ? "#fff" : "#666",
-                  fontSize: 13,
-                  border: `1px solid ${timeLimit === t ? "#e91e63" : "#ddd"}`,
-                  cursor: "pointer",
-                }}
+                className={[
+                  "px-3.5 py-1.5 rounded-full text-sm border transition-colors duration-150 min-h-[36px]",
+                  timeLimit === t
+                    ? "bg-accent text-white border-accent"
+                    : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
+                ].join(" ")}
               >
                 {t}秒
               </button>
@@ -503,19 +410,15 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
         {/* 追加ボタン */}
         <button
+          type="button"
           onClick={handleAdd}
           disabled={!canAdd || isAdding}
-          style={{
-            width: "100%",
-            padding: 14,
-            borderRadius: 8,
-            background: canAdd ? "#1e88e5" : "#e0e0e0",
-            color: "#fff",
-            fontSize: 16,
-            fontWeight: "bold",
-            border: "none",
-            cursor: canAdd ? "pointer" : "default",
-          }}
+          className={[
+            "w-full py-3.5 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
+            canAdd && !isAdding
+              ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
+              : "bg-gray-300 cursor-not-allowed",
+          ].join(" ")}
         >
           {isAdding ? "追加中..." : "この問題を追加"}
         </button>

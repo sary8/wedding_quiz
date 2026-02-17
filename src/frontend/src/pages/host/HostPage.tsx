@@ -123,9 +123,9 @@ export function HostPage() {
   // 接続エラー表示
   if (connectionError) {
     return (
-      <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a2e", color: "#fff", flexDirection: "column", gap: 16 }}>
-        <p style={{ fontSize: 20, color: "#ef5350" }}>{connectionError}</p>
-        <p style={{ fontSize: 14, color: "#aaa" }}>ページを再読み込みしてください</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-4">
+        <p className="text-xl text-red-400">{connectionError}</p>
+        <p className="text-sm text-gray-400">ページを再読み込みしてください</p>
       </div>
     );
   }

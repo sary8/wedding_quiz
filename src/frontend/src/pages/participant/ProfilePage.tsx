@@ -32,24 +32,32 @@ export function ProfilePage({ onJoin }: Props) {
       <h1 style={{ fontSize: 28, color: "#fff", marginBottom: 24 }}>プロフィール設定</h1>
 
       {/* ニックネーム */}
-      <input
-        type="text"
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value.slice(0, 20))}
-        placeholder="ニックネーム（例：花子）"
-        aria-label="ニックネーム（20文字以内）"
-        maxLength={20}
-        style={{
-          width: 280,
-          padding: "14px 20px",
-          borderRadius: 12,
-          border: "none",
-          fontSize: 20,
-          textAlign: "center",
-          marginBottom: 20,
-        }}
-        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-      />
+      <div style={{ marginBottom: 20, width: 280 }}>
+        <label
+          htmlFor="nickname"
+          style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 6, fontWeight: 600 }}
+        >
+          ニックネーム（20文字以内）
+        </label>
+        <input
+          id="nickname"
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value.slice(0, 20))}
+          placeholder="例：花子"
+          maxLength={20}
+          style={{
+            width: "100%",
+            padding: "14px 20px",
+            borderRadius: 12,
+            border: "none",
+            fontSize: 20,
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        />
+      </div>
 
       {/* 自撮りエリア */}
       <div style={{ marginBottom: 20, textAlign: "center" }}>
@@ -72,8 +80,9 @@ export function ProfilePage({ onJoin }: Props) {
             />
             <div style={{ marginTop: 8 }}>
               <button
+                type="button"
                 onClick={retake}
-                style={{ padding: "6px 16px", borderRadius: 8, background: "rgba(255,255,255,0.3)", color: "#fff", fontSize: 14 }}
+                style={{ padding: "10px 20px", borderRadius: 8, background: "rgba(255,255,255,0.3)", color: "#fff", fontSize: 14, minHeight: 44 }}
               >
                 撮り直す
               </button>
@@ -97,13 +106,15 @@ export function ProfilePage({ onJoin }: Props) {
               {frameOptions.map((frame) => (
                 <button
                   key={frame.type}
+                  type="button"
                   onClick={() => setSelectedFrame(frame.type)}
                   style={{
-                    padding: "4px 12px",
+                    padding: "10px 14px",
                     borderRadius: 16,
                     background: selectedFrame === frame.type ? "#e91e63" : "rgba(255,255,255,0.2)",
                     color: "#fff",
                     fontSize: 12,
+                    minHeight: 44,
                   }}
                 >
                   {frame.label}
@@ -112,15 +123,17 @@ export function ProfilePage({ onJoin }: Props) {
             </div>
 
             <button
+              type="button"
               onClick={capture}
               style={{
                 marginTop: 12,
-                padding: "10px 32px",
+                padding: "12px 32px",
                 borderRadius: 24,
                 background: "#e91e63",
                 color: "#fff",
                 fontSize: 16,
                 fontWeight: "bold",
+                minHeight: 44,
               }}
             >
               撮影
@@ -129,6 +142,7 @@ export function ProfilePage({ onJoin }: Props) {
         ) : (
           // カメラ未起動
           <button
+            type="button"
             onClick={startCamera}
             style={{
               width: 200,
@@ -144,7 +158,10 @@ export function ProfilePage({ onJoin }: Props) {
               gap: 8,
             }}
           >
-            <span style={{ fontSize: 40 }}>📷</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
             <span>自撮りを撮る</span>
           </button>
         )}
@@ -153,6 +170,7 @@ export function ProfilePage({ onJoin }: Props) {
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       <button
+        type="button"
         onClick={handleSubmit}
         disabled={!nickname.trim()}
         style={{
@@ -163,6 +181,7 @@ export function ProfilePage({ onJoin }: Props) {
           color: "#fff",
           fontSize: 20,
           fontWeight: "bold",
+          minHeight: 44,
         }}
       >
         参加する

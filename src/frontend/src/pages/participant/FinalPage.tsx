@@ -15,37 +15,31 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
     ? Math.round((myResult.correctCount / myResult.totalQuestions) * 100)
     : 0;
 
-  return (
-    <div style={{
-      height: "100dvh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      background: myResult.rank <= 3
-        ? "linear-gradient(135deg, #ffd700, #ff8c00)"
-        : "linear-gradient(135deg, #667eea, #764ba2)",
-      color: "#fff",
-      padding: 24,
-    }}>
-      <h2 style={{ fontSize: 24, marginBottom: 8, fontWeight: "normal" }}>あなたの最終順位</h2>
-      <p style={{ fontSize: 80, fontWeight: "bold", marginBottom: 24 }}>
-        第{myResult.rank}位
-      </p>
+  const isTopThree = myResult.rank <= 3;
 
-      <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: 16, padding: 24, textAlign: "center", minWidth: 280 }}>
-        <p style={{ fontSize: 16, marginBottom: 8 }}>ニックネーム: {myResult.nickname}</p>
-        <p style={{ fontSize: 32, fontWeight: "bold", marginBottom: 16 }}>
-          {myResult.totalScore.toLocaleString()}点
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
+  return (
+    <div
+      className={[
+        "h-[100dvh] flex flex-col items-center justify-center text-white p-6",
+        isTopThree
+          ? "bg-gradient-to-br from-[#ffd700] to-[#ff8c00]"
+          : "bg-gradient-to-br from-primary to-primary-dark",
+      ].join(" ")}
+    >
+      <h2 className="text-2xl font-normal mb-2">あなたの最終順位</h2>
+      <p className="text-8xl font-bold mb-6">第{myResult.rank}位</p>
+
+      <div className="bg-black/20 rounded-2xl p-6 text-center min-w-[280px]">
+        <p className="text-base mb-2">ニックネーム: {myResult.nickname}</p>
+        <p className="text-3xl font-bold mb-4">{myResult.totalScore.toLocaleString()}点</p>
+        <div className="flex flex-col gap-2 text-sm">
           <p>正答率: {accuracyPercent}% ({myResult.correctCount}/{myResult.totalQuestions}問)</p>
           <p>平均回答速度: {(myResult.averageResponseTimeMs / 1000).toFixed(2)}秒</p>
-          <p>最速回答: {(myResult.fastestResponseTimeMs / 1000).toFixed(3)}秒</p>
+          <p>最速回答: {(myResult.fastestResponseTimeMs / 1000).toFixed(2)}秒</p>
         </div>
       </div>
 
-      <p style={{ fontSize: 14, marginTop: 32, opacity: 0.7 }}>ご参加ありがとうございました！</p>
+      <p className="text-sm mt-8 opacity-70">ご参加ありがとうございました！</p>
     </div>
   );
 }

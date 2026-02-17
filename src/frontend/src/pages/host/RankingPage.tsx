@@ -14,10 +14,10 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
   const maxScore = top10.reduce((max, r) => Math.max(max, r.totalScore), 1);
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #1a1a2e, #16213e)", color: "#fff", padding: 24 }}>
-      <h2 style={{ fontSize: 32, textAlign: "center", marginBottom: 24 }}>ランキング</h2>
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-dark to-[#16213e] text-white p-6">
+      <h2 className="text-3xl font-bold text-center mb-6">ランキング</h2>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center", maxWidth: 900, margin: "0 auto", width: "100%" }}>
+      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full">
         <AnimatePresence>
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
@@ -32,49 +32,51 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 80, damping: 15, duration: 1.5 }}
-                style={{ display: "flex", alignItems: "center", gap: 12 }}
+                className="flex items-center gap-3"
               >
                 {/* 順位 */}
-                <span style={{ width: 40, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
-                  {entry.rank}
-                </span>
+                <span className="w-10 text-2xl font-bold text-center">{entry.rank}</span>
 
                 {/* アイコン */}
                 {entry.selfieUrl ? (
-                  <img src={entry.selfieUrl} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff" }} />
+                  <img
+                    src={entry.selfieUrl}
+                    alt=""
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white shrink-0"
+                  />
                 ) : (
-                  <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#667eea", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: "bold" }}>
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl font-bold shrink-0">
                     {entry.nickname?.[0] || "?"}
                   </div>
                 )}
 
                 {/* ニックネーム */}
-                <span style={{ width: 100, fontSize: 16, fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span className="w-24 text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap">
                   {entry.nickname}
                 </span>
 
                 {/* スコアバー */}
-                <div style={{ flex: 1, height: 36, background: "rgba(255,255,255,0.1)", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+                <div className="flex-1 h-9 bg-white/10 rounded-lg overflow-hidden relative">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${barWidth}%` }}
                     transition={{ type: "spring", stiffness: 60, damping: 15 }}
-                    style={{ height: "100%", background: "linear-gradient(90deg, #667eea, #764ba2)", borderRadius: 8 }}
+                    className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                   />
-                  <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 14, fontWeight: "bold" }}>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold drop-shadow">
                     {entry.totalScore.toLocaleString()}点
                   </span>
                 </div>
 
                 {/* 順位変動 */}
-                <span style={{ width: 40, fontSize: 14, fontWeight: "bold", color: changeColor, textAlign: "center" }}>
+                <span className="w-10 text-sm font-bold text-center" style={{ color: changeColor }}>
                   {changeText}
                 </span>
 
                 {/* 回答速度 */}
-                <span style={{ width: 70, fontSize: 12, color: "#aaa", textAlign: "right" }}>
+                <span className="w-[70px] text-xs text-gray-400 text-right">
                   {entry.lastResponseTimeMs != null
-                    ? `${(entry.lastResponseTimeMs / 1000).toFixed(3)}秒`
+                    ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
                     : "---"}
                 </span>
               </motion.div>
@@ -83,16 +85,16 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
         </AnimatePresence>
       </div>
 
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 24 }}>
+      <div className="flex gap-4 justify-center mt-6">
         <button
           onClick={onNextQuestion}
-          style={{ padding: "16px 32px", borderRadius: 12, background: "#1e88e5", color: "#fff", fontSize: 18, fontWeight: "bold" }}
+          className="px-8 py-4 rounded-xl bg-[#1e88e5] text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           次の問題
         </button>
         <button
           onClick={onEndGame}
-          style={{ padding: "16px 32px", borderRadius: 12, background: "#e91e63", color: "#fff", fontSize: 18, fontWeight: "bold" }}
+          className="px-8 py-4 rounded-xl bg-accent text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           最終結果発表
         </button>

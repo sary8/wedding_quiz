@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { CheckCircle2 } from "lucide-react";
 import type { QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
 
@@ -26,7 +27,9 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
   if (hasAnswered) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-dark text-white">
-        <div className="text-6xl mb-4" role="img" aria-label="回答完了">✅</div>
+        <div className="mb-4 text-green-400" aria-label="回答完了">
+          <CheckCircle2 size={64} strokeWidth={1.5} />
+        </div>
         <p className="text-2xl font-bold">回答済み</p>
         <p className="text-base text-gray-400 mt-2">結果をお待ちください...</p>
       </div>
@@ -72,7 +75,7 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
 
           return (
             <ChoiceButton
-              key={i}
+              key={`${question.questionIndex}-${i}`}
               choice={choice}
               color={CHOICE_COLORS[i]}
               icon={CHOICE_ICONS[i]}

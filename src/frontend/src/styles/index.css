@@ -10,6 +10,13 @@
   --color-choice-blue: #1e88e5;
   --color-choice-green: #43a047;
   --color-choice-yellow: #f9a825;
+
+  --animate-scale-pulse: scale-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 @layer base {
