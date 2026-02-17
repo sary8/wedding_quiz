@@ -309,9 +309,14 @@ export function setupQuizSocket(io: QuizIO) {
     });
 
     // === ビューワー: 読み取り専用参加 ===
-    socket.on("watchRoom", (data, callback) => {
+    socket.on("watchRoom", async (data, callback) => {
       socket.join(data.roomCode);
       socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
+
+      // 接続時点の参加者リストを即時送信
+      const participants = await quizService.getLobbyParticipants(data.roomCode);
+      socket.emit("lobbyUpdate", { participants });
+
       callback({ success: true });
     });
 
