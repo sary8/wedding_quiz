@@ -18,8 +18,4 @@ export default defineConfig({
       },
     },
   },
-  test: {
-    // e2e/ は Playwright で実行するため Vitest から除外
-    exclude: ["e2e/**", "node_modules/**"],
-  },
 });
