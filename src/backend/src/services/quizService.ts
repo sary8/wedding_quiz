@@ -166,22 +166,13 @@ export async function getNextQuestion(roomCode: string): Promise<QuestionData | 
   };
 }
 
-// 回答登録
+// 回答登録（トランザクションで重複チェック→INSERT→スコア更新を一括実行）
 export async function submitAnswer(
   participantId: number,
   questionId: number,
   choiceIndex: number,
   responseTimeMs: number
 ) {
-  // 重複チェック
-  const existing = await db.query.answers.findFirst({
-    where: and(
-      eq(schema.answers.question_id, questionId),
-      eq(schema.answers.participant_id, participantId)
-    ),
-  });
-  if (existing) return { error: "既に回答済みです" };
-
   const question = await db.query.questions.findFirst({
     where: eq(schema.questions.id, questionId),
   });
@@ -190,22 +181,30 @@ export async function submitAnswer(
   const isCorrect = choiceIndex === question.correct_choice;
   const scoreAwarded = calculateScore(isCorrect, responseTimeMs, question.time_limit_seconds);
 
-  await db.insert(schema.answers).values({
-    question_id: questionId,
-    participant_id: participantId,
-    choice_index: choiceIndex,
-    is_correct: isCorrect,
-    response_time_ms: responseTimeMs,
-    score_awarded: scoreAwarded,
-  });
-
-  // 累計スコア更新
-  await db
-    .update(schema.participants)
-    .set({
-      total_score: sql`${schema.participants.total_score} + ${scoreAwarded}`,
-    })
-    .where(eq(schema.participants.id, participantId));
+  try {
+    await db.batch([
+      db.insert(schema.answers).values({
+        question_id: questionId,
+        participant_id: participantId,
+        choice_index: choiceIndex,
+        is_correct: isCorrect,
+        response_time_ms: responseTimeMs,
+        score_awarded: scoreAwarded,
+      }),
+      db
+        .update(schema.participants)
+        .set({
+          total_score: sql`${schema.participants.total_score} + ${scoreAwarded}`,
+        })
+        .where(eq(schema.participants.id, participantId)),
+    ]);
+  } catch (e) {
+    const err = e as Error;
+    if (err.message?.includes("UNIQUE constraint failed")) {
+      return { error: "既に回答済みです" };
+    }
+    throw e;
+  }
 
   return { isCorrect, scoreAwarded };
 }

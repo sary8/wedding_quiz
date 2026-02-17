@@ -8,6 +8,7 @@ type Props = {
 
 export function ProfilePage({ onJoin, isJoining }: Props) {
   const [nickname, setNickname] = useState("");
+  const [captureError, setCaptureError] = useState<string | null>(null);
   const {
     videoRef,
     canvasRef,
@@ -122,9 +123,18 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
                 ))}
               </div>
 
+              {captureError !== null ? (
+                <p className="mt-2 text-sm text-red-500">{captureError}</p>
+              ) : null}
               <button
                 type="button"
-                onClick={capture}
+                onClick={() => {
+                  setCaptureError(null);
+                  const result = capture();
+                  if (result === null) {
+                    setCaptureError("カメラの準備ができていません。少し待ってからもう一度お試しください。");
+                  }
+                }}
                 className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
               >
                 撮影

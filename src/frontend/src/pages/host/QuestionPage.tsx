@@ -12,9 +12,10 @@ type Props = {
 const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
-export function QuestionPage({ question, timeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
+export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
   if (!question) return null;
 
+  const timeRemaining = Math.max(0, rawTimeRemaining);
   const isUrgent = timeRemaining <= 5;
 
   return (

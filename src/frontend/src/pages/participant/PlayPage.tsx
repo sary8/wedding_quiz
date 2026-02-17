@@ -59,8 +59,12 @@ export function PlayPage() {
       }),
       on("reconnected", (data) => {
         setParticipantId(data.participantId);
-        if (data.quizStatus === "lobby") setPhase("waiting");
-        else if (data.quizStatus === "in_progress") setPhase("waiting");
+        setIsJoining(false);
+        if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
+          setPhase("waiting");
+        } else if (data.quizStatus === "finished") {
+          setPhase("final");
+        }
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -78,12 +82,20 @@ export function PlayPage() {
           const res = await uploadSelfie(selfieData);
           selfieFileName = res.filename;
         } catch {
-          console.error("自撮りアップロード失敗");
+          alert("自撮りのアップロードに失敗しました。自撮りなしで参加します。");
         }
       }
 
       const token = localStorage.getItem(`quiz_token_${roomCode}`) || undefined;
+
+      // タイムアウト: 10秒以内にサーバーから応答がなければエラー
+      const joinTimeout = setTimeout(() => {
+        alert("サーバーからの応答がありません。ページを再読み込みしてください。");
+        setIsJoining(false);
+      }, 10000);
+
       emit("joinRoom", { roomCode, nickname, selfieData: selfieFileName, token }, (res) => {
+        clearTimeout(joinTimeout);
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
           localStorage.setItem(`quiz_token_${roomCode}`, res.token);
@@ -99,12 +111,17 @@ export function PlayPage() {
 
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
   const questionId = currentQuestion?.questionId;
+  const [answerError, setAnswerError] = useState<string | null>(null);
+
   const handleAnswer = useCallback(
     (choiceIndex: number) => {
       if (!questionId) return;
       setHasAnswered(true);
+      setAnswerError(null);
       emit("submitAnswer", { questionId, choiceIndex }, (res) => {
-        if (!res.success) console.error(res.error);
+        if (!res.success) {
+          setAnswerError(res.error || "回答の送信に失敗しました");
+        }
       });
     },
     [questionId, emit]
@@ -119,12 +136,19 @@ export function PlayPage() {
       return <WaitingPage />;
     case "answer":
       return (
-        <AnswerPage
-          question={currentQuestion}
-          timeRemaining={timeRemaining}
-          hasAnswered={hasAnswered}
-          onAnswer={handleAnswer}
-        />
+        <>
+          {answerError !== null ? (
+            <div className="fixed top-0 left-0 right-0 px-4 py-2 bg-red-500 text-white text-sm text-center z-[1000]">
+              {answerError}
+            </div>
+          ) : null}
+          <AnswerPage
+            question={currentQuestion}
+            timeRemaining={timeRemaining}
+            hasAnswered={hasAnswered}
+            onAnswer={handleAnswer}
+          />
+        </>
       );
     case "result":
       return <ResultPage result={questionResult} />;

@@ -10,14 +10,24 @@ import { setupQuizSocket } from "./socket/quizHandler.js";
 
 const app = new Hono();
 
-// CORS
+// CORS（環境変数 CORS_ORIGIN で本番ドメインを指定可能）
+const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174,https://localhost:5174,https://localhost:5175,https://localhost:5176")
+  .split(",")
+  .map((s) => s.trim());
+
 app.use(
   "/api/*",
   cors({
-    origin: ["http://localhost:5173"],
+    origin: corsOrigins,
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
+
+// グローバルエラーハンドラ
+app.onError((err, c) => {
+  console.error("Unhandled error:", err);
+  return c.json({ error: "サーバー内部エラーが発生しました" }, 500);
+});
 
 // REST API routes
 app.route("/api/quizzes", quizRoutes);
@@ -36,7 +46,7 @@ const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
 // Attach Socket.io
 const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: corsOrigins,
     methods: ["GET", "POST"],
   },
 });

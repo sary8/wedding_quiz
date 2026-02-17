@@ -13,7 +13,8 @@ type Props = {
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
 const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
-export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: Props) {
+export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer }: Props) {
+  const timeRemaining = Math.max(0, rawTimeRemaining);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   const handleChoiceClick = useCallback((choiceIndex: number) => {
@@ -28,7 +29,7 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
 
   if (hasAnswered) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-dark text-white">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
         <div className="mb-4 text-green-400" aria-label="回答完了">
           <CheckCircle2 size={64} strokeWidth={1.5} />
         </div>
@@ -39,7 +40,7 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
   }
 
   return (
-    <div className="h-screen flex flex-col bg-dark">
+    <div className="h-[100dvh] flex flex-col bg-dark">
       {/* ヘッダー: 問題番号 + タイマー */}
       <header className="flex justify-between items-center px-4 py-3 text-white">
         <span className="text-sm">

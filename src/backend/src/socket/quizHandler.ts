@@ -58,6 +58,19 @@ export function setupQuizSocket(io: QuizIO) {
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
+        if (!data.roomCode || typeof data.roomCode !== "string" || data.roomCode.length !== 6) {
+          callback({ success: false, error: "ルームコードが不正です" });
+          return;
+        }
+        if (!data.nickname || typeof data.nickname !== "string" || !data.nickname.trim()) {
+          callback({ success: false, error: "ニックネームを入力してください" });
+          return;
+        }
+        if (data.nickname.length > 30) {
+          callback({ success: false, error: "ニックネームが長すぎます" });
+          return;
+        }
+
         const result = await quizService.joinRoom(
           data.roomCode,
           data.nickname,
@@ -128,8 +141,12 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        // choiceIndex バリデーション (1-4)
-        if (data.choiceIndex < 1 || data.choiceIndex > 4) {
+        // バリデーション
+        if (!Number.isInteger(data.questionId) || data.questionId <= 0) {
+          callback({ success: false, error: "不正な問題IDです" });
+          return;
+        }
+        if (!Number.isInteger(data.choiceIndex) || data.choiceIndex < 1 || data.choiceIndex > 4) {
           callback({ success: false, error: "不正な選択肢です" });
           return;
         }
@@ -310,14 +327,22 @@ export function setupQuizSocket(io: QuizIO) {
 
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
-      socket.join(data.roomCode);
-      socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
+      try {
+        if (!data.roomCode || typeof data.roomCode !== "string") {
+          callback({ success: false, error: "ルームコードが不正です" });
+          return;
+        }
+        socket.join(data.roomCode);
+        socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
 
-      // 接続時点の参加者リストを即時送信
-      const participants = await quizService.getLobbyParticipants(data.roomCode);
-      socket.emit("lobbyUpdate", { participants });
+        const participants = await quizService.getLobbyParticipants(data.roomCode);
+        socket.emit("lobbyUpdate", { participants });
 
-      callback({ success: true });
+        callback({ success: true });
+      } catch (e) {
+        console.error("watchRoom error:", e);
+        callback({ success: false, error: "ルームの監視に失敗しました" });
+      }
     });
 
     // === 切断処理 ===

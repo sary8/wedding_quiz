@@ -32,6 +32,7 @@ export function HostPage() {
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -63,60 +64,76 @@ export function HostPage() {
     return () => unsubs.forEach((u) => u());
   }, [on]);
 
-  // ルーム開設
+  // ルーム開設（初回接続 + 再接続時に再実行してルームに再join）
   useEffect(() => {
     if (!isConnected || !roomCode) return;
     emit("openRoom", { quizId, hostSecret }, (res) => {
       if (!res.success) setError(res.error || "ルームの開設に失敗しました");
     });
-  }, [isConnected, roomCode, quizId, hostSecret, emit]);
+
+    // 再接続時にロビー参加者を再取得
+    const unsub = on("lobbyUpdate", (data) => setParticipants(data.participants));
+    emit("watchRoom", { roomCode }, () => {});
+    return unsub;
+  }, [isConnected, roomCode, quizId, hostSecret, emit, on]);
 
   // ゲーム開始 → 成功後に即 nextQuestion で最初の問題を配信
   const handleStartGame = useCallback(() => {
-    if (!roomCode) return;
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
     setError(null);
     emit("startGame", { roomCode, hostSecret }, (res) => {
       if (!res.success) {
         setError(res.error || "ゲームの開始に失敗しました");
+        setIsProcessing(false);
         return;
       }
       // 開始成功 → 最初の問題を自動配信
       emit("nextQuestion", { roomCode, hostSecret }, (nextRes) => {
+        setIsProcessing(false);
         if (!nextRes.success) {
           setError(nextRes.error || "最初の問題の配信に失敗しました");
         }
       });
     });
-  }, [roomCode, hostSecret, emit]);
+  }, [roomCode, hostSecret, emit, isProcessing]);
 
   const handleNextQuestion = useCallback(() => {
-    if (!roomCode) return;
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
     setError(null);
     emit("nextQuestion", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
       if (!res.success) setError(res.error || "問題の配信に失敗しました");
     });
-  }, [roomCode, hostSecret, emit]);
+  }, [roomCode, hostSecret, emit, isProcessing]);
 
   const handleCloseQuestion = useCallback(() => {
-    if (!roomCode) return;
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
     emit("closeQuestion", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
       if (!res.success) setError(res.error || "問題の締め切りに失敗しました");
     });
-  }, [roomCode, hostSecret, emit]);
+  }, [roomCode, hostSecret, emit, isProcessing]);
 
   const handleShowRanking = useCallback(() => {
-    if (!roomCode) return;
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
     emit("showRanking", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
       if (!res.success) setError(res.error || "ランキングの表示に失敗しました");
     });
-  }, [roomCode, hostSecret, emit]);
+  }, [roomCode, hostSecret, emit, isProcessing]);
 
   const handleEndGame = useCallback(() => {
-    if (!roomCode) return;
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
     emit("endGame", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
       if (!res.success) setError(res.error || "ゲーム終了に失敗しました");
     });
-  }, [roomCode, hostSecret, emit]);
+  }, [roomCode, hostSecret, emit, isProcessing]);
 
   if (!roomCode) return <div>ルームコードが不正です</div>;
 

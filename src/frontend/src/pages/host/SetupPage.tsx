@@ -301,7 +301,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
   async function handleAdd() {
     if (!text.trim() || choices.some((c) => !c.trim())) return;
-    if (isUploading) return;
+    if (isUploading || isAdding) return;
     setIsAdding(true);
     try {
       await addQuestion({
@@ -322,6 +322,8 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
       setCorrectChoice(1);
       handleRemoveImage();
       onUpdate();
+    } catch {
+      alert("問題の追加に失敗しました");
     } finally {
       setIsAdding(false);
     }
@@ -329,8 +331,12 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
   async function handleDelete(questionId: number) {
     if (!confirm("この問題を削除しますか？")) return;
-    await deleteQuestion(questionId, quiz.host_secret);
-    onUpdate();
+    try {
+      await deleteQuestion(questionId, quiz.host_secret);
+      onUpdate();
+    } catch {
+      alert("問題の削除に失敗しました");
+    }
   }
 
   const canAdd = text.trim() && choices.every((c) => c.trim());

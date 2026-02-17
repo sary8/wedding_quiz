@@ -71,10 +71,11 @@ mediaRoutes.post("/selfie", async (c) => {
 
 // メディア配信
 mediaRoutes.get("/:filename", async (c) => {
-  const filename = c.req.param("filename");
+  const rawFilename = c.req.param("filename");
+  const filename = decodeURIComponent(rawFilename);
 
   // パストラバーサル防止
-  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\") || filename !== rawFilename) {
     return c.json({ error: "不正なファイル名です" }, 400);
   }
 
