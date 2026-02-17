@@ -19,3 +19,17 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Claude Code
+.claude/
+
+# Design system (auto-generated)
+design-system/
+
+# Test artifacts
+src/backend/coverage/
+src/frontend/playwright-report/
+src/frontend/test-results/
+
+# Windows garbage
+nul
