@@ -1,14 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4: テーマのカスタマイズはCSSで定義 */
+@theme {
+  --color-primary: #667eea;
+  --color-primary-dark: #764ba2;
+  --color-accent: #e91e63;
+  --color-dark: #1a1a2e;
+  --color-choice-red: #e53935;
+  --color-choice-blue: #1e88e5;
+  --color-choice-green: #43a047;
+  --color-choice-yellow: #f9a825;
+}
 
 @layer base {
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-
   html {
     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
       sans-serif;
@@ -17,20 +21,24 @@
   }
 
   body {
-    @apply min-h-screen bg-gray-50 text-dark;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    color: #1a1a2e;
   }
 
   #root {
-    @apply min-h-screen;
+    min-height: 100vh;
   }
 
   button {
-    @apply cursor-pointer border-none font-sans;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
   }
 
   input,
   textarea {
-    @apply font-sans;
+    font-family: inherit;
   }
 }
 
