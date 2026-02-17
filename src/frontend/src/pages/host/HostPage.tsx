@@ -132,9 +132,13 @@ export function HostPage() {
 
   // エラーバナー
   const errorBanner = error ? (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, padding: "12px 24px", background: "#ef5350", color: "#fff", textAlign: "center", fontSize: 14, zIndex: 1000 }} onClick={() => setError(null)}>
+    <button
+      onClick={() => setError(null)}
+      aria-label="エラーを閉じる"
+      style={{ position: "fixed", top: 0, left: 0, right: 0, padding: "12px 24px", background: "#ef5350", color: "#fff", textAlign: "center", fontSize: 14, zIndex: 1000, width: "100%", border: "none", cursor: "pointer" }}
+    >
       {error}（タップで閉じる）
-    </div>
+    </button>
   ) : null;
 
   switch (phase) {

@@ -64,7 +64,7 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
               gap: 12,
             }}
           >
-            <span style={{ fontSize: 28 }}>{CHOICE_ICONS[i]}</span>
+            <span aria-hidden="true" style={{ fontSize: 28 }}>{CHOICE_ICONS[i]}</span>
             {choice}
           </div>
         ))}

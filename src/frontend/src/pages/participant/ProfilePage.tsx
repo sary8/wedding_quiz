@@ -36,7 +36,8 @@ export function ProfilePage({ onJoin }: Props) {
         type="text"
         value={nickname}
         onChange={(e) => setNickname(e.target.value.slice(0, 20))}
-        placeholder="ニックネーム"
+        placeholder="ニックネーム（例：花子）"
+        aria-label="ニックネーム（20文字以内）"
         maxLength={20}
         style={{
           width: 280,

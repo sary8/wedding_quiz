@@ -28,7 +28,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
       color: "#fff",
       padding: 24,
     }}>
-      <p style={{ fontSize: 24, marginBottom: 8 }}>あなたの最終順位</p>
+      <h2 style={{ fontSize: 24, marginBottom: 8, fontWeight: "normal" }}>あなたの最終順位</h2>
       <p style={{ fontSize: 80, fontWeight: "bold", marginBottom: 24 }}>
         第{myResult.rank}位
       </p>

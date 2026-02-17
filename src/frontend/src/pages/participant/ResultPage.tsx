@@ -28,7 +28,7 @@ export function ResultPage({ result }: Props) {
       color: "#fff",
       padding: 24,
     }}>
-      <div style={{ fontSize: 64, marginBottom: 16 }}>
+      <div aria-hidden="true" style={{ fontSize: 64, marginBottom: 16 }}>
         {isCorrect ? "⭕" : "❌"}
       </div>
       <p style={{ fontSize: 32, fontWeight: "bold", marginBottom: 24 }}>

@@ -31,7 +31,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
             <div key={i} style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span style={{ fontSize: 16, fontWeight: isCorrect ? "bold" : "normal" }}>
-                  {choiceText} {isCorrect && "✓ 正解"}
+                  {choiceText} {isCorrect && <><span aria-hidden="true">✓</span> 正解</>}
                 </span>
                 <span>{count}人 ({percentage}%)</span>
               </div>

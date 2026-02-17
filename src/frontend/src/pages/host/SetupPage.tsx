@@ -102,7 +102,8 @@ export function SetupPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="例：太郎＆花子 結婚式クイズ"
+              placeholder="例：太郎＆花子 結婚式クイズ…"
+              aria-label="クイズのタイトル"
               style={{
                 flex: 1,
                 padding: "12px 16px",
@@ -145,20 +146,24 @@ export function SetupPage() {
                 const isSelected = selectedQuiz?.id === q.id;
                 const hasKey = !!getHostSecret(q.id);
                 return (
-                  <div
+                  <button
                     key={q.id}
-                    onClick={() => hasKey && handleSelectQuiz(q)}
+                    onClick={() => handleSelectQuiz(q)}
+                    disabled={!hasKey}
+                    aria-pressed={isSelected}
                     style={{
                       padding: "14px 16px",
                       borderRadius: 8,
                       border: isSelected ? "2px solid #e91e63" : "2px solid transparent",
                       background: isSelected ? "#fce4ec" : "#fafafa",
-                      cursor: hasKey ? "pointer" : "not-allowed",
                       opacity: hasKey ? 1 : 0.5,
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      transition: "all 0.15s",
+                      transition: "border-color 0.15s, background 0.15s",
+                      width: "100%",
+                      textAlign: "left",
+                      cursor: hasKey ? "pointer" : "not-allowed",
                     }}
                   >
                     <div>
@@ -172,7 +177,7 @@ export function SetupPage() {
                         選択中
                       </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -381,12 +386,13 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
         {/* 問題文 */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", fontSize: 13, color: "#666", marginBottom: 4, fontWeight: 600 }}>問題文</label>
+          <label htmlFor="question-text" style={{ display: "block", fontSize: 13, color: "#666", marginBottom: 4, fontWeight: 600 }}>問題文</label>
           <input
+            id="question-text"
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="例：新郎の出身地はどこ？"
+            placeholder="例：新郎の出身地はどこ？…"
             style={{
               width: "100%",
               padding: "10px 14px",
@@ -410,7 +416,6 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             {choices.map((c, i) => (
               <div
                 key={i}
-                onClick={() => setCorrectChoice(i + 1)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -419,11 +424,14 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                   borderRadius: 8,
                   border: `2px solid ${correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0"}`,
                   background: correctChoice === i + 1 ? `${choiceColors[i]}15` : "#fff",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
+                  transition: "border-color 0.15s, background 0.15s",
                 }}
               >
-                <div
+                <button
+                  type="button"
+                  onClick={() => setCorrectChoice(i + 1)}
+                  aria-label={`選択肢${choiceLabels[i]}を正解に設定`}
+                  aria-pressed={correctChoice === i + 1}
                   style={{
                     width: 28,
                     height: 28,
@@ -436,10 +444,12 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     fontSize: 13,
                     fontWeight: 700,
                     flexShrink: 0,
+                    border: "none",
+                    cursor: "pointer",
                   }}
                 >
                   {choiceLabels[i]}
-                </div>
+                </button>
                 <input
                   type="text"
                   value={c}
@@ -448,8 +458,8 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     next[i] = e.target.value;
                     setChoices(next);
                   }}
-                  placeholder={`選択肢${choiceLabels[i]}`}
-                  onClick={(e) => e.stopPropagation()}
+                  placeholder={`選択肢${choiceLabels[i]}…`}
+                  aria-label={`選択肢${choiceLabels[i]}のテキスト`}
                   style={{
                     flex: 1,
                     padding: "6px 8px",
@@ -460,7 +470,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                   }}
                 />
                 {correctChoice === i + 1 && (
-                  <span style={{ fontSize: 12, color: choiceColors[i], fontWeight: 700, flexShrink: 0 }}>正解</span>
+                  <span aria-hidden="true" style={{ fontSize: 12, color: choiceColors[i], fontWeight: 700, flexShrink: 0 }}>正解</span>
                 )}
               </div>
             ))}
