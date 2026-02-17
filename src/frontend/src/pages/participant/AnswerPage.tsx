@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
@@ -17,12 +17,15 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
   const timeRemaining = Math.max(0, rawTimeRemaining);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
-  // hasAnsweredがfalseに戻ったら選択状態をリセット（送信失敗時の再選択対応）
-  useEffect(() => {
+  // hasAnsweredがfalseに戻ったらレンダー中にリセット（送信失敗時の再選択対応）
+  // React推奨: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevHasAnswered, setPrevHasAnswered] = useState(hasAnswered);
+  if (prevHasAnswered !== hasAnswered) {
+    setPrevHasAnswered(hasAnswered);
     if (!hasAnswered) {
       setSelectedChoice(null);
     }
-  }, [hasAnswered]);
+  }
 
   const handleChoiceClick = useCallback((choiceIndex: number) => {
     setSelectedChoice((prev) => {
