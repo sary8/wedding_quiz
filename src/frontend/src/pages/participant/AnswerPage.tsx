@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { QuestionData } from "../../types";
-import { ChoiceButton } from "../../components/quiz";
+import { ChoiceButton } from "../../components/quiz/ChoiceButton";
 
 type Props = {
   question: QuestionData | null;
@@ -54,13 +54,13 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
 
       {/* 問題文 */}
       <div className="px-4 py-2 text-white text-center">
-        {question.mediaUrl && question.mediaType === "image" && (
+        {question.mediaUrl !== null && question.mediaType === "image" ? (
           <img
             src={question.mediaUrl}
             alt={question.mediaAltText || "問題の画像"}
             className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-contain mx-auto"
           />
-        )}
+        ) : null}
         <p className="text-lg font-bold">{question.text}</p>
       </div>
 

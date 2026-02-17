@@ -1,6 +1,7 @@
 import type { ParticipantInfo } from "../../types";
-import { Button } from "../../components/ui";
-import { ParticipantChip, QRCodeDisplay } from "../../components/quiz";
+import { Button } from "../../components/ui/Button";
+import { ParticipantChip } from "../../components/quiz/ParticipantChip";
+import { QRCodeDisplay } from "../../components/quiz/QRCodeDisplay";
 
 type Props = {
   roomCode: string;

@@ -92,15 +92,17 @@ export function PlayPage() {
     [roomCode, emit]
   );
 
+  // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
+  const questionId = currentQuestion?.questionId;
   const handleAnswer = useCallback(
     (choiceIndex: number) => {
-      if (!currentQuestion) return;
+      if (!questionId) return;
       setHasAnswered(true);
-      emit("submitAnswer", { questionId: currentQuestion.questionId, choiceIndex }, (res) => {
+      emit("submitAnswer", { questionId, choiceIndex }, (res) => {
         if (!res.success) console.error(res.error);
       });
     },
-    [currentQuestion, emit]
+    [questionId, emit]
   );
 
   if (!roomCode) return <div>ルームコードが不正です</div>;

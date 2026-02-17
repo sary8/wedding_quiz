@@ -38,12 +38,12 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
 
       {/* 問題文 */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        {question.mediaUrl && question.mediaType === "image" && (
-          <img src={question.mediaUrl} alt="" style={{ maxWidth: "60%", maxHeight: "40vh", borderRadius: 12, marginBottom: 24, objectFit: "contain" }} />
-        )}
-        {question.mediaUrl && question.mediaType === "video" && (
+        {question.mediaUrl !== null && question.mediaType === "image" ? (
+          <img src={question.mediaUrl} alt={question.mediaAltText || "問題の画像"} style={{ maxWidth: "60%", maxHeight: "40vh", borderRadius: 12, marginBottom: 24, objectFit: "contain" }} />
+        ) : null}
+        {question.mediaUrl !== null && question.mediaType === "video" ? (
           <video src={question.mediaUrl} autoPlay muted style={{ maxWidth: "60%", maxHeight: "40vh", borderRadius: 12, marginBottom: 24 }} />
-        )}
+        ) : null}
         <h2 style={{ fontSize: 36, color: "#fff", textAlign: "center" }}>{question.text}</h2>
       </div>
 
