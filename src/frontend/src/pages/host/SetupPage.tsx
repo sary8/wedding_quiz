@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia } from "../../services/api";
+import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia, updateQuestion, updateQuiz, reorderQuestions } from "../../services/api";
 import type { Quiz, QuizSummary, Question } from "../../types";
 
 // host_secretをlocalStorageに保存/取得
@@ -77,6 +77,29 @@ export function SetupPage() {
       setSelectedQuiz(updated);
     }
   }, [selectedQuiz]);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+
+  function handleStartEditTitle() {
+    if (!selectedQuiz) return;
+    setEditTitle(selectedQuiz.title);
+    setIsEditingTitle(true);
+  }
+
+  async function handleSaveTitle() {
+    if (!selectedQuiz || !editTitle.trim()) return;
+    const key = getHostSecret(selectedQuiz.id);
+    if (!key) return;
+    try {
+      await updateQuiz(selectedQuiz.id, key, editTitle.trim());
+      setIsEditingTitle(false);
+      await loadQuizzes();
+      await handleQuestionUpdate();
+    } catch {
+      setError("タイトルの更新に失敗しました");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -177,9 +200,36 @@ export function SetupPage() {
         {selectedQuiz && (
           <section className="bg-white rounded-xl p-6 mb-6 shadow-sm">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-semibold m-0 text-gray-800">
-                「{selectedQuiz.title}」の問題（{selectedQuiz.questions?.length ?? 0}問）
-              </h2>
+              {isEditingTitle ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSaveTitle();
+                      if (e.key === "Escape") setIsEditingTitle(false);
+                    }}
+                    onBlur={handleSaveTitle}
+                    autoFocus
+                    className="flex-1 px-3 py-1.5 rounded-lg border-2 border-accent text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                  />
+                </div>
+              ) : (
+                <h2 className="text-lg font-semibold m-0 text-gray-800 flex items-center gap-2">
+                  「{selectedQuiz.title}」の問題（{selectedQuiz.questions?.length ?? 0}問）
+                  <button
+                    type="button"
+                    onClick={handleStartEditTitle}
+                    aria-label="クイズタイトルを編集"
+                    className="p-1.5 rounded hover:bg-gray-100 transition-colors duration-150 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M11.13 1.47a1.5 1.5 0 0 1 2.12 0l1.28 1.28a1.5 1.5 0 0 1 0 2.12L5.91 13.49a1.5 1.5 0 0 1-.7.4l-3.25.93a.5.5 0 0 1-.62-.62l.93-3.25a1.5 1.5 0 0 1 .4-.7L11.13 1.47z" />
+                    </svg>
+                  </button>
+                </h2>
+              )}
             </div>
             <QuestionEditor
               quiz={selectedQuiz}
@@ -257,6 +307,8 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const previewObjectUrlRef = useRef<string | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // コンポーネントアンマウント時に ObjectURL を解放
   useEffect(() => {
@@ -305,6 +357,71 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
     setFileInputKey((k) => k + 1);
   }
 
+  function resetForm() {
+    setText("");
+    setChoices(["", "", "", ""]);
+    setCorrectChoice(1);
+    setTimeLimit(20);
+    handleRemoveImage();
+    setEditingQuestion(null);
+  }
+
+  function handleStartEdit(q: Question) {
+    setText(q.text);
+    setChoices([q.choice1, q.choice2, q.choice3, q.choice4]);
+    setCorrectChoice(q.correct_choice);
+    setTimeLimit(q.time_limit_seconds);
+    if (q.media_url) {
+      setPreviewUrl(q.media_url);
+      setMediaUrl(q.media_url);
+    } else {
+      handleRemoveImage();
+    }
+    setEditingQuestion(q);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleSave() {
+    if (!editingQuestion) return;
+    if (!text.trim() || choices.some((c) => !c.trim())) return;
+    if (isUploading || isAdding) return;
+    setIsAdding(true);
+    try {
+      await updateQuestion(editingQuestion.id, {
+        key: quiz.host_secret,
+        text: text.trim(),
+        choice1: choices[0].trim(),
+        choice2: choices[1].trim(),
+        choice3: choices[2].trim(),
+        choice4: choices[3].trim(),
+        correctChoice,
+        timeLimitSeconds: timeLimit,
+        mediaType: mediaUrl ? "image" : "none",
+        mediaUrl: mediaUrl,
+      });
+      resetForm();
+      onUpdate();
+    } catch {
+      setAddError("問題の更新に失敗しました");
+    } finally {
+      setIsAdding(false);
+    }
+  }
+
+  async function handleReorder(questionIndex: number, direction: "up" | "down") {
+    const questions = quiz.questions;
+    if (!questions) return;
+    const targetIndex = direction === "up" ? questionIndex - 1 : questionIndex + 1;
+    if (targetIndex < 0 || targetIndex >= questions.length) return;
+    const ids = questions.map((q) => q.id);
+    [ids[questionIndex], ids[targetIndex]] = [ids[targetIndex], ids[questionIndex]];
+    try {
+      await reorderQuestions(quiz.id, quiz.host_secret, ids);
+      onUpdate();
+    } catch {
+      setAddError("問題の並べ替えに失敗しました");
+    }
+  }
 
   async function handleAdd() {
     if (!text.trim() || choices.some((c) => !c.trim())) return;
@@ -324,10 +441,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
         mediaType: mediaUrl ? "image" : undefined,
         mediaUrl: mediaUrl ?? undefined,
       });
-      setText("");
-      setChoices(["", "", "", ""]);
-      setCorrectChoice(1);
-      handleRemoveImage();
+      resetForm();
       onUpdate();
     } catch {
       setAddError("問題の追加に失敗しました");
@@ -398,41 +512,87 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     制限時間: {q.time_limit_seconds}秒 ・ 配点: {q.points}点
                   </div>
                 </div>
-                {pendingDeleteId === q.id ? (
-                  <div className="flex gap-1.5 ml-3 shrink-0">
+                <div className="flex flex-col gap-1.5 ml-3 shrink-0">
+                  {/* 並べ替えボタン */}
+                  <div className="flex gap-1">
                     <button
                       type="button"
-                      onClick={() => handleDelete(q.id)}
-                      className="px-3 py-1.5 rounded text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px]"
+                      onClick={() => handleReorder(i, "up")}
+                      disabled={i === 0}
+                      aria-label="上へ移動"
+                      className={[
+                        "px-2 py-1 rounded text-sm transition-colors duration-150 min-h-[32px]",
+                        i === 0 ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:bg-gray-100 cursor-pointer",
+                      ].join(" ")}
                     >
-                      確認
+                      ↑
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPendingDeleteId(null)}
-                      className="px-3 py-1.5 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px]"
+                      onClick={() => handleReorder(i, "down")}
+                      disabled={i === (quiz.questions?.length ?? 0) - 1}
+                      aria-label="下へ移動"
+                      className={[
+                        "px-2 py-1 rounded text-sm transition-colors duration-150 min-h-[32px]",
+                        i === (quiz.questions?.length ?? 0) - 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:bg-gray-100 cursor-pointer",
+                      ].join(" ")}
                     >
-                      戻る
+                      ↓
                     </button>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPendingDeleteId(q.id)}
-                    className="px-3.5 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer ml-3 whitespace-nowrap min-h-[44px]"
-                  >
-                    削除
-                  </button>
-                )}
+                  {/* 編集・削除ボタン */}
+                  {pendingDeleteId === q.id ? (
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(q.id)}
+                        className="px-3 py-1.5 rounded text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px]"
+                      >
+                        確認
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDeleteId(null)}
+                        className="px-3 py-1.5 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px]"
+                      >
+                        戻る
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(q)}
+                        className="px-3 py-1.5 rounded text-sm text-blue-600 border border-blue-600 hover:bg-blue-50 transition-colors duration-150 cursor-pointer whitespace-nowrap min-h-[44px]"
+                      >
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDeleteId(q.id)}
+                        className="px-3 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer whitespace-nowrap min-h-[44px]"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 新規問題フォーム */}
-      <div className="p-5 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300">
-        <h3 className="text-base font-semibold mb-4 text-gray-600">+ 新しい問題を追加</h3>
+      {/* 新規問題フォーム / 編集フォーム */}
+      <div ref={formRef} className={[
+        "p-5 rounded-lg border-2",
+        editingQuestion ? "bg-blue-50/50 border-blue-300" : "bg-gray-50 border-dashed border-gray-300",
+      ].join(" ")}>
+        <h3 className="text-base font-semibold mb-4 text-gray-600">
+          {editingQuestion
+            ? `問題を編集中（Q${(quiz.questions?.findIndex((q) => q.id === editingQuestion.id) ?? 0) + 1}）`
+            : "+ 新しい問題を追加"}
+        </h3>
 
         {addError !== null ? (
           <button
@@ -595,20 +755,35 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
           </div>
         </div>
 
-        {/* 追加ボタン */}
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!canAdd || isAdding || isUploading}
-          className={[
-            "w-full py-3.5 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
-            canAdd && !isAdding && !isUploading
-              ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
-              : "bg-gray-300 cursor-not-allowed",
-          ].join(" ")}
-        >
-          {isAdding ? "追加中…" : isUploading ? "アップロード中…" : "この問題を追加"}
-        </button>
+        {/* 追加/保存ボタン */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={editingQuestion ? handleSave : handleAdd}
+            disabled={!canAdd || isAdding || isUploading}
+            className={[
+              "flex-1 py-3.5 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
+              canAdd && !isAdding && !isUploading
+                ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
+                : "bg-gray-300 cursor-not-allowed",
+            ].join(" ")}
+          >
+            {isAdding
+              ? (editingQuestion ? "保存中…" : "追加中…")
+              : isUploading
+                ? "アップロード中…"
+                : (editingQuestion ? "変更を保存" : "この問題を追加")}
+          </button>
+          {editingQuestion && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-6 py-3.5 rounded-lg text-base font-bold text-gray-600 border-2 border-gray-300 hover:bg-gray-100 transition-colors duration-150 min-h-[44px]"
+            >
+              キャンセル
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

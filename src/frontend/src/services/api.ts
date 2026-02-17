@@ -54,10 +54,36 @@ export function addQuestion(data: {
   });
 }
 
-export function updateQuestion(id: number, data: Record<string, unknown>) {
+export function updateQuiz(id: number, key: string, title: string) {
+  return request<Quiz>(`/quizzes/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ key, title }),
+  });
+}
+
+export function updateQuestion(id: number, data: {
+  key: string;
+  text?: string;
+  choice1?: string;
+  choice2?: string;
+  choice3?: string;
+  choice4?: string;
+  correctChoice?: number;
+  timeLimitSeconds?: number;
+  points?: number;
+  mediaType?: string;
+  mediaUrl?: string | null;
+}) {
   return request<Question>(`/questions/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+
+export function reorderQuestions(quizId: number, key: string, questionIds: number[]) {
+  return request<{ success: boolean }>("/questions/reorder", {
+    method: "PUT",
+    body: JSON.stringify({ quizId, key, questionIds }),
   });
 }
 
