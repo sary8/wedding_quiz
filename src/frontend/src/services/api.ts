@@ -72,3 +72,14 @@ export function uploadSelfie(base64Data: string) {
     body: JSON.stringify({ data: base64Data }),
   });
 }
+
+export async function uploadMedia(file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/media/upload`, { method: "POST", body: formData });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<{ url: string }>;
+}

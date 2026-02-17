@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion } from "../../services/api";
+import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia } from "../../services/api";
 import type { Quiz, QuizSummary, Question } from "../../types";
 
 // host_secretをlocalStorageに保存/取得
@@ -242,12 +242,66 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
   const [correctChoice, setCorrectChoice] = useState(1);
   const [timeLimit, setTimeLimit] = useState(20);
   const [isAdding, setIsAdding] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const previewObjectUrlRef = useRef<string | null>(null);
+
+  // コンポーネントアンマウント時に ObjectURL を解放
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current);
+      }
+    };
+  }, []);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 旧プレビューを解放
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    previewObjectUrlRef.current = objectUrl;
+    setPreviewUrl(objectUrl);
+    setMediaUrl(null);
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const result = await uploadMedia(file);
+      setMediaUrl(result.url);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "アップロードに失敗しました");
+      setMediaUrl(null);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function handleRemoveImage() {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = null;
+    }
+    setPreviewUrl(null);
+    setMediaUrl(null);
+    setUploadError(null);
+    setIsUploading(false);
+    setFileInputKey((k) => k + 1);
+  }
 
   const choiceColors = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
   const choiceLabels = ["A", "B", "C", "D"];
 
   async function handleAdd() {
     if (!text.trim() || choices.some((c) => !c.trim())) return;
+    if (isUploading) return;
     setIsAdding(true);
     try {
       await addQuestion({
@@ -260,10 +314,13 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
         choice4: choices[3].trim(),
         correctChoice,
         timeLimitSeconds: timeLimit,
+        mediaType: mediaUrl ? "image" : undefined,
+        mediaUrl: mediaUrl ?? undefined,
       });
       setText("");
       setChoices(["", "", "", ""]);
       setCorrectChoice(1);
+      handleRemoveImage();
       onUpdate();
     } finally {
       setIsAdding(false);
@@ -290,8 +347,19 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <div className="font-semibold text-base text-gray-800 mb-2">
-                    Q{i + 1}. {q.text}
+                  <div className="flex items-start gap-3 mb-2">
+                    {q.media_url && q.media_type === "image" && (
+                      <img
+                        src={q.media_url}
+                        alt=""
+                        width={64}
+                        height={48}
+                        className="w-16 h-12 object-cover rounded shrink-0"
+                      />
+                    )}
+                    <div className="font-semibold text-base text-gray-800">
+                      Q{i + 1}. {q.text}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
@@ -341,6 +409,71 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             placeholder="例：新郎の出身地はどこ？…"
             className="w-full px-3.5 py-2.5 rounded-lg border-2 border-gray-200 text-base focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 transition-[border-color,box-shadow] duration-200"
           />
+        </div>
+
+        {/* 画像アップロード */}
+        <div className="mb-4">
+          <span className="block text-sm text-gray-600 mb-2 font-semibold">問題画像（任意）</span>
+          <input
+            key={fileInputKey}
+            type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp"
+            className="sr-only"
+            id="question-image-input"
+            onChange={handleFileSelect}
+          />
+          {!previewUrl ? (
+            <label
+              htmlFor="question-image-input"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-sm text-gray-500 cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150"
+            >
+              画像を選択
+            </label>
+          ) : (
+            <div className="flex items-start gap-3">
+              <div className="relative inline-block">
+                <img
+                  src={previewUrl}
+                  alt="プレビュー"
+                  width={120}
+                  height={80}
+                  className="w-30 h-20 object-cover rounded-lg border border-gray-200"
+                />
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
+                    <span className="text-white text-xs font-semibold">アップロード中...</span>
+                  </div>
+                )}
+                {!isUploading && mediaUrl && (
+                  <div className="absolute top-1 right-1 bg-green-500 rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">✓</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="px-3 py-1 rounded text-sm text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[32px]"
+                >
+                  削除
+                </button>
+                {!isUploading && !uploadError && (
+                  <label
+                    htmlFor="question-image-input"
+                    className="px-3 py-1 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 cursor-pointer text-center"
+                  >
+                    変更
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+          {uploadError && (
+            <p role="alert" className="mt-1.5 text-sm text-red-600">
+              {uploadError}
+            </p>
+          )}
         </div>
 
         {/* 選択肢 */}
@@ -415,15 +548,15 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
         <button
           type="button"
           onClick={handleAdd}
-          disabled={!canAdd || isAdding}
+          disabled={!canAdd || isAdding || isUploading}
           className={[
             "w-full py-3.5 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
-            canAdd && !isAdding
+            canAdd && !isAdding && !isUploading
               ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
               : "bg-gray-300 cursor-not-allowed",
           ].join(" ")}
         >
-          {isAdding ? "追加中..." : "この問題を追加"}
+          {isAdding ? "追加中..." : isUploading ? "アップロード中..." : "この問題を追加"}
         </button>
       </div>
     </div>
