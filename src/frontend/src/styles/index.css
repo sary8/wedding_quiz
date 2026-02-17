@@ -35,16 +35,20 @@
     font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* 300msタップ遅延を除去（クイズ回答速度に直結） */
+    touch-action: manipulation;
+    /* プルトゥリフレッシュによる誤リロードを防止 */
+    overscroll-behavior: contain;
   }
 
   body {
-    min-height: 100vh;
+    min-height: 100dvh;
     background-color: #FDF2F8;
     color: #831843;
   }
 
   #root {
-    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   button {
@@ -56,6 +60,22 @@
   input,
   textarea {
     font-family: inherit;
+  }
+}
+
+/* メダル背景グラデーション（FinalPage用） */
+@layer components {
+  .bg-medal-gold {
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: #1a1a2e;
+  }
+  .bg-medal-silver {
+    background: linear-gradient(135deg, #c0c0c0, #e0e0e0);
+    color: #1a1a2e;
+  }
+  .bg-medal-bronze {
+    background: linear-gradient(135deg, #cd7f32, #d4a574);
+    color: #fff;
   }
 }
 

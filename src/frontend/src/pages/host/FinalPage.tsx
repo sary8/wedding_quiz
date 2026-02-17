@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { FinalResultData, FinalRankingEntry } from "../../types";
 
@@ -16,17 +16,19 @@ function getScrollDelay(rank: number): number {
   return 1000;
 }
 
-const MEDAL_COLORS: Record<number, { bg: string; text: string }> = {
-  1: { bg: "linear-gradient(135deg, #ffd700, #ffb300)", text: "#1a1a2e" },
-  2: { bg: "linear-gradient(135deg, #c0c0c0, #e0e0e0)", text: "#1a1a2e" },
-  3: { bg: "linear-gradient(135deg, #cd7f32, #d4a574)", text: "#fff" },
+const MEDAL_CLASSES: Record<number, string> = {
+  1: "bg-medal-gold",
+  2: "bg-medal-silver",
+  3: "bg-medal-bronze",
 };
 
 export function FinalPage({ data }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const { rankings, reversed, top3 } = useMemo(() => {
     const r = data?.rankings ?? [];
@@ -73,24 +75,30 @@ export function FinalPage({ data }: Props) {
     };
   }, [reversed]);
 
-  // Top3演出
+  // Top3演出（一時停止対応）
+  const isPausedRef = useRef(isPaused);
+  useEffect(() => { isPausedRef.current = isPaused; });
+
   useEffect(() => {
     if (phase !== "top3") return;
 
+    let cancelled = false;
     let i = 0;
 
-    const timer = setInterval(() => {
-      if (i >= top3.length) {
-        clearInterval(timer);
-        setPhase("done");
+    function showNext() {
+      if (cancelled || i >= top3.length) {
+        if (!cancelled && i >= top3.length) setPhase("done");
+        return;
+      }
+      // 一時停止中はリトライ
+      if (isPausedRef.current) {
+        setTimeout(showNext, 200);
         return;
       }
 
       const entry = top3[i];
       setSpotlightEntry(entry);
 
-      // エフェクト（prefers-reduced-motion を考慮）
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!prefersReducedMotion) {
         if (entry.rank === 3) {
           confetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
@@ -104,16 +112,21 @@ export function FinalPage({ data }: Props) {
       }
 
       i++;
-    }, 4000);
+      setTimeout(showNext, 4000);
+    }
 
-    return () => clearInterval(timer);
-  }, [phase, top3]);
+    showNext();
+
+    return () => { cancelled = true; };
+  }, [phase, top3, prefersReducedMotion]);
+
+  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
   if (!data || rankings.length === 0) return null;
 
   // Top3 スポットライト表示
   if ((phase === "top3" || phase === "done") && spotlightEntry) {
-    const medal = MEDAL_COLORS[spotlightEntry.rank];
+    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-dark text-white";
     const accuracyPercent = spotlightEntry.totalQuestions > 0
       ? Math.round((spotlightEntry.correctCount / spotlightEntry.totalQuestions) * 100)
       : 0;
@@ -122,17 +135,25 @@ export function FinalPage({ data }: Props) {
       <AnimatePresence mode="wait">
         <motion.div
           key={spotlightEntry.participantId}
-          initial={{ opacity: 0, scale: 0.5 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          transition={{ duration: 0.8, type: "spring" }}
-          className="h-[100dvh] flex flex-col items-center justify-center"
-          style={{ background: medal?.bg || "#1a1a2e", color: medal?.text || "#fff" }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, type: "spring" }}
+          className={`h-[100dvh] flex flex-col items-center justify-center relative ${medalClass}`}
         >
+          {/* 一時停止ボタン */}
+          <button
+            type="button"
+            onClick={togglePause}
+            className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200"
+          >
+            {isPaused ? "再開" : "一時停止"}
+          </button>
+
           <motion.div
-            initial={{ y: -50 }}
+            initial={prefersReducedMotion ? false : { y: -50 }}
             animate={{ y: 0 }}
-            className="text-8xl font-bold mb-4"
+            className="text-5xl md:text-8xl font-bold mb-4"
           >
             第{spotlightEntry.rank}位
           </motion.div>
@@ -140,7 +161,7 @@ export function FinalPage({ data }: Props) {
           {spotlightEntry.selfieUrl ? (
             <img
               src={spotlightEntry.selfieUrl}
-              alt=""
+              alt={`${spotlightEntry.nickname}のアバター`}
               width={192}
               height={192}
               className="w-48 h-48 rounded-full object-cover mb-6 border-[6px] border-white/50"
@@ -154,14 +175,14 @@ export function FinalPage({ data }: Props) {
           )}
 
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.5 }}
             className="text-center"
           >
-            <div className="text-5xl font-bold mb-2">{spotlightEntry.nickname}</div>
-            <div className="text-4xl mb-6">{spotlightEntry.totalScore.toLocaleString()}点</div>
-            <div className="text-lg opacity-80">
+            <div className="text-3xl md:text-5xl font-bold mb-2">{spotlightEntry.nickname}</div>
+            <div className="text-2xl md:text-4xl mb-6">{spotlightEntry.totalScore.toLocaleString()}点</div>
+            <div className="text-base md:text-lg opacity-80">
               正答率: {accuracyPercent}% / 平均回答速度: {(spotlightEntry.averageResponseTimeMs / 1000).toFixed(2)}秒
             </div>
           </motion.div>
@@ -181,7 +202,7 @@ export function FinalPage({ data }: Props) {
         {reversed.slice(0, visibleIndex + 1).map((entry) => (
           <motion.div
             key={entry.participantId}
-            initial={{ opacity: 0, y: 50 }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             className={[
               "flex items-center gap-4 px-6 py-2 mb-1",
@@ -192,10 +213,11 @@ export function FinalPage({ data }: Props) {
             {entry.selfieUrl ? (
               <img
                 src={entry.selfieUrl}
-                alt=""
+                alt={`${entry.nickname}のアバター`}
                 width={36}
                 height={36}
                 className="w-9 h-9 rounded-full object-cover shrink-0"
+                loading="lazy"
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">

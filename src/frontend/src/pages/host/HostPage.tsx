@@ -16,6 +16,8 @@ import { FinalPage } from "./FinalPage";
 
 type HostPhase = "lobby" | "question" | "results" | "ranking" | "final";
 
+const NOOP = () => {}; // stable reference
+
 export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const [searchParams] = useSearchParams();
@@ -47,7 +49,7 @@ export function HostPage() {
       }),
       on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
-      on("questionClosed", () => {}),
+      on("questionClosed", NOOP),
       on("questionResult", (data) => {
         setQuestionResult(data);
         setPhase("results");

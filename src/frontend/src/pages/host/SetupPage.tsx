@@ -330,19 +330,22 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
       handleRemoveImage();
       onUpdate();
     } catch {
-      alert("問題の追加に失敗しました");
+      setAddError("問題の追加に失敗しました");
     } finally {
       setIsAdding(false);
     }
   }
 
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+
   async function handleDelete(questionId: number) {
-    if (!confirm("この問題を削除しますか？")) return;
+    setPendingDeleteId(null);
     try {
       await deleteQuestion(questionId, quiz.host_secret);
       onUpdate();
     } catch {
-      alert("問題の削除に失敗しました");
+      setAddError("問題の削除に失敗しました");
     }
   }
 
@@ -364,9 +367,10 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     {q.media_url && q.media_type === "image" && (
                       <img
                         src={q.media_url}
-                        alt=""
+                        alt="問題画像"
                         width={64}
                         height={48}
+                        loading="lazy"
                         className="w-16 h-12 object-cover rounded shrink-0"
                       />
                     )}
@@ -394,13 +398,32 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     制限時間: {q.time_limit_seconds}秒 ・ 配点: {q.points}点
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(q.id)}
-                  className="px-3.5 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer ml-3 whitespace-nowrap min-h-[44px]"
-                >
-                  削除
-                </button>
+                {pendingDeleteId === q.id ? (
+                  <div className="flex gap-1.5 ml-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(q.id)}
+                      className="px-3 py-1.5 rounded text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px]"
+                    >
+                      確認
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(null)}
+                      className="px-3 py-1.5 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px]"
+                    >
+                      戻る
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteId(q.id)}
+                    className="px-3.5 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer ml-3 whitespace-nowrap min-h-[44px]"
+                  >
+                    削除
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -410,6 +433,16 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
       {/* 新規問題フォーム */}
       <div className="p-5 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300">
         <h3 className="text-base font-semibold mb-4 text-gray-600">+ 新しい問題を追加</h3>
+
+        {addError !== null ? (
+          <button
+            type="button"
+            onClick={() => setAddError(null)}
+            className="w-full mb-4 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150"
+          >
+            {addError}（タップで閉じる）
+          </button>
+        ) : null}
 
         {/* 問題文 */}
         <div className="mb-4">
@@ -550,7 +583,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                 type="button"
                 onClick={() => setTimeLimit(t)}
                 className={[
-                  "px-3.5 py-1.5 rounded-full text-sm border transition-colors duration-150 min-h-[36px]",
+                  "px-3.5 py-2 rounded-full text-sm border transition-colors duration-150 min-h-[44px]",
                   timeLimit === t
                     ? "bg-accent text-white border-accent"
                     : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",

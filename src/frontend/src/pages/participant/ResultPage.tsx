@@ -9,7 +9,7 @@ export function ResultPage({ result }: Props) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
         <p className="text-2xl text-rose-text">未回答</p>
-        <p className="text-base text-rose-text/50 mt-2">次の問題をお待ちください</p>
+        <p className="text-base text-rose-text/70 mt-2">次の問題をお待ちください</p>
       </div>
     );
   }

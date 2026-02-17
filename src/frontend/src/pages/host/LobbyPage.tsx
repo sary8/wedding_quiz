@@ -14,7 +14,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
   const joinUrl = `${window.location.origin}/play/${roomCode}`;
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-dark text-white px-6">
+    <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white px-6">
       {/* タイトル */}
       <header className="text-center mb-8">
         <h1 className="font-script text-6xl text-accent mb-2">Wedding Quiz</h1>
@@ -26,7 +26,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
         <p className="font-serif-wedding text-white/50 tracking-widest text-sm uppercase">Celebration Game</p>
       </header>
 
-      <div className="flex flex-col md:flex-row gap-12 items-center mb-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
         {/* QRコード */}
         <QRCodeDisplay value={joinUrl} size={200} label="QRコードで参加" />
 

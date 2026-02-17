@@ -23,6 +23,7 @@ export function PlayPage() {
   const [questionResult, setQuestionResult] = useState<QuestionResultData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [isJoining, setIsJoining] = useState(false);
+  const [answerError, setAnswerError] = useState<string | null>(null);
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
   const hasAnsweredRef = useRef(hasAnswered);
@@ -87,7 +88,7 @@ export function PlayPage() {
           const res = await uploadSelfie(selfieData);
           selfieFileName = res.filename;
         } catch {
-          alert("自撮りのアップロードに失敗しました。自撮りなしで参加します。");
+          setAnswerError("自撮りのアップロードに失敗しました。自撮りなしで参加します。");
         }
       }
 
@@ -95,7 +96,7 @@ export function PlayPage() {
 
       // タイムアウト: 10秒以内にサーバーから応答がなければエラー
       const joinTimeout = setTimeout(() => {
-        alert("サーバーからの応答がありません。ページを再読み込みしてください。");
+        setAnswerError("サーバーからの応答がありません。ページを再読み込みしてください。");
         setIsJoining(false);
       }, 10000);
 
@@ -106,7 +107,7 @@ export function PlayPage() {
           localStorage.setItem(`quiz_token_${roomCode}`, res.token);
           setPhase("waiting");
         } else {
-          alert(res.error || "参加に失敗しました");
+          setAnswerError(res.error || "参加に失敗しました");
           setIsJoining(false);
         }
       });
@@ -116,7 +117,6 @@ export function PlayPage() {
 
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
   const questionId = currentQuestion?.questionId;
-  const [answerError, setAnswerError] = useState<string | null>(null);
 
   const handleAnswer = useCallback(
     (choiceIndex: number) => {
@@ -140,16 +140,35 @@ export function PlayPage() {
 
   switch (phase) {
     case "profile":
-      return <ProfilePage onJoin={handleJoin} isJoining={isJoining} />;
+      return (
+        <>
+          {answerError !== null ? (
+            <button
+              type="button"
+              onClick={() => setAnswerError(null)}
+              aria-label="エラーを閉じる"
+              className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-[1000] w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
+            >
+              {answerError}（タップで閉じる）
+            </button>
+          ) : null}
+          <ProfilePage onJoin={handleJoin} isJoining={isJoining} />
+        </>
+      );
     case "waiting":
       return <WaitingPage />;
     case "answer":
       return (
         <>
           {answerError !== null ? (
-            <div className="fixed top-0 left-0 right-0 px-4 py-2 bg-red-500 text-white text-sm text-center z-[1000]">
-              {answerError}
-            </div>
+            <button
+              type="button"
+              onClick={() => setAnswerError(null)}
+              aria-label="エラーを閉じる"
+              className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-[1000] w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
+            >
+              {answerError}（タップで閉じる）
+            </button>
           ) : null}
           <AnswerPage
             question={currentQuestion}

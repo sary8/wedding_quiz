@@ -47,6 +47,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             alt={question.mediaAltText || "問題の画像"}
             width={600}
             height={400}
+            loading="lazy"
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6 object-contain"
           />
         ) : null}
@@ -55,6 +56,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             src={question.mediaUrl}
             autoPlay
             muted
+            aria-label="問題の動画"
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
           />
         ) : null}

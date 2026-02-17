@@ -75,6 +75,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
             alt={question.mediaAltText || "問題の画像"}
             width={600}
             height={400}
+            loading="lazy"
             className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-contain mx-auto"
           />
         ) : null}

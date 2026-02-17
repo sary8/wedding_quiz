@@ -17,11 +17,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
 
   const isTopThree = myResult.rank <= 3;
 
-  const rankLabel =
-    myResult.rank === 1 ? "🥇 第1位" :
-    myResult.rank === 2 ? "🥈 第2位" :
-    myResult.rank === 3 ? "🥉 第3位" :
-    `第${myResult.rank}位`;
+  const rankLabel = `第${myResult.rank}位`;
 
   return (
     <div className={[

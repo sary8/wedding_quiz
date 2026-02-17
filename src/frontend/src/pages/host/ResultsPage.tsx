@@ -9,7 +9,8 @@ type Props = {
   isDisplay?: boolean;
 };
 
-const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
+const CHOICE_BAR_CLASSES = ["bg-choice-red", "bg-choice-blue", "bg-choice-green", "bg-choice-yellow"];
+const CHOICE_BAR_DIM_CLASSES = ["bg-choice-red/50", "bg-choice-blue/50", "bg-choice-green/50", "bg-choice-yellow/50"];
 
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
   const { totalAnswers, maxCount } = useMemo(() => ({
@@ -30,7 +31,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
           const barWidth = (count / maxCount) * 100;
           const choiceText = question?.choices[i] || `選択肢${i + 1}`;
-          const barColor = isCorrect ? CHOICE_COLORS[i] : `${CHOICE_COLORS[i]}88`;
+          const barClass = isCorrect ? CHOICE_BAR_CLASSES[i] : CHOICE_BAR_DIM_CLASSES[i];
 
           return (
             <div key={i} className="mb-4">
@@ -48,8 +49,8 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
               </div>
               <div className="h-10 bg-white/10 rounded-lg overflow-hidden">
                 <div
-                  className="h-full rounded-lg transition-[width] duration-700 ease-out"
-                  style={{ width: `${barWidth}%`, background: barColor }}
+                  className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
+                  style={{ width: `${barWidth}%` }}
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { RankingData } from "../../types";
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
   const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data?.rankings]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
+  const prefersReducedMotion = useReducedMotion();
 
   if (!data) return null;
 
@@ -19,7 +20,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-dark to-[#16213e] text-white p-6">
       <h2 className="font-script text-4xl text-accent text-center mb-6">Ranking</h2>
 
-      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" aria-live="polite" aria-label="ランキング">
         <AnimatePresence>
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
@@ -30,11 +31,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             return (
               <motion.div
                 key={entry.participantId}
-                layout
-                initial={{ opacity: 0, x: -50 }}
+                layout={!prefersReducedMotion}
+                initial={prefersReducedMotion ? false : { opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 80, damping: 15, duration: 1.5 }}
-                className="flex items-center gap-3"
+                transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80, damping: 15, duration: 1.5 }}
+                className="flex items-center gap-2 md:gap-3"
               >
                 {/* 順位 */}
                 <span className="w-10 text-2xl font-bold text-center">{entry.rank}</span>
@@ -43,10 +44,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 {entry.selfieUrl ? (
                   <img
                     src={entry.selfieUrl}
-                    alt=""
+                    alt={`${entry.nickname}のアバター`}
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shrink-0"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl font-bold shrink-0">
@@ -55,16 +57,16 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 )}
 
                 {/* ニックネーム */}
-                <span className="w-24 text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap">
+                <span className="w-20 md:w-28 text-sm md:text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap">
                   {entry.nickname}
                 </span>
 
                 {/* スコアバー */}
                 <div className="flex-1 h-9 bg-white/10 rounded-lg overflow-hidden relative">
                   <motion.div
-                    initial={{ width: 0 }}
+                    initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${barWidth}%` }}
-                    transition={{ type: "spring", stiffness: 60, damping: 15 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 60, damping: 15 }}
                     className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold drop-shadow">
