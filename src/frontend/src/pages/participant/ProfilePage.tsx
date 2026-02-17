@@ -52,11 +52,14 @@ export function ProfilePage({ onJoin }: Props) {
           <input
             id="nickname"
             type="text"
+            name="nickname"
+            autoComplete="nickname"
+            spellCheck={false}
             value={nickname}
             onChange={(e) => setNickname(e.target.value.slice(0, 20))}
-            placeholder="例：花子"
+            placeholder="例：花子…"
             maxLength={20}
-            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus:border-primary focus:outline-none transition-colors duration-200"
+            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-[border-color,box-shadow] duration-200"
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           />
         </div>
@@ -105,6 +108,7 @@ export function ProfilePage({ onJoin }: Props) {
                     key={frame.type}
                     type="button"
                     onClick={() => setSelectedFrame(frame.type)}
+                    aria-pressed={selectedFrame === frame.type}
                     className={[
                       "px-3 py-2 rounded-full text-xs border transition-colors duration-150 min-h-[44px]",
                       selectedFrame === frame.type

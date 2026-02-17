@@ -81,7 +81,7 @@ export function SetupPage() {
 
       <div className="max-w-4xl mx-auto px-6 pb-12">
         {error && (
-          <div className="p-3 mb-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
+          <div role="alert" className="p-3 mb-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
             {error}
           </div>
         )}
@@ -99,11 +99,12 @@ export function SetupPage() {
           <div className="flex gap-3">
             <input
               type="text"
+              name="quiz-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例：太郎＆花子 結婚式クイズ…"
               aria-label="クイズのタイトル"
-              className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-200 text-base outline-none focus:border-accent transition-colors duration-200"
+              className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-200 text-base focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 transition-[border-color,box-shadow] duration-200"
               onKeyDown={(e) => e.key === "Enter" && handleCreateQuiz()}
             />
             <button
@@ -334,18 +335,19 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
           <input
             id="question-text"
             type="text"
+            name="question-text"
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="例：新郎の出身地はどこ？…"
-            className="w-full px-3.5 py-2.5 rounded-lg border-2 border-gray-200 text-base outline-none focus:border-accent transition-colors duration-200"
+            className="w-full px-3.5 py-2.5 rounded-lg border-2 border-gray-200 text-base focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 transition-[border-color,box-shadow] duration-200"
           />
         </div>
 
         {/* 選択肢 */}
         <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-2 font-semibold">
+          <span className="block text-sm text-gray-600 mb-2 font-semibold">
             選択肢（正解をクリックして選択）
-          </label>
+          </span>
           <div className="grid grid-cols-2 gap-2">
             {choices.map((c, i) => (
               <div
@@ -368,6 +370,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                 </button>
                 <input
                   type="text"
+                  name={`choice-${choiceLabels[i].toLowerCase()}`}
                   value={c}
                   onChange={(e) => {
                     const next = [...choices];
@@ -376,7 +379,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                   }}
                   placeholder={`選択肢${choiceLabels[i]}…`}
                   aria-label={`選択肢${choiceLabels[i]}のテキスト`}
-                  className="flex-1 bg-transparent border-none outline-none text-sm py-1"
+                  className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded"
                 />
                 {correctChoice === i + 1 && (
                   <span aria-hidden="true" className="text-xs font-bold shrink-0" style={{ color: choiceColors[i] }}>正解</span>
@@ -388,7 +391,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
         {/* 制限時間 */}
         <div className="flex flex-wrap gap-3 items-center mb-5">
-          <label className="text-sm text-gray-600 font-semibold">制限時間:</label>
+          <span className="text-sm text-gray-600 font-semibold">制限時間:</span>
           <div className="flex flex-wrap gap-1.5">
             {[10, 15, 20, 30, 45, 60].map((t) => (
               <button

@@ -16,6 +16,12 @@ const sizeStyles: Record<AvatarSize, string> = {
   lg: "w-16 h-16 text-xl",
 };
 
+const sizePx: Record<AvatarSize, number> = {
+  sm: 32,
+  md: 48,
+  lg: 64,
+};
+
 export function Avatar({ src, alt, fallback, size = "md", className }: Props) {
   const fallbackText = fallback || alt.charAt(0).toUpperCase();
 
@@ -25,6 +31,8 @@ export function Avatar({ src, alt, fallback, size = "md", className }: Props) {
         <img
           src={src}
           alt={alt}
+          width={sizePx[size]}
+          height={sizePx[size]}
           className="w-full h-full object-cover"
           loading="lazy"
         />

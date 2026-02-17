@@ -139,6 +139,8 @@ export function FinalPage({ data }: Props) {
             <img
               src={spotlightEntry.selfieUrl}
               alt=""
+              width={192}
+              height={192}
               className="w-48 h-48 rounded-full object-cover mb-6"
               style={{ border: "6px solid rgba(255,255,255,0.5)" }}
             />
@@ -191,6 +193,8 @@ export function FinalPage({ data }: Props) {
               <img
                 src={entry.selfieUrl}
                 alt=""
+                width={36}
+                height={36}
                 className="w-9 h-9 rounded-full object-cover shrink-0"
               />
             ) : (

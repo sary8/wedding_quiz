@@ -60,14 +60,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
         <button
           type="button"
           onClick={onShowRanking}
-          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           ランキング表示
         </button>
         <button
           type="button"
           onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           次の問題
         </button>

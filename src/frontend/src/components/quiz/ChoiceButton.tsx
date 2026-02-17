@@ -22,8 +22,8 @@ export function ChoiceButton({ choice, color, icon, isSelected = false, disabled
     <button
       className={cn(
         "rounded-xl text-white font-bold flex flex-col items-center justify-center gap-2 p-3",
-        "transition-all duration-200",
-        "focus:outline-none focus:ring-4 focus:ring-white/50",
+        "transition-[opacity,transform,box-shadow] duration-200",
+        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50",
         "disabled:cursor-not-allowed",
         colorStyles[color],
         isSelected && "scale-95 ring-4 ring-white",

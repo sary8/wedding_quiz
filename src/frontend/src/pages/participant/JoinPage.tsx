@@ -51,8 +51,8 @@ export function JoinPage() {
             label="ルームコード（6文字）"
             error={error}
             className="text-3xl tracking-widest uppercase text-center"
-            aria-label="ルームコード（6文字の英数字）"
             autoComplete="off"
+            spellCheck={false}
             autoFocus
           />
 

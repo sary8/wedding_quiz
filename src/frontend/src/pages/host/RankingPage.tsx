@@ -43,6 +43,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
                   <img
                     src={entry.selfieUrl}
                     alt=""
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shrink-0"
                   />
                 ) : (
@@ -90,14 +92,14 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
         <button
           type="button"
           onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           次の問題
         </button>
         <button
           type="button"
           onClick={onEndGame}
-          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           最終結果発表
         </button>

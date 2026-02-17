@@ -44,6 +44,8 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
           <img
             src={question.mediaUrl}
             alt={question.mediaAltText || "問題の画像"}
+            width={600}
+            height={400}
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6 object-contain"
           />
         ) : null}
@@ -77,7 +79,7 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
         <button
           type="button"
           onClick={onCloseQuestion}
-          className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200"
+          className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           回答を締め切る
         </button>

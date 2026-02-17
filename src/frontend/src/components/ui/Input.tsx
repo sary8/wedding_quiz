@@ -25,11 +25,11 @@ export const Input = forwardRef<HTMLInputElement, Props>(
           ref={ref}
           id={inputId}
           className={cn(
-            "px-6 py-4 rounded-2xl border-2 text-center font-bold text-lg transition-all",
-            "focus:outline-none focus:ring-4 focus:ring-white/30",
+            "px-6 py-4 rounded-2xl border-2 text-center font-bold text-lg transition-[border-color,box-shadow] duration-200",
+            "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30",
             error
               ? "border-red-500 bg-red-50"
-              : "border-white bg-white focus:border-primary",
+              : "border-white bg-white focus-visible:border-primary",
             className
           )}
           aria-invalid={error ? "true" : "false"}

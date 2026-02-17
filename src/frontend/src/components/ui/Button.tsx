@@ -29,7 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       <button
         ref={ref}
         className={cn(
-          "font-bold transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-white/30",
+          "font-bold transition-[opacity,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30",
           "disabled:cursor-not-allowed",
           variantStyles[variant],
           sizeStyles[size],
