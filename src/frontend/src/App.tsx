@@ -3,6 +3,7 @@ import { SetupPage } from "./pages/host/SetupPage";
 import { HostPage } from "./pages/host/HostPage";
 import { JoinPage } from "./pages/participant/JoinPage";
 import { PlayPage } from "./pages/participant/PlayPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 export function App() {
   return (
@@ -13,6 +14,7 @@ export function App() {
         <Route path="/play" element={<JoinPage />} />
         <Route path="/play/:roomCode" element={<PlayPage />} />
         <Route path="/" element={<Navigate to="/play" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
