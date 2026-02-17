@@ -77,9 +77,6 @@ export function useCamera() {
         video: { facingMode: "user", width: 400, height: 400 },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       setIsActive(true);
     } catch (e) {
       const err = e as DOMException;
@@ -103,6 +100,7 @@ export function useCamera() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
+    if (video.readyState < video.HAVE_CURRENT_DATA) return null;
 
     const size = 400;
     canvas.width = size;
@@ -137,6 +135,14 @@ export function useCamera() {
     setError(null);
     startCamera();
   }, [startCamera]);
+
+  // isActive変化後にvideo要素へストリームを接続
+  useEffect(() => {
+    if (isActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isActive]);
 
   // クリーンアップ
   useEffect(() => {

@@ -3,9 +3,10 @@ import { useCamera } from "../../hooks/useCamera";
 
 type Props = {
   onJoin: (nickname: string, selfieData?: string) => void;
+  isJoining: boolean;
 };
 
-export function ProfilePage({ onJoin }: Props) {
+export function ProfilePage({ onJoin, isJoining }: Props) {
   const [nickname, setNickname] = useState("");
   const {
     videoRef,
@@ -22,7 +23,7 @@ export function ProfilePage({ onJoin }: Props) {
   } = useCamera();
 
   function handleSubmit() {
-    if (!nickname.trim()) return;
+    if (!nickname.trim() || isJoining) return;
     onJoin(nickname.trim(), capturedImage || undefined);
   }
 
@@ -150,15 +151,15 @@ export function ProfilePage({ onJoin }: Props) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!nickname.trim()}
+          disabled={!nickname.trim() || isJoining}
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-all duration-200 min-h-[44px]",
-            nickname.trim()
+            nickname.trim() && !isJoining
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}
         >
-          参加する
+          {isJoining ? "参加中..." : "参加する"}
         </button>
       </div>
     </div>

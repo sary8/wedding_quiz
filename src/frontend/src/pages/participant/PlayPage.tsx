@@ -22,6 +22,7 @@ export function PlayPage() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [questionResult, setQuestionResult] = useState<QuestionResultData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
   const hasAnsweredRef = useRef(hasAnswered);
@@ -67,7 +68,8 @@ export function PlayPage() {
 
   const handleJoin = useCallback(
     async (nickname: string, selfieData?: string) => {
-      if (!roomCode) return;
+      if (!roomCode || isJoining) return;
+      setIsJoining(true);
 
       // 自撮りデータがあればアップロード
       let selfieFileName: string | undefined;
@@ -88,10 +90,11 @@ export function PlayPage() {
           setPhase("waiting");
         } else {
           alert(res.error || "参加に失敗しました");
+          setIsJoining(false);
         }
       });
     },
-    [roomCode, emit]
+    [roomCode, emit, isJoining]
   );
 
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
@@ -111,7 +114,7 @@ export function PlayPage() {
 
   switch (phase) {
     case "profile":
-      return <ProfilePage onJoin={handleJoin} />;
+      return <ProfilePage onJoin={handleJoin} isJoining={isJoining} />;
     case "waiting":
       return <WaitingPage />;
     case "answer":
