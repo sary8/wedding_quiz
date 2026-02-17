@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SetupPage } from "./pages/host/SetupPage";
 import { HostPage } from "./pages/host/HostPage";
+import { DisplayPage } from "./pages/host/DisplayPage";
 import { JoinPage } from "./pages/participant/JoinPage";
 import { PlayPage } from "./pages/participant/PlayPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -10,6 +11,7 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/host/setup" element={<SetupPage />} />
+        <Route path="/host/:roomCode/screen" element={<DisplayPage />} />
         <Route path="/host/:roomCode" element={<HostPage />} />
         <Route path="/play" element={<JoinPage />} />
         <Route path="/play/:roomCode" element={<PlayPage />} />

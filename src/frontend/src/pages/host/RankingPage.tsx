@@ -6,9 +6,10 @@ type Props = {
   data: RankingData | null;
   onNextQuestion: () => void;
   onEndGame: () => void;
+  isDisplay?: boolean;
 };
 
-export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
+export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
   const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data?.rankings]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
 
@@ -88,22 +89,24 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
         </AnimatePresence>
       </div>
 
-      <div className="flex gap-4 justify-center mt-6">
-        <button
-          type="button"
-          onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        >
-          次の問題
-        </button>
-        <button
-          type="button"
-          onClick={onEndGame}
-          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        >
-          最終結果発表
-        </button>
-      </div>
+      {!isDisplay && (
+        <div className="flex gap-4 justify-center mt-6">
+          <button
+            type="button"
+            onClick={onNextQuestion}
+            className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            次の問題
+          </button>
+          <button
+            type="button"
+            onClick={onEndGame}
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            最終結果発表
+          </button>
+        </div>
+      )}
     </div>
   );
 }

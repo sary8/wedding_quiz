@@ -7,9 +7,10 @@ type Props = {
   roomCode: string;
   participants: ParticipantInfo[];
   onStartGame: () => void;
+  isDisplay?: boolean;
 };
 
-export function LobbyPage({ roomCode, participants, onStartGame }: Props) {
+export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = false }: Props) {
   const joinUrl = `${window.location.origin}/play/${roomCode}`;
 
   return (
@@ -57,15 +58,22 @@ export function LobbyPage({ roomCode, participants, onStartGame }: Props) {
         )}
       </section>
 
-      <Button
-        onClick={onStartGame}
-        disabled={participants.length === 0}
-        variant="accent"
-        size="lg"
-        aria-disabled={participants.length === 0}
-      >
-        ゲーム開始
-      </Button>
+      {!isDisplay && (
+        <>
+          <Button
+            onClick={onStartGame}
+            disabled={participants.length === 0}
+            variant="accent"
+            size="lg"
+            aria-disabled={participants.length === 0}
+          >
+            ゲーム開始
+          </Button>
+          <p className="mt-3 text-white/30 text-xs">
+            プロジェクター: {window.location.origin}/host/{roomCode}/screen
+          </p>
+        </>
+      )}
     </div>
   );
 }

@@ -6,11 +6,12 @@ type Props = {
   question: QuestionData | null;
   onShowRanking: () => void;
   onNextQuestion: () => void;
+  isDisplay?: boolean;
 };
 
 const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 
-export function ResultsPage({ result, question, onShowRanking, onNextQuestion }: Props) {
+export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
   const { totalAnswers, maxCount } = useMemo(() => ({
     totalAnswers: result?.distribution.reduce((s, n) => s + n, 0) ?? 0,
     maxCount: result?.distribution.reduce((max, n) => Math.max(max, n), 1) ?? 1,
@@ -56,22 +57,24 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
         })}
       </div>
 
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={onShowRanking}
-          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        >
-          ランキング表示
-        </button>
-        <button
-          type="button"
-          onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        >
-          次の問題
-        </button>
-      </div>
+      {!isDisplay && (
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={onShowRanking}
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            ランキング表示
+          </button>
+          <button
+            type="button"
+            onClick={onNextQuestion}
+            className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            次の問題
+          </button>
+        </div>
+      )}
     </div>
   );
 }

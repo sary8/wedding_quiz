@@ -57,6 +57,10 @@ type ClientToServerEvents = {
     data: { roomCode: string; hostSecret: string },
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
+  watchRoom: (
+    data: { roomCode: string },
+    cb: (res: { success: boolean; error?: string }) => void
+  ) => void;
 };
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

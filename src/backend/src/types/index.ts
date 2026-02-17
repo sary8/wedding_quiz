@@ -67,6 +67,10 @@ export type ClientToServerEvents = {
     data: { roomCode: string; hostSecret: string },
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
+  watchRoom: (
+    data: { roomCode: string },
+    callback: (res: { success: boolean; error?: string }) => void
+  ) => void;
 };
 
 // Shared data types

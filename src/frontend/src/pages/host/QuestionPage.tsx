@@ -6,12 +6,13 @@ type Props = {
   answerCount: number;
   totalParticipants: number;
   onCloseQuestion: () => void;
+  isDisplay?: boolean;
 };
 
 const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
-export function QuestionPage({ question, timeRemaining, answerCount, totalParticipants, onCloseQuestion }: Props) {
+export function QuestionPage({ question, timeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
   if (!question) return null;
 
   const isUrgent = timeRemaining <= 5;
@@ -75,15 +76,17 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
       </div>
 
       {/* 手動締め切りボタン */}
-      <div className="px-6 pb-6 text-center">
-        <button
-          type="button"
-          onClick={onCloseQuestion}
-          className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        >
-          回答を締め切る
-        </button>
-      </div>
+      {!isDisplay && (
+        <div className="px-6 pb-6 text-center">
+          <button
+            type="button"
+            onClick={onCloseQuestion}
+            className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            回答を締め切る
+          </button>
+        </div>
+      )}
     </div>
   );
 }

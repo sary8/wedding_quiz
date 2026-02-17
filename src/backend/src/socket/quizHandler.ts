@@ -308,6 +308,13 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ビューワー: 読み取り専用参加 ===
+    socket.on("watchRoom", (data, callback) => {
+      socket.join(data.roomCode);
+      socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
+      callback({ success: true });
+    });
+
     // === 切断処理 ===
     socket.on("disconnect", async () => {
       console.log(`Disconnected: ${socket.id}`);
