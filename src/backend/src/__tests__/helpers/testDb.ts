@@ -1,5 +1,5 @@
 import { createClient, type Client } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "../../db/schema.js";
 
 const CREATE_TABLES_SQL = [
@@ -55,7 +55,7 @@ const CREATE_TABLES_SQL = [
 let client: Client;
 
 export const testSchema = schema;
-export let db: ReturnType<typeof drizzle>;
+export let db: LibSQLDatabase<typeof schema>;
 
 export async function initTestDb() {
   client = createClient({ url: "file::memory:" });
