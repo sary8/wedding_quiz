@@ -1,23 +1,21 @@
 name: Azure Static Web Apps CI/CD
 
-# このワークフローはAzure設定後に有効化してください
-# AZURE_STATIC_WEB_APPS_API_TOKEN が設定されている場合のみ実行されます
+# このワークフローは手動実行のみ（Azure設定後に使用）
+# Azure設定が完了したら workflow_dispatch を on: push に変更してください
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
+  workflow_dispatch:  # 手動実行のみ
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   types: [opened, synchronize, reopened, closed]
+  #   branches:
+  #     - main
 
 jobs:
   build_and_deploy_job:
-    # Azure token が設定されている場合のみ実行
-    if: |
-      (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed'))
-      && secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != ''
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -39,10 +37,7 @@ jobs:
           app_build_command: "npm run build"
 
   close_pull_request_job:
-    # Azure token が設定されている場合のみ実行
-    if: |
-      github.event_name == 'pull_request' && github.event.action == 'closed'
-      && secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != ''
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
     steps:
