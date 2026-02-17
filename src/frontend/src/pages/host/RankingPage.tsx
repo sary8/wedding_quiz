@@ -25,7 +25,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             const barWidth = (entry.totalScore / maxScore) * 100;
             const rankChange = entry.previousRank - entry.rank;
             const changeText = rankChange > 0 ? `↑${rankChange}` : rankChange < 0 ? `↓${Math.abs(rankChange)}` : "";
-            const changeColor = rankChange > 0 ? "#4caf50" : rankChange < 0 ? "#ef5350" : "transparent";
+            const changeColorClass = rankChange > 0 ? "text-green-500" : rankChange < 0 ? "text-[#ef5350]" : "text-transparent";
 
             return (
               <motion.div
@@ -73,7 +73,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </div>
 
                 {/* 順位変動 */}
-                <span className="w-10 text-sm font-bold text-center" style={{ color: changeColor }}>
+                <span className={`w-10 text-sm font-bold text-center ${changeColorClass}`}>
                   {changeText}
                 </span>
 

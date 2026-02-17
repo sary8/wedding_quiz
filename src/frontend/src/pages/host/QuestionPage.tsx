@@ -9,7 +9,7 @@ type Props = {
   isDisplay?: boolean;
 };
 
-const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
+const CHOICE_BG_CLASSES = ["bg-choice-red", "bg-choice-blue", "bg-choice-green", "bg-choice-yellow"];
 const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
 export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
@@ -26,8 +26,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <span
-          className="text-5xl font-bold transition-colors duration-300"
-          style={{ color: isUrgent ? "#ef5350" : "#fff" }}
+          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-[#ef5350]" : "text-white"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -67,8 +66,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
         {question.choices.map((choice, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold"
-            style={{ background: CHOICE_COLORS[i] }}
+            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_BG_CLASSES[i]}`}
           >
             <span aria-hidden="true" className="text-3xl">{CHOICE_ICONS[i]}</span>
             {choice}

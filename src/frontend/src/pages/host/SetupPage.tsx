@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia } from "../../services/api";
 import type { Quiz, QuizSummary, Question } from "../../types";
@@ -64,10 +64,19 @@ export function SetupPage() {
     }
   }
 
-  function handleStartLobby() {
+  const handleStartLobby = useCallback(() => {
     if (!selectedQuiz) return;
     navigate(`/host/${selectedQuiz.room_code}?key=${selectedQuiz.host_secret}&quizId=${selectedQuiz.id}`);
-  }
+  }, [selectedQuiz, navigate]);
+
+  const handleQuestionUpdate = useCallback(async () => {
+    if (!selectedQuiz) return;
+    const key = getHostSecret(selectedQuiz.id);
+    if (key) {
+      const updated = await getQuiz(selectedQuiz.id, key);
+      setSelectedQuiz(updated);
+    }
+  }, [selectedQuiz]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -174,13 +183,7 @@ export function SetupPage() {
             </div>
             <QuestionEditor
               quiz={selectedQuiz}
-              onUpdate={async () => {
-                const key = getHostSecret(selectedQuiz.id);
-                if (key) {
-                  const updated = await getQuiz(selectedQuiz.id, key);
-                  setSelectedQuiz(updated);
-                }
-              }}
+              onUpdate={handleQuestionUpdate}
             />
           </section>
         )}
@@ -233,6 +236,12 @@ function statusLabel(status: string): string {
     default: return status;
   }
 }
+
+const CHOICE_BG_CLASSES = ["bg-choice-red", "bg-choice-blue", "bg-choice-green", "bg-choice-yellow"];
+const CHOICE_BORDER_CLASSES = ["border-choice-red", "border-choice-blue", "border-choice-green", "border-choice-yellow"];
+const CHOICE_TEXT_CLASSES = ["text-choice-red", "text-choice-blue", "text-choice-green", "text-choice-yellow"];
+const CHOICE_BG_LIGHT_CLASSES = ["bg-choice-red/[0.08]", "bg-choice-blue/[0.08]", "bg-choice-green/[0.08]", "bg-choice-yellow/[0.08]"];
+const CHOICE_LABELS = ["A", "B", "C", "D"];
 
 type QuestionEditorProps = { quiz: Quiz; onUpdate: () => void };
 
@@ -296,8 +305,6 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
     setFileInputKey((k) => k + 1);
   }
 
-  const choiceColors = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
-  const choiceLabels = ["A", "B", "C", "D"];
 
   async function handleAdd() {
     if (!text.trim() || choices.some((c) => !c.trim())) return;
@@ -368,19 +375,20 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
-                      <div
-                        key={ci}
-                        className="px-2.5 py-1 rounded text-sm"
-                        style={{
-                          background: ci + 1 === q.correct_choice ? choiceColors[ci] : "#f0f0f0",
-                          color: ci + 1 === q.correct_choice ? "#fff" : "#555",
-                          fontWeight: ci + 1 === q.correct_choice ? 600 : 400,
-                        }}
-                      >
-                        {choiceLabels[ci]}. {c}
-                      </div>
-                    ))}
+                    {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => {
+                      const isCorrect = ci + 1 === q.correct_choice;
+                      return (
+                        <div
+                          key={ci}
+                          className={[
+                            "px-2.5 py-1 rounded text-sm",
+                            isCorrect ? `${CHOICE_BG_CLASSES[ci]} text-white font-semibold` : "bg-gray-100 text-gray-600",
+                          ].join(" ")}
+                        >
+                          {CHOICE_LABELS[ci]}. {c}
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="text-xs text-gray-400 mt-1.5">
                     制限時間: {q.time_limit_seconds}秒 ・ 配点: {q.points}点
@@ -488,43 +496,47 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             選択肢（正解をクリックして選択）
           </span>
           <div className="grid grid-cols-2 gap-2">
-            {choices.map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150"
-                style={{
-                  borderColor: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0",
-                  background: correctChoice === i + 1 ? `${choiceColors[i]}15` : "#fff",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setCorrectChoice(i + 1)}
-                  aria-label={`選択肢${choiceLabels[i]}を正解に設定`}
-                  aria-pressed={correctChoice === i + 1}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 min-h-[28px]"
-                  style={{ background: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0" }}
+            {choices.map((c, i) => {
+              const isSelected = correctChoice === i + 1;
+              return (
+                <div
+                  key={i}
+                  className={[
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150",
+                    isSelected ? `${CHOICE_BORDER_CLASSES[i]} ${CHOICE_BG_LIGHT_CLASSES[i]}` : "border-gray-300 bg-white",
+                  ].join(" ")}
                 >
-                  {choiceLabels[i]}
-                </button>
-                <input
-                  type="text"
-                  name={`choice-${choiceLabels[i].toLowerCase()}`}
-                  value={c}
-                  onChange={(e) => {
-                    const next = [...choices];
-                    next[i] = e.target.value;
-                    setChoices(next);
-                  }}
-                  placeholder={`選択肢${choiceLabels[i]}…`}
-                  aria-label={`選択肢${choiceLabels[i]}のテキスト`}
-                  className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded"
-                />
-                {correctChoice === i + 1 && (
-                  <span aria-hidden="true" className="text-xs font-bold shrink-0" style={{ color: choiceColors[i] }}>正解</span>
-                )}
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => setCorrectChoice(i + 1)}
+                    aria-label={`選択肢${CHOICE_LABELS[i]}を正解に設定`}
+                    aria-pressed={isSelected}
+                    className={[
+                      "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 min-h-[28px]",
+                      isSelected ? CHOICE_BG_CLASSES[i] : "bg-gray-300",
+                    ].join(" ")}
+                  >
+                    {CHOICE_LABELS[i]}
+                  </button>
+                  <input
+                    type="text"
+                    name={`choice-${CHOICE_LABELS[i].toLowerCase()}`}
+                    value={c}
+                    onChange={(e) => {
+                      const next = [...choices];
+                      next[i] = e.target.value;
+                      setChoices(next);
+                    }}
+                    placeholder={`選択肢${CHOICE_LABELS[i]}…`}
+                    aria-label={`選択肢${CHOICE_LABELS[i]}のテキスト`}
+                    className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded"
+                  />
+                  {isSelected && (
+                    <span aria-hidden="true" className={`text-xs font-bold shrink-0 ${CHOICE_TEXT_CLASSES[i]}`}>正解</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

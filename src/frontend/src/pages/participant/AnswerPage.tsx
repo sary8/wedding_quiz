@@ -57,8 +57,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <div
-          className="text-4xl font-bold"
-          style={{ color: timeRemaining <= 5 ? "#ef5350" : "#fff" }}
+          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-[#ef5350]" : "text-white"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -96,7 +95,8 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
               icon={CHOICE_ICONS[i]}
               isSelected={isSelected}
               disabled={selectedChoice !== null}
-              onClick={() => handleChoiceClick(choiceIndex)}
+              choiceIndex={choiceIndex}
+              onClick={handleChoiceClick}
               aria-label={`選択肢${choiceIndex}: ${choice}`}
             />
           );

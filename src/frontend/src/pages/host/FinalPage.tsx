@@ -28,12 +28,14 @@ export function FinalPage({ data }: Props) {
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const rankings = useMemo(() => data?.rankings ?? [], [data]);
-  const reversed = useMemo(() => [...rankings].reverse(), [rankings]);
-  const top3 = useMemo(
-    () => rankings.filter((r) => r.rank <= 3).sort((a, b) => b.rank - a.rank),
-    [rankings],
-  );
+  const { rankings, reversed, top3 } = useMemo(() => {
+    const r = data?.rankings ?? [];
+    return {
+      rankings: r,
+      reversed: [...r].reverse(),
+      top3: r.filter((e) => e.rank <= 3).sort((a, b) => b.rank - a.rank),
+    };
+  }, [data]);
 
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
@@ -141,13 +143,11 @@ export function FinalPage({ data }: Props) {
               alt=""
               width={192}
               height={192}
-              className="w-48 h-48 rounded-full object-cover mb-6"
-              style={{ border: "6px solid rgba(255,255,255,0.5)" }}
+              className="w-48 h-48 rounded-full object-cover mb-6 border-[6px] border-white/50"
             />
           ) : (
             <div
-              className="w-48 h-48 rounded-full flex items-center justify-center text-8xl font-bold mb-6"
-              style={{ background: "rgba(255,255,255,0.3)" }}
+              className="w-48 h-48 rounded-full flex items-center justify-center text-8xl font-bold mb-6 bg-white/30"
             >
               {spotlightEntry.nickname?.[0] || "?"}
             </div>

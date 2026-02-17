@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useCamera } from "../../hooks/useCamera";
 
 type Props = {
@@ -22,6 +22,14 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
     error: cameraError,
     frameOptions,
   } = useCamera();
+
+  const handleCapture = useCallback(() => {
+    setCaptureError(null);
+    const result = capture();
+    if (result === null) {
+      setCaptureError("カメラの準備ができていません。少し待ってからもう一度お試しください。");
+    }
+  }, [capture]);
 
   function handleSubmit() {
     if (!nickname.trim() || isJoining) return;
@@ -128,13 +136,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               ) : null}
               <button
                 type="button"
-                onClick={() => {
-                  setCaptureError(null);
-                  const result = capture();
-                  if (result === null) {
-                    setCaptureError("カメラの準備ができていません。少し待ってからもう一度お試しください。");
-                  }
-                }}
+                onClick={handleCapture}
                 className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
               >
                 撮影

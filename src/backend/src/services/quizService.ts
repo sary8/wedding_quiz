@@ -232,17 +232,24 @@ export async function getQuestionResult(
   questionId: number,
   participantId?: number
 ): Promise<QuestionResultData> {
-  const question = await db.query.questions.findFirst({
-    where: eq(schema.questions.id, questionId),
-  });
+  // question, allAnswers, participant を並列取得
+  const [question, allAnswers, participant] = await Promise.all([
+    db.query.questions.findFirst({
+      where: eq(schema.questions.id, questionId),
+    }),
+    db
+      .select()
+      .from(schema.answers)
+      .where(eq(schema.answers.question_id, questionId)),
+    participantId
+      ? db.query.participants.findFirst({
+          where: eq(schema.participants.id, participantId),
+        })
+      : Promise.resolve(undefined),
+  ]);
   if (!question) throw new Error("Question not found");
 
   // 回答分布
-  const allAnswers = await db
-    .select()
-    .from(schema.answers)
-    .where(eq(schema.answers.question_id, questionId));
-
   const distribution = [0, 0, 0, 0];
   for (const a of allAnswers) {
     if (a.choice_index >= 1 && a.choice_index <= 4) {
@@ -260,9 +267,6 @@ export async function getQuestionResult(
   if (participantId) {
     const myAnswer = allAnswers.find((a) => a.participant_id === participantId);
     if (myAnswer) {
-      const participant = await db.query.participants.findFirst({
-        where: eq(schema.participants.id, participantId),
-      });
       result.yourAnswer = {
         choiceIndex: myAnswer.choice_index,
         isCorrect: myAnswer.is_correct,
@@ -284,17 +288,20 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
   });
   if (!quiz) return [];
 
-  const participants = await db
-    .select()
-    .from(schema.participants)
-    .where(eq(schema.participants.quiz_id, quiz.id))
-    .orderBy(desc(schema.participants.total_score));
+  // participants と currentQuestionId を並列取得
+  const [participants, currentQuestionId] = await Promise.all([
+    db
+      .select()
+      .from(schema.participants)
+      .where(eq(schema.participants.quiz_id, quiz.id))
+      .orderBy(desc(schema.participants.total_score)),
+    getCurrentQuestionId(quiz.id, quiz.current_question_index),
+  ]);
 
   // 前回のランクを保持して比較用に
   const previousRanks = new Map(participants.map((p) => [p.id, p.current_rank]));
 
   // 現在の問題のresponse_timeを一括取得（N+1解消）
-  const currentQuestionId = await getCurrentQuestionId(quiz.id, quiz.current_question_index);
   const answerMap = new Map<number, number>();
   if (currentQuestionId) {
     const answers = await db
@@ -306,18 +313,20 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
     }
   }
 
-  const rankings: RankingEntry[] = [];
-  for (let i = 0; i < participants.length; i++) {
-    const p = participants[i];
-    const rank = i + 1;
-
-    // ランク更新
-    await db
+  // ランク更新をバッチ実行
+  const rankUpdates = participants.map((p, i) =>
+    db
       .update(schema.participants)
-      .set({ current_rank: rank })
-      .where(eq(schema.participants.id, p.id));
+      .set({ current_rank: i + 1 })
+      .where(eq(schema.participants.id, p.id))
+  );
+  if (rankUpdates.length > 0) {
+    await db.batch(rankUpdates as [typeof rankUpdates[0], ...typeof rankUpdates]);
+  }
 
-    rankings.push({
+  const rankings: RankingEntry[] = participants.map((p, i) => {
+    const rank = i + 1;
+    return {
       participantId: p.id,
       nickname: p.nickname,
       selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
@@ -325,8 +334,8 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
       rank,
       previousRank: previousRanks.get(p.id) || rank,
       lastResponseTimeMs: answerMap.get(p.id) ?? null,
-    });
-  }
+    };
+  });
 
   return rankings;
 }
@@ -338,16 +347,18 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
   });
   if (!quiz) return { rankings: [] };
 
-  const totalQuestions = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(schema.questions)
-    .where(eq(schema.questions.quiz_id, quiz.id));
-
-  const participants = await db
-    .select()
-    .from(schema.participants)
-    .where(eq(schema.participants.quiz_id, quiz.id))
-    .orderBy(desc(schema.participants.total_score));
+  // totalQuestions と participants を並列取得
+  const [totalQuestions, participants] = await Promise.all([
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(schema.questions)
+      .where(eq(schema.questions.quiz_id, quiz.id)),
+    db
+      .select()
+      .from(schema.participants)
+      .where(eq(schema.participants.quiz_id, quiz.id))
+      .orderBy(desc(schema.participants.total_score)),
+  ]);
 
   // 全参加者の回答を一括取得（N+1解消）
   const participantIds = participants.map((p) => p.id);

@@ -19,21 +19,29 @@ async function distributeQuestionResult(
   questionId: number,
   hostSocketId?: string
 ) {
-  // 各参加者に個別結果を送信
   const sockets = await io.in(roomCode).fetchSockets();
-  for (const s of sockets) {
+
+  // 参加者ソケットとホストの結果を並列取得
+  const participantSockets = sockets.filter((s) => {
     const meta = socketMeta.get(s.id);
-    if (meta && meta.participantId > 0) {
-      const result = await quizService.getQuestionResult(
-        questionId,
-        meta.participantId
-      );
-      s.emit("questionResult", result);
-    }
+    return meta && meta.participantId > 0;
+  });
+
+  const [participantResults, hostResult] = await Promise.all([
+    Promise.all(
+      participantSockets.map((s) =>
+        quizService.getQuestionResult(questionId, socketMeta.get(s.id)!.participantId)
+      )
+    ),
+    quizService.getQuestionResult(questionId),
+  ]);
+
+  // 各参加者に個別結果を送信
+  for (let i = 0; i < participantSockets.length; i++) {
+    participantSockets[i].emit("questionResult", participantResults[i]);
   }
 
   // ホストには全体結果を送信
-  const hostResult = await quizService.getQuestionResult(questionId);
   if (hostSocketId) {
     const hostSocket = sockets.find((s) => s.id === hostSocketId);
     if (hostSocket) {

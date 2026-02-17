@@ -16,6 +16,8 @@ import { FinalPage } from "./FinalPage";
 
 type DisplayPhase = "lobby" | "question" | "results" | "ranking" | "final";
 
+const NOOP = () => {}; // stable reference for display-only props
+
 export function DisplayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const { emit, on, isConnected, connectionError } = useSocket();
@@ -49,7 +51,7 @@ export function DisplayPage() {
       }),
       on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
-      on("questionClosed", () => {}),
+      on("questionClosed", NOOP),
       on("questionResult", (data) => {
         setQuestionResult(data);
         setPhase("results");
@@ -104,7 +106,7 @@ export function DisplayPage() {
           <LobbyPage
             roomCode={roomCode}
             participants={participants}
-            onStartGame={() => {}}
+            onStartGame={NOOP}
             isDisplay={true}
           />
         </>
@@ -118,7 +120,7 @@ export function DisplayPage() {
             timeRemaining={timeRemaining}
             answerCount={answerCount}
             totalParticipants={participants.length}
-            onCloseQuestion={() => {}}
+            onCloseQuestion={NOOP}
             isDisplay={true}
           />
         </>
@@ -130,8 +132,8 @@ export function DisplayPage() {
           <ResultsPage
             result={questionResult}
             question={currentQuestion}
-            onShowRanking={() => {}}
-            onNextQuestion={() => {}}
+            onShowRanking={NOOP}
+            onNextQuestion={NOOP}
             isDisplay={true}
           />
         </>
@@ -142,8 +144,8 @@ export function DisplayPage() {
           {errorBanner}
           <RankingPage
             data={rankingData}
-            onNextQuestion={() => {}}
-            onEndGame={() => {}}
+            onNextQuestion={NOOP}
+            onEndGame={NOOP}
             isDisplay={true}
           />
         </>

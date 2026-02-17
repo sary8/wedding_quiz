@@ -1,13 +1,15 @@
-import { type ButtonHTMLAttributes } from "react";
+import { memo, useCallback, type ButtonHTMLAttributes } from "react";
 import { cn } from "../../utils/cn";
 
 type ChoiceColor = "red" | "blue" | "green" | "yellow";
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
+type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
   choice: string;
   color: ChoiceColor;
   icon: string;
   isSelected?: boolean;
+  choiceIndex: number;
+  onClick: (choiceIndex: number) => void;
 };
 
 const colorStyles: Record<ChoiceColor, string> = {
@@ -17,7 +19,11 @@ const colorStyles: Record<ChoiceColor, string> = {
   yellow: "bg-choice-yellow",
 };
 
-export function ChoiceButton({ choice, color, icon, isSelected = false, disabled, ...props }: Props) {
+export const ChoiceButton = memo(function ChoiceButton({ choice, color, icon, isSelected = false, disabled, choiceIndex, onClick, ...props }: Props) {
+  const handleClick = useCallback(() => {
+    onClick(choiceIndex);
+  }, [onClick, choiceIndex]);
+
   return (
     <button
       className={cn(
@@ -31,6 +37,7 @@ export function ChoiceButton({ choice, color, icon, isSelected = false, disabled
       )}
       disabled={disabled}
       aria-pressed={isSelected}
+      onClick={handleClick}
       {...props}
     >
       <span className="text-4xl" aria-hidden="true">
@@ -39,4 +46,4 @@ export function ChoiceButton({ choice, color, icon, isSelected = false, disabled
       <span className="text-base">{choice}</span>
     </button>
   );
-}
+});

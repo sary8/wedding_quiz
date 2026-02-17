@@ -25,16 +25,19 @@ questionRoutes.put("/reorder", async (c) => {
   const auth = await verifyHost(body.quizId, body.key);
   if ("error" in auth) return c.json({ error: auth.error }, auth.status);
 
-  for (let i = 0; i < body.questionIds.length; i++) {
-    await db
+  const reorderUpdates = body.questionIds.map((id, i) =>
+    db
       .update(schema.questions)
       .set({ order_index: i })
       .where(
         and(
-          eq(schema.questions.id, body.questionIds[i]),
+          eq(schema.questions.id, id),
           eq(schema.questions.quiz_id, body.quizId)
         )
-      );
+      )
+  );
+  if (reorderUpdates.length > 0) {
+    await db.batch(reorderUpdates as [typeof reorderUpdates[0], ...typeof reorderUpdates]);
   }
 
   return c.json({ success: true });
