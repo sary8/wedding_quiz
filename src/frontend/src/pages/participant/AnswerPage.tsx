@@ -40,7 +40,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
   if (hasAnswered) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
-        <div className="mb-4 text-green-400" aria-label="回答完了">
+        <div className="mb-4 text-green-400" aria-hidden="true">
           <CheckCircle2 size={64} strokeWidth={1.5} />
         </div>
         <p className="text-2xl font-bold">回答済み</p>

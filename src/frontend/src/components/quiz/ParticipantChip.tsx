@@ -12,7 +12,7 @@ export function ParticipantChip({ nickname, selfieUrl, className }: Props) {
     <div
       className={cn(
         "flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5",
-        "transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
+        "transition-colors hover:bg-white/30",
         className
       )}
     >
