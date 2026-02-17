@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+src/frontend/dist/
+
+# DB & uploads (runtime data)
+src/backend/data/
+src/backend/uploads/
+
+# Test artifacts
+src/backend/coverage/
+src/frontend/playwright-report/
+src/frontend/test-results/
+
+# Load test
+tests/load/node_modules/
+tests/load/report.json
+tests/load/report.html
+
+# Drizzle migrations (auto-generated)
+src/backend/drizzle/
+
+# Lock files
+package-lock.json
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
