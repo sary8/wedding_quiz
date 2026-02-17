@@ -11,7 +11,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
   if (!data) return null;
 
   const top10 = data.rankings.slice(0, 10);
-  const maxScore = Math.max(...top10.map((r) => r.totalScore), 1);
+  const maxScore = top10.reduce((max, r) => Math.max(max, r.totalScore), 1);
 
   return (
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #1a1a2e, #16213e)", color: "#fff", padding: 24 }}>

@@ -1,5 +1,5 @@
 import { QRCodeSVG } from "qrcode.react";
-import { Card } from "../ui";
+import { Card } from "../ui/Card";
 
 type Props = {
   value: string;

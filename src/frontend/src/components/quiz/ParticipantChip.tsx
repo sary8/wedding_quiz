@@ -1,4 +1,4 @@
-import { Avatar } from "../ui";
+import { Avatar } from "../ui/Avatar";
 import { cn } from "../../utils/cn";
 
 type Props = {
