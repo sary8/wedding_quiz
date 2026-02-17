@@ -54,7 +54,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
             ))}
           </ul>
         ) : (
-          <p className="text-white/40 text-base">参加者を待っています...</p>
+          <p className="text-white/40 text-base">参加者を待っています…</p>
         )}
       </section>
 

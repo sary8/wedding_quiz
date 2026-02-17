@@ -441,7 +441,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                 />
                 {isUploading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
-                    <span className="text-white text-xs font-semibold">アップロード中...</span>
+                    <span className="text-white text-xs font-semibold">アップロード中…</span>
                   </div>
                 )}
                 {!isUploading && mediaUrl && (
@@ -485,7 +485,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             {choices.map((c, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-150"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150"
                 style={{
                   borderColor: correctChoice === i + 1 ? choiceColors[i] : "#e0e0e0",
                   background: correctChoice === i + 1 ? `${choiceColors[i]}15` : "#fff",
@@ -556,7 +556,7 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
               : "bg-gray-300 cursor-not-allowed",
           ].join(" ")}
         >
-          {isAdding ? "追加中..." : isUploading ? "アップロード中..." : "この問題を追加"}
+          {isAdding ? "追加中…" : isUploading ? "アップロード中…" : "この問題を追加"}
         </button>
       </div>
     </div>
