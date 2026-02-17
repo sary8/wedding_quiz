@@ -171,7 +171,7 @@ export function FinalPage({ data }: Props) {
       ref={containerRef}
       className="h-[100dvh] overflow-hidden bg-dark text-white flex flex-col items-center justify-end p-6"
     >
-      <h2 className="text-3xl font-bold absolute top-6">最終結果発表</h2>
+      <h2 className="font-script text-4xl text-accent absolute top-6">最終結果発表</h2>
       <AnimatePresence>
         {reversed.slice(0, visibleIndex + 1).map((entry) => (
           <motion.div

@@ -7,9 +7,9 @@ type Props = {
 export function ResultPage({ result }: Props) {
   if (!result?.yourAnswer) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
-        <p className="text-2xl">未回答</p>
-        <p className="text-base text-gray-400 mt-2">次の問題をお待ちください</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
+        <p className="text-2xl text-rose-text">未回答</p>
+        <p className="text-base text-rose-text/50 mt-2">次の問題をお待ちください</p>
       </div>
     );
   }
@@ -18,36 +18,41 @@ export function ResultPage({ result }: Props) {
   const isCorrect = yourAnswer.isCorrect;
 
   return (
-    <div
-      className={[
-        "h-[100dvh] flex flex-col items-center justify-center text-white p-6",
-        isCorrect
-          ? "bg-gradient-to-br from-[#43a047] to-[#66bb6a]"
-          : "bg-gradient-to-br from-[#e53935] to-[#ef5350]",
-      ].join(" ")}
-    >
-      <div aria-hidden="true" className="mb-4">
+    <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush p-6">
+      {/* 正解 / 不正解 アイコン */}
+      <div className={["mb-4", isCorrect ? "text-primary" : "text-gray-400"].join(" ")} aria-hidden="true">
         {isCorrect ? (
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <path d="m9 12 2 2 4-4"/>
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <path d="m15 9-6 6M9 9l6 6"/>
           </svg>
         )}
       </div>
-      <p className="text-3xl font-bold mb-6" aria-live="polite">
+
+      <p className="font-script text-5xl text-primary mb-6" aria-live="polite">
         {isCorrect ? "正解！" : "不正解..."}
       </p>
 
-      <div className="bg-black/20 rounded-2xl p-6 text-center min-w-[240px]">
-        <p className="text-4xl font-bold mb-3">+{yourAnswer.scoreAwarded}点</p>
-        <p className="text-base mb-2">回答速度: {(yourAnswer.responseTimeMs / 1000).toFixed(2)}秒</p>
-        <p className="text-base mb-2">累計スコア: {yourAnswer.totalScore.toLocaleString()}点</p>
-        <p className="text-xl font-bold">現在 第{yourAnswer.currentRank}位</p>
+      {/* スコアカード */}
+      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-6 text-center">
+        <p className="text-4xl font-bold text-rose-text mb-1">+{yourAnswer.scoreAwarded}<span className="text-lg">点</span></p>
+
+        <div className="flex items-center gap-3 my-3">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
+          <span className="text-accent/60 text-xs">◆</span>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
+        </div>
+
+        <div className="flex flex-col gap-1.5 text-sm text-rose-text/70">
+          <p>回答速度: {(yourAnswer.responseTimeMs / 1000).toFixed(2)}秒</p>
+          <p>累計スコア: {yourAnswer.totalScore.toLocaleString()}点</p>
+          <p className="text-base font-bold text-rose-text mt-1">現在 第{yourAnswer.currentRank}位</p>
+        </div>
       </div>
     </div>
   );

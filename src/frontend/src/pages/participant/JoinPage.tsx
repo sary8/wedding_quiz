@@ -27,37 +27,49 @@ export function JoinPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-primary-dark px-6">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-blush px-6">
+      {/* タイトル */}
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Wedding Quiz</h1>
-        <p className="text-white/80 text-lg">ルームコードを入力して参加</p>
+        <h1 className="font-script text-6xl text-primary mb-1">Wedding Quiz</h1>
+        <div className="flex items-center gap-3 justify-center my-3">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
+          <span className="text-accent text-base">◆</span>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
+        </div>
+        <p className="font-serif-wedding text-rose-text/70 tracking-widest text-sm uppercase">Celebration Game</p>
       </header>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-4">
-        <Input
-          type="text"
-          value={roomCode}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="ルームコード"
-          maxLength={6}
-          label="ルームコード（6文字）"
-          error={error}
-          className="text-3xl tracking-widest uppercase"
-          aria-label="ルームコード（6文字の英数字）"
-          autoComplete="off"
-          autoFocus
-        />
+      {/* カード */}
+      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_32px_rgba(219,39,119,0.12)] border border-primary/10 p-8">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            type="text"
+            value={roomCode}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="XXXXXX"
+            maxLength={6}
+            label="ルームコード（6文字）"
+            error={error}
+            className="text-3xl tracking-widest uppercase text-center"
+            aria-label="ルームコード（6文字の英数字）"
+            autoComplete="off"
+            autoFocus
+          />
 
-        <Button
-          type="submit"
-          variant="accent"
-          size="lg"
-          fullWidth
-          disabled={roomCode.length !== 6}
-        >
-          参加する
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            variant="accent"
+            size="lg"
+            fullWidth
+            disabled={roomCode.length !== 6}
+          >
+            参加する
+          </Button>
+        </form>
+      </div>
+
+      {/* フッター装飾 */}
+      <p className="mt-8 text-primary/40 text-xs">💍 本日はご参加いただきありがとうございます</p>
     </div>
   );
 }

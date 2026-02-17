@@ -75,6 +75,7 @@ export function QuestionPage({ question, timeRemaining, answerCount, totalPartic
       {/* 手動締め切りボタン */}
       <div className="px-6 pb-6 text-center">
         <button
+          type="button"
           onClick={onCloseQuestion}
           className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200"
         >

@@ -15,7 +15,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-dark to-[#16213e] text-white p-6">
-      <h2 className="text-3xl font-bold text-center mb-6">ランキング</h2>
+      <h2 className="font-script text-4xl text-accent text-center mb-6">Ranking</h2>
 
       <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full">
         <AnimatePresence>
@@ -87,14 +87,16 @@ export function RankingPage({ data, onNextQuestion, onEndGame }: Props) {
 
       <div className="flex gap-4 justify-center mt-6">
         <button
+          type="button"
           onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-[#1e88e5] text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px]"
         >
           次の問題
         </button>
         <button
+          type="button"
           onClick={onEndGame}
-          className="px-8 py-4 rounded-xl bg-accent text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           最終結果発表
         </button>

@@ -7,7 +7,6 @@ type Props = {
 
 export function ProfilePage({ onJoin }: Props) {
   const [nickname, setNickname] = useState("");
-  // ref と非ref を分割代入して ESLint の react-hooks/refs 誤検知を回避
   const {
     videoRef,
     canvasRef,
@@ -28,164 +27,136 @@ export function ProfilePage({ onJoin }: Props) {
   }
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #667eea, #764ba2)", padding: 24 }}>
-      <h1 style={{ fontSize: 28, color: "#fff", marginBottom: 24 }}>プロフィール設定</h1>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-blush px-6 py-8">
+      {/* タイトル */}
+      <header className="text-center mb-6">
+        <h1 className="font-script text-4xl text-primary mb-1">プロフィール設定</h1>
+        <div className="flex items-center gap-3 justify-center">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
+          <span className="text-accent text-xs">◆</span>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
+        </div>
+      </header>
 
-      {/* ニックネーム */}
-      <div style={{ marginBottom: 20, width: 280 }}>
-        <label
-          htmlFor="nickname"
-          style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 6, fontWeight: 600 }}
-        >
-          ニックネーム（20文字以内）
-        </label>
-        <input
-          id="nickname"
-          type="text"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value.slice(0, 20))}
-          placeholder="例：花子"
-          maxLength={20}
-          style={{
-            width: "100%",
-            padding: "14px 20px",
-            borderRadius: 12,
-            border: "none",
-            fontSize: 20,
-            textAlign: "center",
-            boxSizing: "border-box",
-          }}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        />
-      </div>
+      {/* カード */}
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_4px_32px_rgba(219,39,119,0.12)] border border-primary/10 p-6 flex flex-col items-center gap-5">
 
-      {/* 自撮りエリア */}
-      <div style={{ marginBottom: 20, textAlign: "center" }}>
-        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>自撮り（任意）</p>
+        {/* ニックネーム */}
+        <div className="w-full">
+          <label
+            htmlFor="nickname"
+            className="block text-sm font-semibold text-rose-text/80 mb-1.5"
+          >
+            ニックネーム（20文字以内）
+          </label>
+          <input
+            id="nickname"
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value.slice(0, 20))}
+            placeholder="例：花子"
+            maxLength={20}
+            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus:border-primary focus:outline-none transition-colors duration-200"
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
+        </div>
 
-        {/* カメラエラー表示 */}
-        {cameraError !== null ? (
-          <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "rgba(239,83,80,0.3)", color: "#fff", fontSize: 13, maxWidth: 280 }}>
-            {cameraError}
-          </div>
-        ) : null}
+        {/* 自撮りエリア */}
+        <div className="text-center">
+          <p className="text-sm text-rose-text/50 mb-3">自撮り（任意）</p>
 
-        {capturedImage !== null ? (
-          // 撮影済み
-          <div>
-            <img
-              src={capturedImage}
-              alt="自撮り"
-              style={{ width: 200, height: 200, borderRadius: "50%", objectFit: "cover", border: "4px solid rgba(255,255,255,0.5)" }}
-            />
-            <div style={{ marginTop: 8 }}>
+          {cameraError !== null ? (
+            <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
+              {cameraError}
+            </div>
+          ) : null}
+
+          {capturedImage !== null ? (
+            <div>
+              <img
+                src={capturedImage}
+                alt="自撮り"
+                className="w-44 h-44 rounded-full object-cover mx-auto border-4 border-primary/30 shadow-md"
+              />
               <button
                 type="button"
                 onClick={retake}
-                style={{ padding: "10px 20px", borderRadius: 8, background: "rgba(255,255,255,0.3)", color: "#fff", fontSize: 14, minHeight: 44 }}
+                className="mt-3 px-5 py-2.5 rounded-full bg-white border border-primary/30 text-primary text-sm hover:bg-primary/5 transition-colors duration-200 min-h-[44px]"
               >
                 撮り直す
               </button>
             </div>
-          </div>
-        ) : isActive ? (
-          // カメラ起動中
-          <div>
-            <div style={{ position: "relative", width: 200, height: 200, borderRadius: "50%", overflow: "hidden", margin: "0 auto", border: "4px solid rgba(255,255,255,0.5)" }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: 200, height: 200, objectFit: "cover", transform: "scaleX(-1)" }}
-              />
-            </div>
+          ) : isActive ? (
+            <div>
+              <div className="w-44 h-44 rounded-full overflow-hidden mx-auto border-4 border-primary/30 shadow-md">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-44 h-44 object-cover scale-x-[-1]"
+                />
+              </div>
 
-            {/* フレーム選択 */}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12 }}>
-              {frameOptions.map((frame) => (
-                <button
-                  key={frame.type}
-                  type="button"
-                  onClick={() => setSelectedFrame(frame.type)}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 16,
-                    background: selectedFrame === frame.type ? "#e91e63" : "rgba(255,255,255,0.2)",
-                    color: "#fff",
-                    fontSize: 12,
-                    minHeight: 44,
-                  }}
-                >
-                  {frame.label}
-                </button>
-              ))}
-            </div>
+              {/* フレーム選択 */}
+              <div className="flex gap-2 justify-center mt-3">
+                {frameOptions.map((frame) => (
+                  <button
+                    key={frame.type}
+                    type="button"
+                    onClick={() => setSelectedFrame(frame.type)}
+                    className={[
+                      "px-3 py-2 rounded-full text-xs border transition-colors duration-150 min-h-[44px]",
+                      selectedFrame === frame.type
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white text-rose-text/60 border-primary/20 hover:border-primary/40",
+                    ].join(" ")}
+                  >
+                    {frame.label}
+                  </button>
+                ))}
+              </div>
 
+              <button
+                type="button"
+                onClick={capture}
+                className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+              >
+                撮影
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={capture}
-              style={{
-                marginTop: 12,
-                padding: "12px 32px",
-                borderRadius: 24,
-                background: "#e91e63",
-                color: "#fff",
-                fontSize: 16,
-                fontWeight: "bold",
-                minHeight: 44,
-              }}
+              onClick={startCamera}
+              className="w-44 h-44 rounded-full border-2 border-dashed border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors duration-200 mx-auto"
             >
-              撮影
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+              <span className="text-sm">自撮りを撮る</span>
             </button>
-          </div>
-        ) : (
-          // カメラ未起動
-          <button
-            type="button"
-            onClick={startCamera}
-            style={{
-              width: 200,
-              height: 200,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.15)",
-              color: "#fff",
-              fontSize: 16,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-              <circle cx="12" cy="13" r="3"/>
-            </svg>
-            <span>自撮りを撮る</span>
-          </button>
-        )}
+          )}
+        </div>
+
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* 参加ボタン */}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!nickname.trim()}
+          className={[
+            "w-full py-4 rounded-xl text-xl font-bold transition-all duration-200 min-h-[44px]",
+            nickname.trim()
+              ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
+              : "bg-primary/20 text-primary/40 cursor-not-allowed",
+          ].join(" ")}
+        >
+          参加する
+        </button>
       </div>
-
-      <canvas ref={canvasRef} style={{ display: "none" }} />
-
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!nickname.trim()}
-        style={{
-          width: 280,
-          padding: 16,
-          borderRadius: 12,
-          background: nickname.trim() ? "#e91e63" : "rgba(255,255,255,0.2)",
-          color: "#fff",
-          fontSize: 20,
-          fontWeight: "bold",
-          minHeight: 44,
-        }}
-      >
-        参加する
-      </button>
     </div>
   );
 }

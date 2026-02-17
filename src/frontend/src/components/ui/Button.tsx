@@ -13,7 +13,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 const variantStyles: Record<ButtonVariant, string> = {
   primary: "bg-gradient-to-r from-primary to-primary-dark text-white hover:opacity-90 disabled:opacity-40",
   secondary: "bg-white/20 text-white hover:bg-white/30 disabled:opacity-40",
-  accent: "bg-accent text-white hover:opacity-90 disabled:opacity-40",
+  accent: "bg-accent text-dark hover:opacity-90 disabled:opacity-40",
   ghost: "bg-transparent text-white hover:bg-white/10 disabled:opacity-40",
 };
 

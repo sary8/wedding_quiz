@@ -17,7 +17,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
 
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">
-      <h2 className="text-3xl font-bold mb-8">回答結果</h2>
+      <h2 className="font-script text-4xl text-accent mb-8">Results</h2>
 
       {/* 回答分布グラフ */}
       <div className="w-full max-w-xl mb-12">
@@ -55,14 +55,16 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion }:
 
       <div className="flex gap-4">
         <button
+          type="button"
           onClick={onShowRanking}
-          className="px-8 py-4 rounded-xl bg-accent text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
         >
           ランキング表示
         </button>
         <button
+          type="button"
           onClick={onNextQuestion}
-          className="px-8 py-4 rounded-xl bg-[#1e88e5] text-white text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+          className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px]"
         >
           次の問題
         </button>

@@ -2,15 +2,26 @@
 
 /* Tailwind v4: テーマのカスタマイズはCSSで定義 */
 @theme {
-  --color-primary: #667eea;
-  --color-primary-dark: #764ba2;
-  --color-accent: #e91e63;
+  /* Wedding Elegance カラーパレット */
+  --color-primary: #DB2777;
+  --color-primary-dark: #9D174D;
+  --color-accent: #CA8A04;
+  --color-accent-light: #FEF3C7;
+  --color-blush: #FDF2F8;
+  --color-rose-text: #831843;
   --color-dark: #1a1a2e;
+
+  /* ゲーム選択肢カラー（変更なし） */
   --color-choice-red: #e53935;
   --color-choice-blue: #1e88e5;
   --color-choice-green: #43a047;
   --color-choice-yellow: #f9a825;
 
+  /* フォント */
+  --font-script: 'Great Vibes', cursive;
+  --font-serif: 'Cormorant Infant', serif;
+
+  /* アニメーション */
   --animate-scale-pulse: scale-pulse 2s ease-in-out infinite;
 }
 
@@ -21,16 +32,15 @@
 
 @layer base {
   html {
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
-      sans-serif;
+    font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     min-height: 100vh;
-    background-color: #f8f9fa;
-    color: #1a1a2e;
+    background-color: #FDF2F8;
+    color: #831843;
   }
 
   #root {
@@ -62,5 +72,13 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+  }
+
+  .font-script {
+    font-family: var(--font-script);
+  }
+
+  .font-serif-wedding {
+    font-family: var(--font-serif);
   }
 }
