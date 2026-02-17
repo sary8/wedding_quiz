@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { QuestionResultData, QuestionData } from "../../types";
 
 type Props = {
@@ -12,8 +13,10 @@ const CHOICE_COLORS = ["#e53935", "#1e88e5", "#43a047", "#f9a825"];
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion }: Props) {
   if (!result) return null;
 
-  const totalAnswers = result.distribution.reduce((s, n) => s + n, 0);
-  const maxCount = Math.max(...result.distribution, 1);
+  const { totalAnswers, maxCount } = useMemo(() => ({
+    totalAnswers: result.distribution.reduce((s, n) => s + n, 0),
+    maxCount: result.distribution.reduce((max, n) => Math.max(max, n), 1),
+  }), [result.distribution]);
 
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">

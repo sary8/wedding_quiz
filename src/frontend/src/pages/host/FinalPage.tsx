@@ -30,6 +30,10 @@ export function FinalPage({ data }: Props) {
 
   const rankings = useMemo(() => data?.rankings ?? [], [data]);
   const reversed = useMemo(() => [...rankings].reverse(), [rankings]);
+  const top3 = useMemo(
+    () => rankings.filter((r) => r.rank <= 3).sort((a, b) => b.rank - a.rank),
+    [rankings],
+  );
 
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
@@ -71,7 +75,6 @@ export function FinalPage({ data }: Props) {
   useEffect(() => {
     if (phase !== "top3") return;
 
-    const top3 = rankings.filter((r) => r.rank <= 3).sort((a, b) => b.rank - a.rank);
     let i = 0;
 
     const timer = setInterval(() => {
@@ -102,7 +105,7 @@ export function FinalPage({ data }: Props) {
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [phase, rankings]);
+  }, [phase, top3]);
 
   if (!data || rankings.length === 0) return null;
 

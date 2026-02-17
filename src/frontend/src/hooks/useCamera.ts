@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 
 export type FrameType = "none" | "heart" | "ribbon" | "gold";
 
@@ -145,6 +145,15 @@ export function useCamera() {
     };
   }, []);
 
+  const frameOptions = useMemo(
+    () =>
+      Object.entries(FRAME_CONFIGS).map(([key, config]) => ({
+        type: key as FrameType,
+        label: config.label,
+      })),
+    [],
+  );
+
   return {
     videoRef,
     canvasRef,
@@ -158,9 +167,6 @@ export function useCamera() {
     retake,
     error,
     isSupported,
-    frameOptions: Object.entries(FRAME_CONFIGS).map(([key, config]) => ({
-      type: key as FrameType,
-      label: config.label,
-    })),
+    frameOptions,
   };
 }

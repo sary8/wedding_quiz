@@ -17,10 +17,12 @@ export function AnswerPage({ question, timeRemaining, hasAnswered, onAnswer }: P
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   const handleChoiceClick = useCallback((choiceIndex: number) => {
-    if (selectedChoice !== null) return;
-    setSelectedChoice(choiceIndex);
-    onAnswer(choiceIndex);
-  }, [selectedChoice, onAnswer]);
+    setSelectedChoice((prev) => {
+      if (prev !== null) return prev;
+      onAnswer(choiceIndex);
+      return choiceIndex;
+    });
+  }, [onAnswer]);
 
   if (!question) return null;
 
