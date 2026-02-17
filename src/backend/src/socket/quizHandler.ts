@@ -1,5 +1,5 @@
 import type { Server, Socket } from "socket.io";
-import type { ServerToClientEvents, ClientToServerEvents } from "../types/index.js";
+import type { ServerToClientEvents, ClientToServerEvents, QuizStatus } from "../types/index.js";
 import * as quizService from "../services/quizService.js";
 import { startTimer, stopTimer, getElapsedMs } from "../services/timerService.js";
 
@@ -99,9 +99,21 @@ export function setupQuizSocket(io: QuizIO) {
 
         if (reconnect) {
           const quiz = await quizService.getQuizByRoom(data.roomCode);
+          const quizStatus = (quiz?.status ?? "lobby") as QuizStatus;
+
+          // in_progress中の再接続: 現在出題中の問題があれば復元データを送信
+          let currentQuestionData = null;
+          if (quizStatus === "in_progress") {
+            const activeQuestionId = activeQuestions.get(data.roomCode);
+            if (activeQuestionId && quiz) {
+              currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+            }
+          }
+
           socket.emit("reconnected", {
             participantId: participant.id,
-            quizStatus: (quiz?.status as any) || "lobby",
+            quizStatus,
+            currentQuestionData,
           });
         } else {
           // 新規参加を全員に通知
@@ -184,6 +196,19 @@ export function setupQuizSocket(io: QuizIO) {
         if (!roomCode) {
           callback({ success: false, error: "ルームの開設に失敗しました" });
           return;
+        }
+
+        // 既存ホストソケットを検知（同一roomCodeで別ソケット）
+        const existingHost = Array.from(socketMeta.entries()).find(
+          ([id, m]) => id !== socket.id && m.roomCode === roomCode && m.participantId === -1
+        );
+        if (existingHost) {
+          // 既存ホストに通知して切断
+          const oldSocket = (await io.in(roomCode).fetchSockets()).find((s) => s.id === existingHost[0]);
+          if (oldSocket) {
+            oldSocket.emit("error", { message: "別のタブでホスト画面が開かれたため、この接続は無効になりました" });
+          }
+          socketMeta.delete(existingHost[0]);
         }
 
         socket.join(roomCode);
@@ -349,8 +374,23 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("disconnect", async () => {
       console.log(`Disconnected: ${socket.id}`);
       const meta = socketMeta.get(socket.id);
-      if (meta && meta.participantId > 0) {
-        await quizService.handleDisconnect(socket.id);
+      if (meta) {
+        if (meta.participantId > 0) {
+          await quizService.handleDisconnect(socket.id);
+        }
+
+        // ホスト切断時: activeQuestionsを掃除してタイマーを停止
+        if (meta.participantId === -1) {
+          const roomCode = meta.roomCode;
+          // 同じroomCodeに別のホストソケットがなければ掃除
+          const hasOtherHost = Array.from(socketMeta.entries()).some(
+            ([id, m]) => id !== socket.id && m.roomCode === roomCode && m.participantId === -1
+          );
+          if (!hasOtherHost) {
+            activeQuestions.delete(roomCode);
+            stopTimer(`question_${roomCode}`);
+          }
+        }
       }
       socketMeta.delete(socket.id);
     });

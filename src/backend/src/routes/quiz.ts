@@ -14,26 +14,39 @@ function generateRoomCode(): string {
   return code;
 }
 
-// クイズ作成
+// クイズ作成（room code衝突時はリトライ）
 quizRoutes.post("/", async (c) => {
   const body = await c.req.json<{ title: string }>();
   if (!body.title?.trim()) {
     return c.json({ error: "タイトルは必須です" }, 400);
   }
 
-  const roomCode = generateRoomCode();
   const hostSecret = nanoid(32);
+  const maxRetries = 5;
 
-  const result = await db
-    .insert(schema.quizzes)
-    .values({
-      room_code: roomCode,
-      host_secret: hostSecret,
-      title: body.title.trim(),
-    })
-    .returning();
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const roomCode = generateRoomCode();
+    try {
+      const result = await db
+        .insert(schema.quizzes)
+        .values({
+          room_code: roomCode,
+          host_secret: hostSecret,
+          title: body.title.trim(),
+        })
+        .returning();
 
-  return c.json(result[0], 201);
+      return c.json(result[0], 201);
+    } catch (e) {
+      const err = e as Error;
+      if (err.message?.includes("UNIQUE constraint failed") && attempt < maxRetries - 1) {
+        continue;
+      }
+      throw e;
+    }
+  }
+
+  return c.json({ error: "ルームコードの生成に失敗しました。もう一度お試しください" }, 500);
 });
 
 // クイズ一覧（host_secretは除外）

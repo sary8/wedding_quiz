@@ -60,6 +60,23 @@ questionRoutes.post("/", async (c) => {
   const auth = await verifyHost(body.quizId, body.key);
   if ("error" in auth) return c.json({ error: auth.error }, auth.status);
 
+  // バリデーション
+  if (!body.text?.trim()) {
+    return c.json({ error: "問題文は必須です" }, 400);
+  }
+  if (!body.choice1?.trim() || !body.choice2?.trim() || !body.choice3?.trim() || !body.choice4?.trim()) {
+    return c.json({ error: "すべての選択肢を入力してください" }, 400);
+  }
+  if (!Number.isInteger(body.correctChoice) || body.correctChoice < 1 || body.correctChoice > 4) {
+    return c.json({ error: "正解は1〜4の整数で指定してください" }, 400);
+  }
+  if (body.timeLimitSeconds !== undefined && (!Number.isInteger(body.timeLimitSeconds) || body.timeLimitSeconds < 5 || body.timeLimitSeconds > 120)) {
+    return c.json({ error: "制限時間は5〜120秒の整数で指定してください" }, 400);
+  }
+  if (body.points !== undefined && (!Number.isInteger(body.points) || body.points < 0 || body.points > 10000)) {
+    return c.json({ error: "配点は0〜10000の整数で指定してください" }, 400);
+  }
+
   // 末尾に追加するためにorder_indexの最大値を取得
   const maxOrder = await db
     .select({ max: sql<number>`COALESCE(MAX(${schema.questions.order_index}), -1)` })
@@ -111,6 +128,17 @@ questionRoutes.put("/:id", async (c) => {
 
   const auth = await verifyHost(question.quiz_id, body.key);
   if ("error" in auth) return c.json({ error: auth.error }, auth.status);
+
+  // バリデーション
+  if (body.correctChoice !== undefined && (!Number.isInteger(body.correctChoice) || body.correctChoice < 1 || body.correctChoice > 4)) {
+    return c.json({ error: "正解は1〜4の整数で指定してください" }, 400);
+  }
+  if (body.timeLimitSeconds !== undefined && (!Number.isInteger(body.timeLimitSeconds) || body.timeLimitSeconds < 5 || body.timeLimitSeconds > 120)) {
+    return c.json({ error: "制限時間は5〜120秒の整数で指定してください" }, 400);
+  }
+  if (body.points !== undefined && (!Number.isInteger(body.points) || body.points < 0 || body.points > 10000)) {
+    return c.json({ error: "配点は0〜10000の整数で指定してください" }, 400);
+  }
 
   const updated = await db
     .update(schema.questions)

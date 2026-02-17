@@ -151,8 +151,10 @@ describe("media routes", () => {
 
   describe("POST /upload", () => {
     it("許可された拡張子 → 201", async () => {
+      // 有効なJPEGマジックバイト (FF D8 FF) + ダミーデータ
+      const jpegBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, ...Array(20).fill(0)]);
       const file = new File(
-        [Buffer.from("fake-jpeg-content")],
+        [jpegBytes],
         "test.jpg",
         { type: "image/jpeg" }
       );
@@ -205,6 +207,27 @@ describe("media routes", () => {
       });
 
       expect(res.status).toBe(400);
+    });
+
+    it("拡張子と内容が不一致 → 400", async () => {
+      // .jpgだがPNGのマジックバイト
+      const pngBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, ...Array(20).fill(0)]);
+      const file = new File(
+        [pngBytes],
+        "fake.jpg",
+        { type: "image/jpeg" }
+      );
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await mediaRoutes.request("/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("拡張子と一致しません");
     });
 
     it("ファイルなし → 400", async () => {

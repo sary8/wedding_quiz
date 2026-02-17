@@ -62,7 +62,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
             placeholder="例：花子…"
             maxLength={20}
             className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-[border-color,box-shadow] duration-200"
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSubmit()}
           />
         </div>
 

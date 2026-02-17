@@ -12,6 +12,32 @@ const UPLOAD_DIR = "./uploads";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
 
+// マジックバイトによるファイルタイプ検証
+function validateMagicBytes(buffer: Buffer, ext: string): boolean {
+  if (buffer.length < 4) return false;
+
+  switch (ext) {
+    case ".jpg":
+    case ".jpeg":
+      return buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+    case ".png":
+      return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+    case ".gif":
+      return buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46;
+    case ".webp":
+      return buffer.length >= 12 && buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46
+        && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+    case ".mp4":
+      // ftyp box
+      return buffer.length >= 8 && buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70;
+    case ".webm":
+      // EBML header
+      return buffer[0] === 0x1A && buffer[1] === 0x45 && buffer[2] === 0xDF && buffer[3] === 0xA3;
+    default:
+      return false;
+  }
+}
+
 // メディアアップロード
 mediaRoutes.post("/upload", async (c) => {
   const body = await c.req.parseBody();
@@ -30,11 +56,16 @@ mediaRoutes.post("/upload", async (c) => {
     return c.json({ error: "許可されていないファイル形式です" }, 400);
   }
 
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (!validateMagicBytes(buffer, ext)) {
+    return c.json({ error: "ファイルの内容が拡張子と一致しません" }, 400);
+  }
+
   await mkdir(UPLOAD_DIR, { recursive: true });
   const filename = `${nanoid(16)}${ext}`;
   const filepath = join(UPLOAD_DIR, filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
 
   return c.json({ url: `/api/media/${filename}` }, 201);
@@ -55,10 +86,19 @@ mediaRoutes.post("/selfie", async (c) => {
   }
 
   const ext = match[1] === "jpeg" ? "jpg" : match[1];
+  const dotExt = `.${ext}`;
+  if (!ALLOWED_EXTENSIONS.has(dotExt)) {
+    return c.json({ error: "許可されていない画像形式です" }, 400);
+  }
+
   const buffer = Buffer.from(match[2], "base64");
 
   if (buffer.length > MAX_FILE_SIZE) {
     return c.json({ error: "画像サイズが5MBを超えています" }, 400);
+  }
+
+  if (!validateMagicBytes(buffer, dotExt)) {
+    return c.json({ error: "画像データの内容が形式と一致しません" }, 400);
   }
 
   await mkdir(UPLOAD_DIR, { recursive: true });

@@ -60,7 +60,12 @@ export function PlayPage() {
       on("reconnected", (data) => {
         setParticipantId(data.participantId);
         setIsJoining(false);
-        if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
+        if (data.quizStatus === "in_progress" && data.currentQuestionData) {
+          // 出題中の問題がある場合は回答画面に復帰
+          setCurrentQuestion(data.currentQuestionData);
+          setHasAnswered(false);
+          setPhase("answer");
+        } else if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
           setPhase("waiting");
         } else if (data.quizStatus === "finished") {
           setPhase("final");
@@ -121,6 +126,10 @@ export function PlayPage() {
       emit("submitAnswer", { questionId, choiceIndex }, (res) => {
         if (!res.success) {
           setAnswerError(res.error || "回答の送信に失敗しました");
+          // 送信失敗時は再選択可能にする（ただし「既に回答済み」エラーの場合は維持）
+          if (!res.error?.includes("既に回答済み")) {
+            setHasAnswered(false);
+          }
         }
       });
     },

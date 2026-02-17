@@ -94,6 +94,64 @@ describe("question routes", () => {
       expect(res.status).toBe(403);
     });
 
+    it("correctChoiceが範囲外 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          key: "test-secret-123",
+          text: "質問",
+          choice1: "A",
+          choice2: "B",
+          choice3: "C",
+          choice4: "D",
+          correctChoice: 5,
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("timeLimitSecondsが範囲外 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          key: "test-secret-123",
+          text: "質問",
+          choice1: "A",
+          choice2: "B",
+          choice3: "C",
+          choice4: "D",
+          correctChoice: 1,
+          timeLimitSeconds: -1,
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("問題文が空 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          key: "test-secret-123",
+          text: "  ",
+          choice1: "A",
+          choice2: "B",
+          choice3: "C",
+          choice4: "D",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
     it("存在しないquizId → 404", async () => {
       const res = await questionRoutes.request("/", {
         method: "POST",
@@ -190,6 +248,21 @@ describe("question routes", () => {
       const data = await res.json();
       expect(data.text).toBe("元の質問テキスト");
       expect(data.choice1).toBe("更新後のA");
+    });
+
+    it("correctChoiceが範囲外で更新 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id);
+
+      const res = await questionRoutes.request(`/${question.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "test-secret-123",
+          correctChoice: 0,
+        }),
+      });
+      expect(res.status).toBe(400);
     });
 
     it("存在しないid → 404", async () => {

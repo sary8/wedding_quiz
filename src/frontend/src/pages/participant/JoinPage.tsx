@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { normalizeRoomCode } from "../../utils/normalizeInput";
 
 export function JoinPage() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export function JoinPage() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const code = roomCode.trim().toUpperCase();
+    const code = normalizeRoomCode(roomCode);
 
     if (code.length !== 6) {
       setError("6文字のルームコードを入力してください");
@@ -22,7 +23,7 @@ export function JoinPage() {
   }
 
   function handleChange(value: string) {
-    setRoomCode(value.toUpperCase().slice(0, 6));
+    setRoomCode(normalizeRoomCode(value).slice(0, 6));
     if (error) setError("");
   }
 
@@ -46,12 +47,15 @@ export function JoinPage() {
             type="text"
             value={roomCode}
             onChange={(e) => handleChange(e.target.value)}
+            onCompositionEnd={(e) => handleChange((e.target as HTMLInputElement).value)}
             placeholder="XXXXXX"
             maxLength={6}
             label="ルームコード（6文字）"
             error={error}
             className="text-3xl tracking-widest uppercase text-center"
             autoComplete="off"
+            autoCapitalize="characters"
+            inputMode="text"
             spellCheck={false}
             autoFocus
           />

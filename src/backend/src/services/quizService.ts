@@ -114,17 +114,26 @@ export async function getLobbyParticipants(roomCode: string): Promise<Participan
   }));
 }
 
-// ゲーム開始
+// ゲーム開始（冪等: 既にin_progressの場合はそのまま成功を返す）
 export async function startGame(roomCode: string) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.room_code, roomCode),
   });
-  if (!quiz || quiz.status !== "lobby") return null;
+  if (!quiz) return null;
+
+  // 既にin_progressなら冪等に成功を返す
+  if (quiz.status === "in_progress") return quiz.id;
+  if (quiz.status !== "lobby") return null;
 
   await db
     .update(schema.quizzes)
     .set({ status: "in_progress", current_question_index: -1 })
-    .where(eq(schema.quizzes.id, quiz.id));
+    .where(
+      and(
+        eq(schema.quizzes.id, quiz.id),
+        eq(schema.quizzes.status, "lobby")
+      )
+    );
 
   return quiz.id;
 }
@@ -409,6 +418,35 @@ async function getCurrentQuestionId(
     .where(eq(schema.questions.quiz_id, quizId))
     .orderBy(asc(schema.questions.order_index));
   return questions[currentQuestionIndex]?.id ?? null;
+}
+
+// 再接続時の問題データ取得
+export async function getReconnectQuestionData(
+  quizId: number,
+  currentQuestionIndex: number
+): Promise<QuestionData | null> {
+  if (currentQuestionIndex < 0) return null;
+
+  const questions = await db
+    .select()
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, quizId))
+    .orderBy(asc(schema.questions.order_index));
+
+  if (currentQuestionIndex >= questions.length) return null;
+  const q = questions[currentQuestionIndex];
+
+  return {
+    questionId: q.id,
+    questionIndex: currentQuestionIndex,
+    totalQuestions: questions.length,
+    text: q.text,
+    mediaType: q.media_type as "none" | "image" | "video",
+    mediaUrl: q.media_url,
+    choices: [q.choice1, q.choice2, q.choice3, q.choice4],
+    timeLimitSeconds: q.time_limit_seconds,
+    points: q.points,
+  };
 }
 
 // quizIdからroomCode取得

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
@@ -16,6 +16,13 @@ const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer }: Props) {
   const timeRemaining = Math.max(0, rawTimeRemaining);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+
+  // hasAnsweredがfalseに戻ったら選択状態をリセット（送信失敗時の再選択対応）
+  useEffect(() => {
+    if (!hasAnswered) {
+      setSelectedChoice(null);
+    }
+  }, [hasAnswered]);
 
   const handleChoiceClick = useCallback((choiceIndex: number) => {
     setSelectedChoice((prev) => {

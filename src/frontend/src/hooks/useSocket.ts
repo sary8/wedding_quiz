@@ -21,7 +21,7 @@ type ServerToClientEvents = {
   rankingUpdate: (data: RankingData) => void;
   gameEnded: (data: FinalResultData) => void;
   error: (data: { message: string }) => void;
-  reconnected: (data: { participantId: number; quizStatus: QuizStatus }) => void;
+  reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null }) => void;
 };
 
 type ClientToServerEvents = {
