@@ -155,6 +155,44 @@ describe("quizService", () => {
       expect(result).not.toHaveProperty("error");
       expect(result).toHaveProperty("reconnect", false);
     });
+
+    it("同一クイズ内のニックネーム重複 → error", async () => {
+      await createTestQuiz({ status: "lobby" });
+      await joinRoom("ABCDEF", "ゲスト1", null, "conn-1");
+      const result = await joinRoom("ABCDEF", "ゲスト1", null, "conn-2");
+      expect(result).toHaveProperty("error", "このニックネームはすでに使われています");
+    });
+
+    it("再接続（token有）は同名でもOK", async () => {
+      const quiz = await createTestQuiz({ status: "lobby" });
+      const existing = await createTestParticipant(quiz.id, {
+        nickname: "ゲスト1",
+        token: "reconnect-token-for-dedup-test123",
+        connectionId: "old-conn",
+      });
+
+      const result = await joinRoom(
+        "ABCDEF",
+        "ゲスト1",
+        null,
+        "new-conn",
+        "reconnect-token-for-dedup-test123"
+      );
+      expect(result).toHaveProperty("reconnect", true);
+      const { participant } = result as { participant: { id: number; token: string }; reconnect: boolean };
+      expect(participant.id).toBe(existing.id);
+    });
+
+    it("別クイズなら同名OK", async () => {
+      await createTestQuiz({ status: "lobby", roomCode: "QUIZ01" });
+      await createTestQuiz({ status: "lobby", roomCode: "QUIZ02" });
+
+      const result1 = await joinRoom("QUIZ01", "ゲスト1", null, "conn-1");
+      expect(result1).not.toHaveProperty("error");
+
+      const result2 = await joinRoom("QUIZ02", "ゲスト1", null, "conn-2");
+      expect(result2).not.toHaveProperty("error");
+    });
   });
 
   describe("handleDisconnect", () => {

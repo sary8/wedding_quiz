@@ -71,6 +71,17 @@ export async function joinRoom(
     }
   }
 
+  // ニックネーム重複チェック
+  const existingNickname = await db.query.participants.findFirst({
+    where: and(
+      eq(schema.participants.quiz_id, quiz.id),
+      eq(schema.participants.nickname, nickname.trim())
+    ),
+  });
+  if (existingNickname) {
+    return { error: "このニックネームはすでに使われています" };
+  }
+
   const token = nanoid(32);
   const result = await db
     .insert(schema.participants)
