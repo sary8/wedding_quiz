@@ -12,18 +12,12 @@ vi.mock("../../hooks/useCamera", () => ({
     canvasRef: { current: null },
     isActive: false,
     capturedImage: mockCapturedImage,
-    selectedFrame: "none" as const,
-    setSelectedFrame: vi.fn(),
     startCamera: vi.fn(),
     stopCamera: vi.fn(),
     capture: vi.fn(),
     retake: vi.fn(),
     error: null,
     isSupported: true,
-    frameOptions: [
-      { type: "none" as const, label: "フレームなし" },
-      { type: "heart" as const, label: "ハート&花" },
-    ],
   }),
 }));
 

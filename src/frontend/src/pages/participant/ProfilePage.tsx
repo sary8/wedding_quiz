@@ -14,13 +14,10 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
     canvasRef,
     isActive,
     capturedImage,
-    selectedFrame,
-    setSelectedFrame,
     startCamera,
     capture,
     retake,
     error: cameraError,
-    frameOptions,
   } = useCamera();
 
   const handleCapture = useCallback(() => {
@@ -109,26 +106,6 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
                   muted
                   className="w-44 h-44 object-cover scale-x-[-1]"
                 />
-              </div>
-
-              {/* フレーム選択 */}
-              <div className="flex gap-2 justify-center mt-3">
-                {frameOptions.map((frame) => (
-                  <button
-                    key={frame.type}
-                    type="button"
-                    onClick={() => setSelectedFrame(frame.type)}
-                    aria-pressed={selectedFrame === frame.type}
-                    className={[
-                      "px-3 py-2 rounded-full text-xs border transition-colors duration-150 min-h-[44px]",
-                      selectedFrame === frame.type
-                        ? "bg-primary text-white border-primary"
-                        : "bg-white text-rose-text/60 border-primary/20 hover:border-primary/40",
-                    ].join(" ")}
-                  >
-                    {frame.label}
-                  </button>
-                ))}
               </div>
 
               {captureError !== null ? (

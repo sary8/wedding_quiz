@@ -38,7 +38,6 @@ describe("useCamera", () => {
 
     expect(result.current.isActive).toBe(false);
     expect(result.current.capturedImage).toBeNull();
-    expect(result.current.selectedFrame).toBe("none");
     expect(result.current.error).toBeNull();
   });
 
@@ -250,23 +249,4 @@ describe("useCamera", () => {
     expect(result.current.error).toContain("見つかりません");
   });
 
-  it("フレーム選択が変更できる", () => {
-    const { result } = renderHook(() => useCamera());
-
-    act(() => {
-      result.current.setSelectedFrame("heart");
-    });
-
-    expect(result.current.selectedFrame).toBe("heart");
-  });
-
-  it("frameOptionsが全フレームを含む", () => {
-    const { result } = renderHook(() => useCamera());
-    const types = result.current.frameOptions.map((f) => f.type);
-
-    expect(types).toContain("none");
-    expect(types).toContain("heart");
-    expect(types).toContain("ribbon");
-    expect(types).toContain("gold");
-  });
 });

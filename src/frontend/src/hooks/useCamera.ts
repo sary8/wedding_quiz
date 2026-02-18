@@ -1,55 +1,4 @@
-import { useRef, useState, useCallback, useEffect, useMemo } from "react";
-
-export type FrameType = "none" | "heart" | "ribbon" | "gold";
-
-const FRAME_CONFIGS: Record<FrameType, { label: string; draw: (ctx: CanvasRenderingContext2D, size: number) => void }> = {
-  none: {
-    label: "フレームなし",
-    draw: () => {},
-  },
-  heart: {
-    label: "ハート&花",
-    draw: (ctx, size) => {
-      ctx.strokeStyle = "#e91e63";
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, size - 8, size - 8);
-      // ハートを四隅に描画
-      const hearts = [[20, 20], [size - 40, 20], [20, size - 40], [size - 40, size - 40]];
-      ctx.fillStyle = "#e91e63";
-      ctx.font = "24px serif";
-      hearts.forEach(([x, y]) => ctx.fillText("❤", x, y + 20));
-      // 花を上下に描画
-      ctx.font = "18px serif";
-      ctx.fillText("🌸", size / 2 - 10, 22);
-      ctx.fillText("🌸", size / 2 - 10, size - 8);
-    },
-  },
-  ribbon: {
-    label: "リボン",
-    draw: (ctx, size) => {
-      ctx.strokeStyle = "#ff80ab";
-      ctx.lineWidth = 10;
-      ctx.strokeRect(5, 5, size - 10, size - 10);
-      ctx.font = "28px serif";
-      ctx.fillText("🎀", size / 2 - 14, 30);
-      ctx.fillText("🎀", size / 2 - 14, size - 6);
-    },
-  },
-  gold: {
-    label: "ゴールド",
-    draw: (ctx, size) => {
-      const gradient = ctx.createLinearGradient(0, 0, size, size);
-      gradient.addColorStop(0, "#ffd700");
-      gradient.addColorStop(0.5, "#ffec8b");
-      gradient.addColorStop(1, "#ffd700");
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 12;
-      ctx.strokeRect(6, 6, size - 12, size - 12);
-      ctx.lineWidth = 4;
-      ctx.strokeRect(16, 16, size - 32, size - 32);
-    },
-  },
-};
+import { useRef, useState, useCallback, useEffect } from "react";
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -57,7 +6,6 @@ export function useCamera() {
   const streamRef = useRef<MediaStream | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [selectedFrame, setSelectedFrame] = useState<FrameType>("none");
   const [error, setError] = useState<string | null>(null);
 
   const isSupported = typeof navigator !== "undefined"
@@ -121,14 +69,11 @@ export function useCamera() {
     ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, size, size);
     ctx.restore();
 
-    // フレーム描画
-    FRAME_CONFIGS[selectedFrame].draw(ctx, size);
-
     const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
     setCapturedImage(dataUrl);
     stopCamera();
     return dataUrl;
-  }, [selectedFrame, stopCamera]);
+  }, [stopCamera]);
 
   const retake = useCallback(() => {
     setCapturedImage(null);
@@ -151,28 +96,16 @@ export function useCamera() {
     };
   }, []);
 
-  const frameOptions = useMemo(
-    () =>
-      Object.entries(FRAME_CONFIGS).map(([key, config]) => ({
-        type: key as FrameType,
-        label: config.label,
-      })),
-    [],
-  );
-
   return {
     videoRef,
     canvasRef,
     isActive,
     capturedImage,
-    selectedFrame,
-    setSelectedFrame,
     startCamera,
     stopCamera,
     capture,
     retake,
     error,
     isSupported,
-    frameOptions,
   };
 }
