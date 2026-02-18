@@ -10,7 +10,7 @@ type Props = {
   onSpotlight?: (rank: number) => void;
 };
 
-type RevealPhase = "scroll" | "top3" | "winner" | "done";
+type RevealPhase = "scroll" | "top3" | "winner" | "done" | "group";
 
 function getScrollDelay(rank: number): number {
   if (rank > 20) return 200;
@@ -24,6 +24,11 @@ const MEDAL_CLASSES: Record<number, string> = {
   2: "bg-medal-silver",
   3: "bg-medal-bronze",
 };
+
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
 
 export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
@@ -127,9 +132,21 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
     return () => { cancelled = true; };
   }, [phase, top3, prefersReducedMotion]);
 
+  // done → 5秒後に group フェーズへ自動遷移
+  useEffect(() => {
+    if (phase !== "done") return;
+    const timer = setTimeout(() => setPhase("group"), 5000);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
   if (!data || rankings.length === 0) return null;
+
+  // 集合写真フェーズ
+  if (phase === "group") {
+    return <GroupPhotoView rankings={rankings} onReplay={onReplay} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
+  }
 
   // Top3 スポットライト表示
   if ((phase === "top3" || phase === "done") && spotlightEntry) {
@@ -246,6 +263,85 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
           </motion.div>
         ))}
       </AnimatePresence>
+    </div>
+  );
+}
+
+type GroupPhotoProps = {
+  rankings: FinalRankingEntry[];
+  onReplay?: () => void;
+  isDisplay?: boolean;
+  prefersReducedMotion: boolean | null;
+};
+
+function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }: GroupPhotoProps) {
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+  }, [prefersReducedMotion]);
+
+  return (
+    <div className="min-h-[100dvh] bg-dark flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* タイトル */}
+      <motion.h2
+        initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="font-script text-4xl md:text-5xl text-accent mb-8 text-center z-10"
+      >
+        みんなで記念撮影！
+      </motion.h2>
+
+      {/* グリッド */}
+      <div className="flex flex-wrap justify-center gap-3 max-w-5xl z-10">
+        {rankings.map((entry, i) => {
+          const rotate = seededRandom(entry.participantId) * 12 - 6;
+          return (
+            <motion.div
+              key={entry.participantId}
+              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0, rotate: rotate * 2 }}
+              animate={{ opacity: 1, scale: 1, rotate }}
+              transition={prefersReducedMotion
+                ? { duration: 0 }
+                : { delay: i * 0.05, duration: 0.4, type: "spring", stiffness: 200 }
+              }
+              className="flex flex-col items-center"
+            >
+              {entry.selfieUrl ? (
+                <img
+                  src={entry.selfieUrl}
+                  alt={`${entry.nickname}のアバター`}
+                  width={80}
+                  height={80}
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-white/60 shadow-lg"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-white/60 shadow-lg">
+                  {entry.nickname?.[0] || "?"}
+                </div>
+              )}
+              <span className="text-white/80 text-xs mt-1 max-w-[80px] truncate text-center">
+                {entry.nickname}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* もう一度プレイ */}
+      {onReplay && !isDisplay && (
+        <motion.button
+          type="button"
+          onClick={onReplay}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: Math.min(rankings.length * 0.05 + 0.5, 3) }}
+          className="mt-10 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-all duration-200 z-10"
+        >
+          もう一度プレイ
+        </motion.button>
+      )}
     </div>
   );
 }
