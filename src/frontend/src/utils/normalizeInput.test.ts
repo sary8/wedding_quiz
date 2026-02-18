@@ -28,20 +28,20 @@ describe("toHalfWidth", () => {
 });
 
 describe("normalizeRoomCode", () => {
-  it("全角英数字を半角大文字に変換する", () => {
-    expect(normalizeRoomCode("ａｂｃ１２３")).toBe("ABC123");
+  it("全角数字を半角に変換して数字のみ抽出する", () => {
+    expect(normalizeRoomCode("１２３４５６")).toBe("123456");
   });
 
-  it("小文字を大文字にする", () => {
-    expect(normalizeRoomCode("abcdef")).toBe("ABCDEF");
+  it("英字を除去する", () => {
+    expect(normalizeRoomCode("abc123")).toBe("123");
   });
 
-  it("英数字以外を除去する", () => {
-    expect(normalizeRoomCode("AB-CD_12")).toBe("ABCD12");
+  it("数字以外を除去する", () => {
+    expect(normalizeRoomCode("12-34_56")).toBe("123456");
   });
 
   it("日本語文字を除去する", () => {
-    expect(normalizeRoomCode("あABいC")).toBe("ABC");
+    expect(normalizeRoomCode("あ1い2う3")).toBe("123");
   });
 
   it("空文字列を処理する", () => {
@@ -49,6 +49,10 @@ describe("normalizeRoomCode", () => {
   });
 
   it("スペースを除去する", () => {
-    expect(normalizeRoomCode("AB CD")).toBe("ABCD");
+    expect(normalizeRoomCode("12 34")).toBe("1234");
+  });
+
+  it("数字のみ保持する", () => {
+    expect(normalizeRoomCode("0123456789")).toBe("0123456789");
   });
 });

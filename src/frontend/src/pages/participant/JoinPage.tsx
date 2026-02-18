@@ -14,7 +14,7 @@ export function JoinPage() {
     const code = normalizeRoomCode(roomCode);
 
     if (code.length !== 6) {
-      setError("6文字のルームコードを入力してください");
+      setError("6桁のルームコードを入力してください");
       return;
     }
 
@@ -48,14 +48,13 @@ export function JoinPage() {
             value={roomCode}
             onChange={(e) => handleChange(e.target.value)}
             onCompositionEnd={(e) => handleChange((e.target as HTMLInputElement).value)}
-            placeholder="XXXXXX"
+            placeholder="000000"
             maxLength={6}
-            label="ルームコード（6文字）"
+            label="ルームコード（6桁）"
             error={error}
-            className="text-3xl tracking-widest uppercase text-center"
+            className="text-3xl tracking-widest text-center"
             autoComplete="off"
-            autoCapitalize="characters"
-            inputMode="text"
+            inputMode="numeric"
             spellCheck={false}
             autoFocus
           />
