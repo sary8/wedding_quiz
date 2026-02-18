@@ -7,6 +7,7 @@ type Props = {
   data: FinalResultData | null;
   onReplay?: () => void;
   isDisplay?: boolean;
+  onSpotlight?: (rank: number) => void;
 };
 
 type RevealPhase = "scroll" | "top3" | "winner" | "done";
@@ -24,7 +25,7 @@ const MEDAL_CLASSES: Record<number, string> = {
   3: "bg-medal-bronze",
 };
 
-export function FinalPage({ data, onReplay, isDisplay }: Props) {
+export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
@@ -100,6 +101,10 @@ export function FinalPage({ data, onReplay, isDisplay }: Props) {
 
       const entry = top3[i];
       setSpotlightEntry(entry);
+
+      if (onSpotlight && entry.rank >= 1 && entry.rank <= 3) {
+        onSpotlight(entry.rank);
+      }
 
       if (!prefersReducedMotion) {
         if (entry.rank === 3) {

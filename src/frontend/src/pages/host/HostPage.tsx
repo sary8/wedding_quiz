@@ -8,6 +8,7 @@ import type {
   RankingData,
   FinalResultData,
 } from "../../types";
+import { useGameSounds } from "../../hooks/useGameSounds";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
 import { ResultsPage } from "./ResultsPage";
@@ -16,14 +17,13 @@ import { FinalPage } from "./FinalPage";
 
 type HostPhase = "lobby" | "question" | "results" | "ranking" | "final" | "recovering";
 
-const NOOP = () => {}; // stable reference
-
 export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const [searchParams] = useSearchParams();
   const hostSecret = searchParams.get("key") || "";
   const quizId = Number(searchParams.get("quizId")) || 0;
   const { emit, on, isConnected, connectionError } = useSocket();
+  const sounds = useGameSounds();
 
   const [phase, setPhase] = useState<HostPhase>("lobby");
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
@@ -40,27 +40,41 @@ export function HostPage() {
   useEffect(() => {
     const unsubs = [
       on("lobbyUpdate", (data) => setParticipants(data.participants)),
+      on("participantJoined", () => {
+        sounds.playJoinChime();
+      }),
       on("questionStarted", (data) => {
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setAnswerCount(0);
         setQuestionResult(null);
         setPhase("question");
+        sounds.playQuestionStart();
       }),
-      on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
+      on("timeUpdate", (data) => {
+        setTimeRemaining(data.remaining);
+        if (data.remaining <= 5 && data.remaining > 0) {
+          sounds.playTick();
+        }
+      }),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
-      on("questionClosed", NOOP),
+      on("questionClosed", () => {
+        sounds.playBuzzer();
+      }),
       on("questionResult", (data) => {
         setQuestionResult(data);
         setPhase("results");
+        sounds.playResultReveal();
       }),
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setPhase("ranking");
+        sounds.playRankingFanfare();
       }),
       on("gameEnded", (data) => {
         setFinalData(data);
         setPhase("final");
+        sounds.playDrumRoll();
       }),
       on("quizReset", () => {
         setPhase("lobby");
@@ -238,7 +252,7 @@ export function HostPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} onReplay={handleReplay} />
+          <FinalPage data={finalData} onReplay={handleReplay} onSpotlight={(rank) => sounds.playFanfare(rank)} />
         </>
       );
     case "recovering":

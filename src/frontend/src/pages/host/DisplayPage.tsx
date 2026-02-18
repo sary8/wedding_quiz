@@ -8,6 +8,7 @@ import type {
   RankingData,
   FinalResultData,
 } from "../../types";
+import { useGameSounds } from "../../hooks/useGameSounds";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
 import { ResultsPage } from "./ResultsPage";
@@ -21,6 +22,7 @@ const NOOP = () => {}; // stable reference for display-only props
 export function DisplayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const { emit, on, isConnected, connectionError } = useSocket();
+  const sounds = useGameSounds();
 
   const [phase, setPhase] = useState<DisplayPhase>("lobby");
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
@@ -41,6 +43,7 @@ export function DisplayPage() {
           if (prev.some((p) => p.id === participant.id)) return prev;
           return [...prev, participant];
         });
+        sounds.playJoinChime();
       }),
       on("questionStarted", (data) => {
         setCurrentQuestion(data);
@@ -48,21 +51,32 @@ export function DisplayPage() {
         setAnswerCount(0);
         setQuestionResult(null);
         setPhase("question");
+        sounds.playQuestionStart();
       }),
-      on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
+      on("timeUpdate", (data) => {
+        setTimeRemaining(data.remaining);
+        if (data.remaining <= 5 && data.remaining > 0) {
+          sounds.playTick();
+        }
+      }),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
-      on("questionClosed", NOOP),
+      on("questionClosed", () => {
+        sounds.playBuzzer();
+      }),
       on("questionResult", (data) => {
         setQuestionResult(data);
         setPhase("results");
+        sounds.playResultReveal();
       }),
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setPhase("ranking");
+        sounds.playRankingFanfare();
       }),
       on("gameEnded", (data) => {
         setFinalData(data);
         setPhase("final");
+        sounds.playDrumRoll();
       }),
       on("quizReset", () => {
         setPhase("lobby");
@@ -164,7 +178,7 @@ export function DisplayPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} isDisplay={true} />
+          <FinalPage data={finalData} isDisplay={true} onSpotlight={(rank) => sounds.playFanfare(rank)} />
         </>
       );
   }
