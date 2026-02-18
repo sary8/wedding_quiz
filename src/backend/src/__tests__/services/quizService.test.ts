@@ -28,6 +28,7 @@ const {
   getFinalResult,
   getQuizByRoom,
   getParticipant,
+  replayQuiz,
 } = await import("../../services/quizService.js");
 
 import { eq } from "drizzle-orm";
@@ -741,6 +742,68 @@ describe("quizService", () => {
       expect(result.rankings[0].correctCount).toBe(0);
       expect(result.rankings[0].averageResponseTimeMs).toBe(0);
       expect(result.rankings[0].fastestResponseTimeMs).toBe(0);
+    });
+  });
+
+  describe("replayQuiz", () => {
+    it("finished → lobby リセット、回答削除、スコアリセット", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      const q1 = await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "プレイヤー1",
+        totalScore: 1000,
+        currentRank: 1,
+        token: "replay-token-1",
+      });
+
+      await createTestAnswer({
+        questionId: q1.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 2000,
+        scoreAwarded: 1000,
+      });
+
+      // まずfinishedにする
+      await getFinalResult("ABCDEF");
+      const beforeReplay = await db.query.quizzes.findFirst({
+        where: eq(schema.quizzes.id, quiz.id),
+      });
+      expect(beforeReplay!.status).toBe("finished");
+
+      const result = await replayQuiz(quiz.id, "test-secret-123");
+      expect(result).toHaveProperty("success", true);
+
+      // status → lobby
+      const updated = await db.query.quizzes.findFirst({
+        where: eq(schema.quizzes.id, quiz.id),
+      });
+      expect(updated!.status).toBe("lobby");
+      expect(updated!.current_question_index).toBe(-1);
+
+      // スコアリセット
+      const updatedP = await db.query.participants.findFirst({
+        where: eq(schema.participants.id, p1.id),
+      });
+      expect(updatedP!.total_score).toBe(0);
+      expect(updatedP!.current_rank).toBe(0);
+
+      // 回答データ削除
+      const answerCount = await getAnswerCount(q1.id);
+      expect(answerCount).toBe(0);
+    });
+
+    it("finished以外 → error", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      const result = await replayQuiz(quiz.id, "test-secret-123");
+      expect(result).toHaveProperty("error", "終了済みのクイズのみリプレイできます");
+    });
+
+    it("認証エラー → error", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+      const result = await replayQuiz(quiz.id, "wrong-secret");
+      expect(result).toHaveProperty("error", "認証エラー");
     });
   });
 

@@ -62,6 +62,16 @@ export function HostPage() {
         setFinalData(data);
         setPhase("final");
       }),
+      on("quizReset", () => {
+        setPhase("lobby");
+        setCurrentQuestion(null);
+        setTimeRemaining(0);
+        setAnswerCount(0);
+        setQuestionResult(null);
+        setRankingData(null);
+        setFinalData(null);
+        setError(null);
+      }),
     ];
     return () => unsubs.forEach((u) => u());
   }, [on]);
@@ -134,6 +144,15 @@ export function HostPage() {
     emit("endGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "ゲーム終了に失敗しました");
+    });
+  }, [roomCode, hostSecret, emit, isProcessing]);
+
+  const handleReplay = useCallback(() => {
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
+    emit("replayQuiz", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
+      if (!res.success) setError(res.error || "リプレイに失敗しました");
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
 
@@ -213,7 +232,7 @@ export function HostPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} />
+          <FinalPage data={finalData} onReplay={handleReplay} />
         </>
       );
   }

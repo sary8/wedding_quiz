@@ -29,6 +29,7 @@ export type ServerToClientEvents = {
   gameEnded: (data: FinalResultData) => void;
   error: (data: { message: string }) => void;
   reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null }) => void;
+  quizReset: () => void;
 };
 
 // Socket.io client → server events
@@ -69,6 +70,10 @@ export type ClientToServerEvents = {
   ) => void;
   watchRoom: (
     data: { roomCode: string },
+    callback: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  replayQuiz: (
+    data: { roomCode: string; hostSecret: string },
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
 };

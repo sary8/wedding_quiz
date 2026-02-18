@@ -58,6 +58,14 @@ export function PlayPage() {
         setFinalData(data);
         setPhase("final");
       }),
+      on("quizReset", () => {
+        setPhase("waiting");
+        setCurrentQuestion(null);
+        setTimeRemaining(0);
+        setHasAnswered(false);
+        setQuestionResult(null);
+        setFinalData(null);
+      }),
       on("reconnected", (data) => {
         setParticipantId(data.participantId);
         setIsJoining(false);

@@ -358,6 +358,36 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ホスト: リプレイ ===
+    socket.on("replayQuiz", async (data, callback) => {
+      try {
+        const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
+        if (!quiz) {
+          callback({ success: false, error: "認証エラー" });
+          return;
+        }
+
+        const result = await quizService.replayQuiz(quiz.id, quiz.host_secret);
+        if ("error" in result) {
+          callback({ success: false, error: result.error });
+          return;
+        }
+
+        activeQuestions.delete(data.roomCode);
+        stopTimer(`question_${data.roomCode}`);
+
+        io.to(data.roomCode).emit("quizReset");
+
+        const participants = await quizService.getLobbyParticipants(data.roomCode);
+        io.to(data.roomCode).emit("lobbyUpdate", { participants });
+
+        callback({ success: true });
+      } catch (e) {
+        console.error("replayQuiz error:", e);
+        callback({ success: false, error: "リプレイに失敗しました" });
+      }
+    });
+
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {

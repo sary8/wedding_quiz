@@ -1,5 +1,5 @@
 import { db, schema } from "../db/index.js";
-import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { eq, and, asc, desc, sql, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { calculateScore } from "./scoringService.js";
 import type {
@@ -426,6 +426,49 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
     .where(eq(schema.quizzes.id, quiz.id));
 
   return { rankings };
+}
+
+// リプレイ（ゲームリセット）
+export async function replayQuiz(quizId: number, hostSecret: string) {
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, quizId),
+  });
+  if (!quiz || quiz.host_secret !== hostSecret) return { error: "認証エラー" };
+  if (quiz.status !== "finished") return { error: "終了済みのクイズのみリプレイできます" };
+
+  const questionRows = await db
+    .select({ id: schema.questions.id })
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, quizId));
+  const questionIds = questionRows.map((q) => q.id);
+
+  const ops = [];
+
+  if (questionIds.length > 0) {
+    ops.push(
+      db.delete(schema.answers).where(inArray(schema.answers.question_id, questionIds))
+    );
+  }
+
+  ops.push(
+    db
+      .update(schema.participants)
+      .set({ total_score: 0, current_rank: 0 })
+      .where(eq(schema.participants.quiz_id, quizId))
+  );
+
+  ops.push(
+    db
+      .update(schema.quizzes)
+      .set({ status: "lobby", current_question_index: -1 })
+      .where(eq(schema.quizzes.id, quizId))
+  );
+
+  if (ops.length > 0) {
+    await db.batch(ops as [typeof ops[0], ...typeof ops]);
+  }
+
+  return { success: true };
 }
 
 // ヘルパー: 現在の問題ID取得

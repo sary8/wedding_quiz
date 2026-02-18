@@ -5,6 +5,8 @@ import type { FinalResultData, FinalRankingEntry } from "../../types";
 
 type Props = {
   data: FinalResultData | null;
+  onReplay?: () => void;
+  isDisplay?: boolean;
 };
 
 type RevealPhase = "scroll" | "top3" | "winner" | "done";
@@ -22,7 +24,7 @@ const MEDAL_CLASSES: Record<number, string> = {
   3: "bg-medal-bronze",
 };
 
-export function FinalPage({ data }: Props) {
+export function FinalPage({ data, onReplay, isDisplay }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
@@ -149,6 +151,16 @@ export function FinalPage({ data }: Props) {
           >
             {isPaused ? "再開" : "一時停止"}
           </button>
+
+          {phase === "done" && onReplay && !isDisplay && (
+            <button
+              type="button"
+              onClick={onReplay}
+              className="absolute bottom-8 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-all duration-200"
+            >
+              もう一度プレイ
+            </button>
+          )}
 
           <motion.div
             initial={prefersReducedMotion ? false : { y: -50 }}
