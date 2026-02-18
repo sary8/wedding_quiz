@@ -139,17 +139,6 @@ export function HostPage() {
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
 
-  // カウントダウン: 5→4→3→2→1→0 → 最初の問題を配信
-  useEffect(() => {
-    if (phase !== "countdown") return;
-    if (countdownValue <= 0) {
-      handleNextQuestion();
-      return;
-    }
-    const timer = setTimeout(() => setCountdownValue((v) => v - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [phase, countdownValue]);
-
   const handleNextQuestion = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
@@ -159,6 +148,17 @@ export function HostPage() {
       if (!res.success) setError(res.error || "問題の配信に失敗しました");
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
+
+  // カウントダウン: 5→4→3→2→1→0 → 最初の問題を配信
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (countdownValue <= 0) {
+      const t = setTimeout(handleNextQuestion, 0);
+      return () => clearTimeout(t);
+    }
+    const timer = setTimeout(() => setCountdownValue((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [phase, countdownValue, handleNextQuestion]);
 
   const handleCloseQuestion = useCallback(() => {
     if (!roomCode || isProcessing) return;
