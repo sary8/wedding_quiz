@@ -2,19 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import type { Question } from "../../types";
 import { uploadMedia, addQuestion, updateQuestion, deleteQuestion, addBankQuestion } from "../../services/api";
 import { cn } from "../../utils/cn";
-import { ModalShell } from "./ModalShell";
 import { CHOICE_BG_CLASSES, CHOICE_BORDER_CLASSES, CHOICE_TEXT_CLASSES, CHOICE_BG_LIGHT_CLASSES, CHOICE_LABELS } from "./constants";
 
 type Props = {
-  isOpen: boolean;
-  onClose: () => void;
   question: Question | null;
   quizId: number;
   hostSecret: string;
   onSaved: () => void;
+  onCancel: () => void;
 };
 
-export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecret, onSaved }: Props) {
+export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCancel }: Props) {
   const [text, setText] = useState("");
   const [choices, setChoices] = useState(["", "", "", ""]);
   const [correctChoice, setCorrectChoice] = useState(1);
@@ -27,14 +25,13 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
-  const [savedToBank, setSavedToBank] = useState(false);
+  const [savedToTemplate, setSavedToTemplate] = useState(false);
   const previewObjectUrlRef = useRef<string | null>(null);
 
   const isEditing = question !== null;
+  const formId = question ? `edit-${question.id}` : "new";
 
-  // Prefill form when opening with a question
   useEffect(() => {
-    if (!isOpen) return;
     if (question) {
       setText(question.text);
       setChoices([question.choice1, question.choice2, question.choice3, question.choice4]);
@@ -51,10 +48,9 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
     }
     setError(null);
     setPendingDelete(false);
-    setSavedToBank(false);
-  }, [isOpen, question]);
+    setSavedToTemplate(false);
+  }, [question]);
 
-  // Cleanup ObjectURL on unmount
   useEffect(() => {
     return () => {
       if (previewObjectUrlRef.current) {
@@ -141,7 +137,6 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
         });
       }
       onSaved();
-      onClose();
     } catch {
       setError(isEditing ? "問題の更新に失敗しました" : "問題の追加に失敗しました");
     } finally {
@@ -156,7 +151,6 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
     try {
       await deleteQuestion(question.id, hostSecret);
       onSaved();
-      onClose();
     } catch {
       setError("問題の削除に失敗しました");
     } finally {
@@ -164,7 +158,7 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
     }
   }
 
-  async function handleSaveToBank() {
+  async function handleSaveToTemplate() {
     if (!question) return;
     try {
       await addBankQuestion({
@@ -179,51 +173,17 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
         mediaType: question.media_type,
         mediaUrl: question.media_url ?? undefined,
       });
-      setSavedToBank(true);
-      setTimeout(() => setSavedToBank(false), 2000);
+      setSavedToTemplate(true);
+      setTimeout(() => setSavedToTemplate(false), 2000);
     } catch {
-      setError("バンクへの保存に失敗しました");
+      setError("テンプレートへの保存に失敗しました");
     }
   }
 
   const canSave = text.trim() && choices.every((c) => c.trim()) && !isSaving && !isUploading;
 
-  const footer = (
-    <div className="flex justify-between items-center">
-      <button
-        type="button"
-        onClick={onClose}
-        className="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors duration-150 min-h-[44px]"
-      >
-        キャンセル
-      </button>
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={!canSave}
-        className={cn(
-          "px-7 py-2.5 rounded-lg text-sm font-bold text-white transition-colors duration-150 min-h-[44px]",
-          canSave
-            ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
-            : "bg-gray-300 cursor-not-allowed",
-        )}
-      >
-        {isSaving
-          ? (isEditing ? "保存中…" : "追加中…")
-          : isUploading
-            ? "アップロード中…"
-            : (isEditing ? "変更を保存" : "この問題を追加")}
-      </button>
-    </div>
-  );
-
   return (
-    <ModalShell
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isEditing ? "問題を編集" : "新しい問題を追加"}
-      footer={footer}
-    >
+    <div className="p-4 border-t border-gray-100">
       {error && (
         <button
           type="button"
@@ -236,11 +196,11 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
 
       {/* 問題文 */}
       <div className="mb-4">
-        <label htmlFor="modal-question-text" className="block text-sm text-gray-600 mb-1 font-semibold">
+        <label htmlFor={`question-text-${formId}`} className="block text-sm text-gray-600 mb-1 font-semibold">
           問題文
         </label>
         <input
-          id="modal-question-text"
+          id={`question-text-${formId}`}
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -257,12 +217,12 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
           type="file"
           accept=".jpg,.jpeg,.png,.gif,.webp"
           className="sr-only"
-          id="modal-question-image-input"
+          id={`question-image-${formId}`}
           onChange={handleFileSelect}
         />
         {!previewUrl ? (
           <label
-            htmlFor="modal-question-image-input"
+            htmlFor={`question-image-${formId}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-sm text-gray-500 cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150"
           >
             画像を選択
@@ -298,7 +258,7 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
               </button>
               {!isUploading && !uploadError && (
                 <label
-                  htmlFor="modal-question-image-input"
+                  htmlFor={`question-image-${formId}`}
                   className="px-3 py-1 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 cursor-pointer text-center"
                 >
                   変更
@@ -389,20 +349,20 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
         </div>
       </div>
 
-      {/* 編集時のみ: バンク保存 + 削除 */}
+      {/* 編集時のみ: テンプレート保存 + 削除 */}
       {isEditing && (
-        <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+        <div className="pt-4 border-t border-gray-100 flex justify-between items-center mb-4">
           <button
             type="button"
-            onClick={handleSaveToBank}
+            onClick={handleSaveToTemplate}
             className={cn(
               "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px]",
-              savedToBank
+              savedToTemplate
                 ? "text-green-600 border-green-600 bg-green-50"
                 : "text-purple-600 border-purple-600 hover:bg-purple-50",
             )}
           >
-            {savedToBank ? "保存済み" : "バンクに保存"}
+            {savedToTemplate ? "保存済み" : "テンプレートに保存"}
           </button>
 
           {pendingDelete ? (
@@ -433,6 +393,34 @@ export function QuestionFormModal({ isOpen, onClose, question, quizId, hostSecre
           )}
         </div>
       )}
-    </ModalShell>
+
+      {/* フッター: キャンセル+保存 */}
+      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors duration-150 min-h-[44px]"
+        >
+          キャンセル
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!canSave}
+          className={cn(
+            "px-7 py-2.5 rounded-lg text-sm font-bold text-white transition-colors duration-150 min-h-[44px]",
+            canSave
+              ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
+              : "bg-gray-300 cursor-not-allowed",
+          )}
+        >
+          {isSaving
+            ? (isEditing ? "保存中…" : "追加中…")
+            : isUploading
+              ? "アップロード中…"
+              : (isEditing ? "変更を保存" : "この問題を追加")}
+        </button>
+      </div>
+    </div>
   );
 }

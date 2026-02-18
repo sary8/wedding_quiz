@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes, updateQuiz } from "../../services/api";
+import { createQuiz, getQuiz, listQuizzes } from "../../services/api";
 import type { Quiz, QuizSummary } from "../../types";
+import { NewQuizForm } from "../../components/setup/NewQuizForm";
 import { QuizSelector } from "../../components/setup/QuizSelector";
-import { QuestionList } from "../../components/setup/QuestionList";
+import { TabBar } from "../../components/setup/TabBar";
+import { QuizConfigTab } from "../../components/setup/QuizConfigTab";
+import { QuestionManagementTab } from "../../components/setup/QuestionManagementTab";
 
-// host_secretをlocalStorageに保存/取得
 function saveHostSecret(quizId: number, secret: string) {
   localStorage.setItem(`host_secret_${quizId}`, secret);
 }
+
 function getHostSecret(quizId: number): string | null {
   return localStorage.getItem(`host_secret_${quizId}`);
 }
@@ -19,6 +22,7 @@ export function SetupPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"config" | "questions">("config");
 
   useEffect(() => {
     loadQuizzes();
@@ -41,6 +45,7 @@ export function SetupPage() {
       saveHostSecret(quiz.id, quiz.host_secret);
       await loadQuizzes();
       setSelectedQuiz(quiz);
+      setActiveTab("questions");
     } catch {
       setError("クイズの作成に失敗しました");
     } finally {
@@ -58,9 +63,15 @@ export function SetupPage() {
     try {
       const quiz = await getQuiz(summary.id, key);
       setSelectedQuiz(quiz);
+      setActiveTab("config");
     } catch {
       setError("クイズの取得に失敗しました（キーが不正な可能性があります）");
     }
+  }
+
+  function handleChangeQuiz() {
+    setSelectedQuiz(null);
+    setActiveTab("config");
   }
 
   const handleStartLobby = useCallback(() => {
@@ -77,29 +88,10 @@ export function SetupPage() {
     }
   }, [selectedQuiz]);
 
-  // Title editing
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-
-  function handleStartEditTitle() {
-    if (!selectedQuiz) return;
-    setEditTitle(selectedQuiz.title);
-    setIsEditingTitle(true);
-  }
-
-  async function handleSaveTitle() {
-    if (!selectedQuiz || !editTitle.trim()) return;
-    const key = getHostSecret(selectedQuiz.id);
-    if (!key) return;
-    try {
-      await updateQuiz(selectedQuiz.id, key, editTitle.trim());
-      setIsEditingTitle(false);
-      await loadQuizzes();
-      await handleQuestionUpdate();
-    } catch {
-      setError("タイトルの更新に失敗しました");
-    }
-  }
+  const handleTitleSaved = useCallback(async () => {
+    await loadQuizzes();
+    await handleQuestionUpdate();
+  }, [handleQuestionUpdate]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -118,96 +110,37 @@ export function SetupPage() {
           </div>
         )}
 
-        {/* ステップ表示 */}
-        <div className="flex gap-3 mb-8">
-          <StepBadge num={1} label="クイズ作成" active={!selectedQuiz} />
-          <StepBadge num={2} label="問題追加" active={!!selectedQuiz} />
-          <StepBadge num={3} label="ロビー開始" active={false} />
-        </div>
-
-        <QuizSelector
-          quizList={quizList}
-          selectedQuiz={selectedQuiz}
-          isLoading={isLoading}
-          onCreateQuiz={handleCreateQuiz}
-          onSelectQuiz={handleSelectQuiz}
-          getHostSecret={getHostSecret}
-        />
-
-        {/* 問題編集 */}
-        {selectedQuiz && (
-          <section className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-            <div className="flex justify-between items-center mb-5">
-              {isEditingTitle ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSaveTitle();
-                      if (e.key === "Escape") setIsEditingTitle(false);
-                    }}
-                    onBlur={handleSaveTitle}
-                    autoFocus
-                    className="flex-1 px-3 py-1.5 rounded-lg border-2 border-accent text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-                  />
-                </div>
-              ) : (
-                <h2 className="text-lg font-semibold m-0 text-gray-800 flex items-center gap-2">
-                  「{selectedQuiz.title}」の問題（{selectedQuiz.questions?.length ?? 0}問）
-                  <button
-                    type="button"
-                    onClick={handleStartEditTitle}
-                    aria-label="クイズタイトルを編集"
-                    className="p-1.5 rounded hover:bg-gray-100 transition-colors duration-150 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                      <path d="M11.13 1.47a1.5 1.5 0 0 1 2.12 0l1.28 1.28a1.5 1.5 0 0 1 0 2.12L5.91 13.49a1.5 1.5 0 0 1-.7.4l-3.25.93a.5.5 0 0 1-.62-.62l.93-3.25a1.5 1.5 0 0 1 .4-.7L11.13 1.47z" />
-                    </svg>
-                  </button>
-                </h2>
-              )}
-            </div>
-            <QuestionList quiz={selectedQuiz} onUpdate={handleQuestionUpdate} />
-          </section>
-        )}
-
-        {/* ロビー開始 */}
-        {selectedQuiz && (selectedQuiz.questions?.length ?? 0) > 0 && (
-          <button
-            type="button"
-            onClick={handleStartLobby}
-            className="w-full py-5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold shadow-lg hover:opacity-95 transition-opacity duration-200 min-h-[44px]"
-          >
-            ロビーを開く（参加者受付開始）
-          </button>
-        )}
-
-        {selectedQuiz && (selectedQuiz.questions?.length ?? 0) === 0 && (
-          <p className="text-center py-6 text-gray-500 text-sm">
-            問題を1つ以上追加するとロビーを開始できます
-          </p>
+        {selectedQuiz ? (
+          /* クイズ選択後: タブ表示 */
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+            {activeTab === "config" ? (
+              <QuizConfigTab
+                quiz={selectedQuiz}
+                onTitleSaved={handleTitleSaved}
+                onStartLobby={handleStartLobby}
+                onChangeQuiz={handleChangeQuiz}
+                getHostSecret={getHostSecret}
+              />
+            ) : (
+              <QuestionManagementTab
+                quiz={selectedQuiz}
+                onUpdate={handleQuestionUpdate}
+              />
+            )}
+          </div>
+        ) : (
+          /* クイズ未選択時: 新規作成 + 既存一覧 */
+          <>
+            <NewQuizForm isLoading={isLoading} onCreateQuiz={handleCreateQuiz} />
+            <QuizSelector
+              quizList={quizList}
+              onSelectQuiz={handleSelectQuiz}
+              getHostSecret={getHostSecret}
+            />
+          </>
         )}
       </div>
-    </div>
-  );
-}
-
-function StepBadge({ num, label, active }: { num: number; label: string; active: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className={[
-          "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white",
-          active ? "bg-accent" : "bg-gray-300",
-        ].join(" ")}
-      >
-        {num}
-      </div>
-      <span className={["text-sm font-semibold", active ? "text-gray-800" : "text-gray-400"].join(" ")}>
-        {label}
-      </span>
     </div>
   );
 }
