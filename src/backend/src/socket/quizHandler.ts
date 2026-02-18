@@ -19,6 +19,9 @@ async function distributeQuestionResult(
   questionId: number,
   hostSocketId?: string
 ) {
+  // ランキング計算を先に実行（current_rankをDBに反映してからresultを取得する）
+  await quizService.calculateRanking(roomCode);
+
   const sockets = await io.in(roomCode).fetchSockets();
 
   // 参加者ソケットとホストの結果を並列取得

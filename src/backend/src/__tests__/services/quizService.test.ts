@@ -638,6 +638,40 @@ describe("quizService", () => {
     });
   });
 
+  describe("calculateRanking → getQuestionResult 順序", () => {
+    it("calculateRanking後にgetQuestionResultを呼ぶとcurrent_rankが0以外になる", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
+      const question = await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "回答者A",
+        totalScore: 0,
+        currentRank: 0,
+        token: "rank-order-token-1",
+      });
+      const p2 = await createTestParticipant(quiz.id, {
+        nickname: "回答者B",
+        totalScore: 0,
+        currentRank: 0,
+        token: "rank-order-token-2",
+      });
+
+      // 両者が回答（scoreAwardedでスコア差をつける）
+      await submitAnswer(p1.id, question.id, 1, 1000);
+      await submitAnswer(p2.id, question.id, 2, 2000);
+
+      // calculateRanking前: current_rankは0のまま
+      const beforeResult = await getQuestionResult(question.id, p1.id);
+      expect(beforeResult.yourAnswer!.currentRank).toBe(0);
+
+      // calculateRanking実行 → current_rankがDBに反映される
+      await calculateRanking("ABCDEF");
+
+      // calculateRanking後: current_rankが正しい値になる
+      const afterResult = await getQuestionResult(question.id, p1.id);
+      expect(afterResult.yourAnswer!.currentRank).toBeGreaterThan(0);
+    });
+  });
+
   describe("getFinalResult", () => {
     it("全参加者の統計、quiz status → finished更新", async () => {
       const quiz = await createTestQuiz({ status: "in_progress" });
