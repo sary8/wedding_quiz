@@ -86,6 +86,37 @@ export async function createTestParticipant(
   return result[0];
 }
 
+export async function createTestBankQuestion(overrides: Partial<{
+  text: string;
+  choice1: string;
+  choice2: string;
+  choice3: string;
+  choice4: string;
+  correctChoice: number;
+  timeLimitSeconds: number;
+  points: number;
+  mediaType: string;
+  mediaUrl: string | null;
+}> = {}) {
+  const result = await db
+    .insert(schema.questionBank)
+    .values({
+      text: overrides.text ?? "バンク問題",
+      media_type: (overrides.mediaType as "none" | "image" | "video") ?? "none",
+      media_url: overrides.mediaUrl ?? null,
+      choice1: overrides.choice1 ?? "バンク選択肢1",
+      choice2: overrides.choice2 ?? "バンク選択肢2",
+      choice3: overrides.choice3 ?? "バンク選択肢3",
+      choice4: overrides.choice4 ?? "バンク選択肢4",
+      correct_choice: overrides.correctChoice ?? 1,
+      time_limit_seconds: overrides.timeLimitSeconds ?? 20,
+      points: overrides.points ?? 1000,
+      created_at: new Date().toISOString(),
+    })
+    .returning();
+  return result[0];
+}
+
 export async function createTestAnswer(overrides: {
   questionId: number;
   participantId: number;

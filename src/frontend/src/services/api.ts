@@ -1,4 +1,4 @@
-import type { Quiz, QuizSummary, Question } from "../types";
+import type { Quiz, QuizSummary, Question, QuestionBankItem } from "../types";
 
 const API_BASE = "/api";
 
@@ -89,6 +89,58 @@ export function reorderQuestions(quizId: number, key: string, questionIds: numbe
 
 export function deleteQuestion(id: number, key: string) {
   return request<void>(`/questions/${id}?key=${key}`, { method: "DELETE" });
+}
+
+// Question Bank
+export function listBankQuestions() {
+  return request<QuestionBankItem[]>("/question-bank");
+}
+
+export function addBankQuestion(data: {
+  text: string;
+  choice1: string;
+  choice2: string;
+  choice3: string;
+  choice4: string;
+  correctChoice: number;
+  timeLimitSeconds?: number;
+  points?: number;
+  mediaType?: string;
+  mediaUrl?: string;
+}) {
+  return request<QuestionBankItem>("/question-bank", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateBankQuestion(id: number, data: {
+  text?: string;
+  choice1?: string;
+  choice2?: string;
+  choice3?: string;
+  choice4?: string;
+  correctChoice?: number;
+  timeLimitSeconds?: number;
+  points?: number;
+  mediaType?: string;
+  mediaUrl?: string | null;
+}) {
+  return request<QuestionBankItem>(`/question-bank/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteBankQuestion(id: number) {
+  return request<{ success: boolean }>(`/question-bank/${id}`, { method: "DELETE" });
+}
+
+export function importBankToQuiz(quizId: number, key: string, bankQuestionIds: number[]) {
+  return request<{ imported: number[]; count: number }>("/question-bank/import-to-quiz", {
+    method: "POST",
+    body: JSON.stringify({ quizId, key, bankQuestionIds }),
+  });
 }
 
 // Media

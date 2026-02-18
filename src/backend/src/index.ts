@@ -6,6 +6,7 @@ import type { ServerToClientEvents, ClientToServerEvents } from "./types/index.j
 import { quizRoutes } from "./routes/quiz.js";
 import { questionRoutes } from "./routes/question.js";
 import { mediaRoutes } from "./routes/media.js";
+import { questionBankRoutes } from "./routes/questionBank.js";
 import { setupQuizSocket } from "./socket/quizHandler.js";
 
 const app = new Hono();
@@ -33,6 +34,7 @@ app.onError((err, c) => {
 app.route("/api/quizzes", quizRoutes);
 app.route("/api/questions", questionRoutes);
 app.route("/api/media", mediaRoutes);
+app.route("/api/question-bank", questionBankRoutes);
 
 // Health check
 app.get("/api/health", (c) => c.json({ status: "ok" }));

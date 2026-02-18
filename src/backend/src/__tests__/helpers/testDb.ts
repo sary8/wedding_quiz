@@ -50,6 +50,20 @@ const CREATE_TABLES_SQL = [
     answered_at TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS answers_question_participant_idx ON answers(question_id, participant_id)`,
+  `CREATE TABLE IF NOT EXISTS question_bank (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    media_type TEXT NOT NULL DEFAULT 'none',
+    media_url TEXT,
+    choice1 TEXT NOT NULL,
+    choice2 TEXT NOT NULL,
+    choice3 TEXT NOT NULL,
+    choice4 TEXT NOT NULL,
+    correct_choice INTEGER NOT NULL,
+    time_limit_seconds INTEGER NOT NULL DEFAULT 20,
+    points INTEGER NOT NULL DEFAULT 1000,
+    created_at TEXT NOT NULL DEFAULT ''
+  )`,
 ];
 
 let client: Client;
@@ -70,4 +84,5 @@ export async function resetTestDb() {
   await client.execute("DELETE FROM participants");
   await client.execute("DELETE FROM questions");
   await client.execute("DELETE FROM quizzes");
+  await client.execute("DELETE FROM question_bank");
 }

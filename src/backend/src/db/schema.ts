@@ -78,6 +78,25 @@ export const answers = sqliteTable(
   ]
 );
 
+export const questionBank = sqliteTable("question_bank", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  text: text("text", { length: 500 }).notNull(),
+  media_type: text("media_type", { enum: ["none", "image", "video"] })
+    .notNull()
+    .default("none"),
+  media_url: text("media_url"),
+  choice1: text("choice1", { length: 200 }).notNull(),
+  choice2: text("choice2", { length: 200 }).notNull(),
+  choice3: text("choice3", { length: 200 }).notNull(),
+  choice4: text("choice4", { length: 200 }).notNull(),
+  correct_choice: integer("correct_choice").notNull(), // 1-4
+  time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
+  points: integer("points").notNull().default(1000),
+  created_at: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
 // --- Relations ---
 
 export const quizzesRelations = relations(quizzes, ({ many }) => ({

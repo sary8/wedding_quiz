@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia, updateQuestion, updateQuiz, reorderQuestions } from "../../services/api";
-import type { Quiz, QuizSummary, Question } from "../../types";
+import { createQuiz, getQuiz, listQuizzes, addQuestion, deleteQuestion, uploadMedia, updateQuestion, updateQuiz, reorderQuestions, listBankQuestions, addBankQuestion, deleteBankQuestion, importBankToQuiz } from "../../services/api";
+import type { Quiz, QuizSummary, Question, QuestionBankItem } from "../../types";
 
 // host_secretをlocalStorageに保存/取得
 function saveHostSecret(quizId: number, secret: string) {
@@ -296,6 +296,7 @@ const CHOICE_LABELS = ["A", "B", "C", "D"];
 type QuestionEditorProps = { quiz: Quiz; onUpdate: () => void };
 
 function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
+  const [isBankOpen, setIsBankOpen] = useState(false);
   const [text, setText] = useState("");
   const [choices, setChoices] = useState(["", "", "", ""]);
   const [correctChoice, setCorrectChoice] = useState(1);
@@ -452,6 +453,43 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
 
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [savedToBankId, setSavedToBankId] = useState<number | null>(null);
+
+  async function handleSaveToBank(q: Question) {
+    try {
+      await addBankQuestion({
+        text: q.text,
+        choice1: q.choice1,
+        choice2: q.choice2,
+        choice3: q.choice3,
+        choice4: q.choice4,
+        correctChoice: q.correct_choice,
+        timeLimitSeconds: q.time_limit_seconds,
+        points: q.points,
+        mediaType: q.media_type,
+        mediaUrl: q.media_url ?? undefined,
+      });
+      setSavedToBankId(q.id);
+      setTimeout(() => setSavedToBankId(null), 2000);
+    } catch {
+      setAddError("バンクへの保存に失敗しました");
+    }
+  }
+
+  async function handleImportFromBank() {
+    setIsBankOpen(true);
+  }
+
+  async function handleBankImport(bankQuestionIds: number[]) {
+    if (bankQuestionIds.length === 0) return;
+    try {
+      await importBankToQuiz(quiz.id, quiz.host_secret, bankQuestionIds);
+      onUpdate();
+      setIsBankOpen(false);
+    } catch {
+      setAddError("バンクからのインポートに失敗しました");
+    }
+  }
 
   async function handleDelete(questionId: number) {
     setPendingDeleteId(null);
@@ -569,6 +607,18 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
                       </button>
                       <button
                         type="button"
+                        onClick={() => handleSaveToBank(q)}
+                        className={[
+                          "px-3 py-1.5 rounded text-sm border transition-colors duration-150 cursor-pointer whitespace-nowrap min-h-[44px]",
+                          savedToBankId === q.id
+                            ? "text-green-600 border-green-600 bg-green-50"
+                            : "text-purple-600 border-purple-600 hover:bg-purple-50",
+                        ].join(" ")}
+                      >
+                        {savedToBankId === q.id ? "保存済" : "バンクに保存"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setPendingDeleteId(q.id)}
                         className="px-3 py-1.5 rounded text-sm text-red-600 border border-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer whitespace-nowrap min-h-[44px]"
                       >
@@ -581,6 +631,25 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
             </div>
           ))}
         </div>
+      )}
+
+      {/* 問題バンクから追加ボタン */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={handleImportFromBank}
+          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors duration-150 min-h-[44px]"
+        >
+          問題バンクから追加
+        </button>
+      </div>
+
+      {/* 問題バンクパネル */}
+      {isBankOpen && (
+        <QuestionBankPanel
+          onImport={handleBankImport}
+          onClose={() => setIsBankOpen(false)}
+        />
       )}
 
       {/* 新規問題フォーム / 編集フォーム */}
@@ -785,6 +854,166 @@ function QuestionEditor({ quiz, onUpdate }: QuestionEditorProps) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+type QuestionBankPanelProps = {
+  onImport: (bankQuestionIds: number[]) => void;
+  onClose: () => void;
+};
+
+function QuestionBankPanel({ onImport, onClose }: QuestionBankPanelProps) {
+  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadBank();
+  }, []);
+
+  async function loadBank() {
+    setIsLoading(true);
+    try {
+      const data = await listBankQuestions();
+      setBankQuestions(data);
+    } catch {
+      setError("問題バンクの読み込みに失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleDeleteBank(id: number) {
+    setPendingDeleteId(null);
+    try {
+      await deleteBankQuestion(id);
+      setBankQuestions((prev) => prev.filter((q) => q.id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch {
+      setError("バンクからの削除に失敗しました");
+    }
+  }
+
+  return (
+    <div className="mb-4 p-5 rounded-lg border-2 border-purple-300 bg-purple-50/50">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-base font-semibold text-purple-800">問題バンク</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-1.5 rounded text-sm text-gray-600 hover:bg-gray-100 transition-colors duration-150 min-h-[44px]"
+        >
+          閉じる
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
+          {error}
+        </div>
+      )}
+
+      {isLoading ? (
+        <p className="text-sm text-gray-500 py-4 text-center">読み込み中...</p>
+      ) : bankQuestions.length === 0 ? (
+        <p className="text-sm text-gray-500 py-4 text-center">
+          バンクに問題がありません。問題リストの「バンクに保存」で問題を追加できます。
+        </p>
+      ) : (
+        <>
+          <div className="max-h-80 overflow-y-auto mb-4">
+            {bankQuestions.map((q) => (
+              <div
+                key={q.id}
+                className={[
+                  "flex items-start gap-3 p-3 mb-1.5 rounded-lg border transition-colors duration-150",
+                  selectedIds.has(q.id) ? "bg-purple-100 border-purple-400" : "bg-white border-gray-200",
+                ].join(" ")}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(q.id)}
+                  onChange={() => toggleSelect(q.id)}
+                  className="mt-1 w-4 h-4 shrink-0 accent-purple-600"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-gray-800 truncate">{q.text}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    正解: {CHOICE_LABELS[q.correct_choice - 1]} ・ {q.time_limit_seconds}秒 ・ {q.points}点
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
+                      <span key={ci} className={ci + 1 === q.correct_choice ? "font-semibold text-gray-600" : ""}>
+                        {CHOICE_LABELS[ci]}.{c}{ci < 3 ? " / " : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {pendingDeleteId === q.id ? (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBank(q.id)}
+                        className="px-2 py-1 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[32px]"
+                      >
+                        確認
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDeleteId(null)}
+                        className="px-2 py-1 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[32px]"
+                      >
+                        戻る
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(q.id)}
+                      className="px-2 py-1 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[32px]"
+                    >
+                      削除
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onImport(Array.from(selectedIds))}
+            disabled={selectedIds.size === 0}
+            className={[
+              "w-full py-3 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
+              selectedIds.size > 0
+                ? "bg-purple-600 hover:opacity-90 cursor-pointer"
+                : "bg-gray-300 cursor-not-allowed",
+            ].join(" ")}
+          >
+            {selectedIds.size > 0
+              ? `選択した${selectedIds.size}問をインポート`
+              : "問題を選択してください"}
+          </button>
+        </>
+      )}
     </div>
   );
 }

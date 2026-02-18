@@ -85,6 +85,21 @@ export type Quiz = QuizSummary & {
   questions?: Question[];
 };
 
+export type QuestionBankItem = {
+  id: number;
+  text: string;
+  media_type: MediaType;
+  media_url: string | null;
+  choice1: string;
+  choice2: string;
+  choice3: string;
+  choice4: string;
+  correct_choice: number;
+  time_limit_seconds: number;
+  points: number;
+  created_at: string;
+};
+
 export type Question = {
   id: number;
   quiz_id: number;
