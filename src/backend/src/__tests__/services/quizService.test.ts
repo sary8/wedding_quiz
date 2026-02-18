@@ -76,16 +76,26 @@ describe("quizService", () => {
       expect(roomCode).toBe("ABCDEF");
     });
 
-    it("lobby状態 → null(再open防止)", async () => {
+    it("lobby状態 → roomCode返却、ステータス変更なし", async () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       const result = await openRoom(quiz.id, "test-secret-123");
-      expect(result).toBeNull();
+      expect(result).toBe("ABCDEF");
+
+      const updated = await db.query.quizzes.findFirst({
+        where: eq(schema.quizzes.id, quiz.id),
+      });
+      expect(updated!.status).toBe("lobby");
     });
 
-    it("in_progress状態 → null", async () => {
+    it("in_progress状態 → roomCode返却、ステータス変更なし", async () => {
       const quiz = await createTestQuiz({ status: "in_progress" });
       const result = await openRoom(quiz.id, "test-secret-123");
-      expect(result).toBeNull();
+      expect(result).toBe("ABCDEF");
+
+      const updated = await db.query.quizzes.findFirst({
+        where: eq(schema.quizzes.id, quiz.id),
+      });
+      expect(updated!.status).toBe("in_progress");
     });
 
     it("間違ったsecret → null", async () => {

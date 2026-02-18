@@ -222,6 +222,17 @@ export function setupQuizSocket(io: QuizIO) {
         socket.join(roomCode);
         socketMeta.set(socket.id, { participantId: -1, roomCode });
         callback({ success: true, roomCode });
+
+        // ホスト復旧: lobby/in_progress状態を復元通知
+        const quiz = await quizService.getQuizByRoom(roomCode);
+        if (quiz && quiz.status !== "draft") {
+          const participants = await quizService.getLobbyParticipants(roomCode);
+          socket.emit("hostReconnected", {
+            quizStatus: quiz.status as QuizStatus,
+            currentQuestionIndex: quiz.current_question_index,
+            participants,
+          });
+        }
       } catch (e) {
         console.error("openRoom error:", e);
         callback({ success: false, error: "ルームの開設に失敗しました" });

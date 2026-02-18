@@ -23,6 +23,11 @@ type ServerToClientEvents = {
   error: (data: { message: string }) => void;
   reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null }) => void;
   quizReset: () => void;
+  hostReconnected: (data: {
+    quizStatus: QuizStatus;
+    currentQuestionIndex: number;
+    participants: ParticipantInfo[];
+  }) => void;
 };
 
 type ClientToServerEvents = {

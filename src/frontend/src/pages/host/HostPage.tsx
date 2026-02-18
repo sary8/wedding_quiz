@@ -14,7 +14,7 @@ import { ResultsPage } from "./ResultsPage";
 import { RankingPage } from "./RankingPage";
 import { FinalPage } from "./FinalPage";
 
-type HostPhase = "lobby" | "question" | "results" | "ranking" | "final";
+type HostPhase = "lobby" | "question" | "results" | "ranking" | "final" | "recovering";
 
 const NOOP = () => {}; // stable reference
 
@@ -71,6 +71,12 @@ export function HostPage() {
         setRankingData(null);
         setFinalData(null);
         setError(null);
+      }),
+      on("hostReconnected", (data) => {
+        setParticipants(data.participants);
+        if (data.quizStatus === "in_progress") {
+          setPhase("recovering");
+        }
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -233,6 +239,32 @@ export function HostPage() {
         <>
           {errorBanner}
           <FinalPage data={finalData} onReplay={handleReplay} />
+        </>
+      );
+    case "recovering":
+      return (
+        <>
+          {errorBanner}
+          <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-6">
+            <p className="text-2xl font-bold">ゲームを再開</p>
+            <p className="text-gray-400">ゲームは進行中です。操作を続けてください。</p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={handleNextQuestion}
+                className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px]"
+              >
+                次の問題を配信
+              </button>
+              <button
+                type="button"
+                onClick={handleShowRanking}
+                className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px]"
+              >
+                ランキング表示
+              </button>
+            </div>
+          </div>
         </>
       );
   }

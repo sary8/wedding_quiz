@@ -20,14 +20,17 @@ export async function verifyHostSecret(roomCode: string, hostSecret: string) {
   return quiz;
 }
 
-// ルーム開設 (draft/finished → lobby)
+// ルーム開設 (draft/finished → lobby, lobby/in_progress → そのまま返却)
 export async function openRoom(quizId: number, hostSecret: string) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
   });
   if (!quiz || quiz.host_secret !== hostSecret) return null;
 
-  // in_progress中の再openを防止
+  if (quiz.status === "lobby" || quiz.status === "in_progress") {
+    return quiz.room_code;
+  }
+
   if (quiz.status !== "draft" && quiz.status !== "finished") return null;
 
   await db
