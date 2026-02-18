@@ -1,15 +1,28 @@
-import type { QuestionResultData } from "../../types";
+import type { QuestionResultData, QuestionData } from "../../types";
 
 type Props = {
   result: QuestionResultData | null;
+  question: QuestionData | null;
 };
 
-export function ResultPage({ result }: Props) {
+export function ResultPage({ result, question }: Props) {
+  const correctAnswerText =
+    result && question && result.correctChoice >= 1 && result.correctChoice <= question.choices.length
+      ? question.choices[result.correctChoice - 1]
+      : null;
+
   if (!result?.yourAnswer) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush p-6">
         <p className="text-2xl text-rose-text">未回答</p>
         <p className="text-base text-rose-text/70 mt-2">次の問題をお待ちください</p>
+
+        {correctAnswerText !== null ? (
+          <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-6">
+            <p className="text-sm text-rose-text/60 mb-1">正解</p>
+            <p className="text-lg font-bold text-primary">{correctAnswerText}</p>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -54,6 +67,14 @@ export function ResultPage({ result }: Props) {
           <p className="text-base font-bold text-rose-text mt-1">現在 第{yourAnswer.currentRank}位</p>
         </div>
       </div>
+
+      {/* 正解表示 */}
+      {correctAnswerText !== null ? (
+        <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-4">
+          <p className="text-sm text-rose-text/60 mb-1">正解</p>
+          <p className="text-lg font-bold text-primary">{correctAnswerText}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

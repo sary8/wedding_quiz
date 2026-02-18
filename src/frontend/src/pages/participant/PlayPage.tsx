@@ -184,7 +184,7 @@ export function PlayPage() {
         </>
       );
     case "result":
-      return <ResultPage result={questionResult} />;
+      return <ResultPage result={questionResult} question={currentQuestion} />;
     case "ranking":
       return <WaitingPage message="ランキング発表中..." />;
     case "final":
