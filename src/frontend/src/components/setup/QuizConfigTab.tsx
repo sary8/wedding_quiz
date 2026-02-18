@@ -23,6 +23,7 @@ function statusLabel(status: string): string {
 export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, getHostSecret }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [error, setError] = useState("");
 
   const questionCount = quiz.questions?.length ?? 0;
@@ -34,15 +35,18 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
   }
 
   async function handleSaveTitle() {
-    if (!editTitle.trim()) return;
+    if (!editTitle.trim() || isSavingTitle) return;
     const key = getHostSecret(quiz.id);
     if (!key) return;
+    setIsSavingTitle(true);
     try {
       await updateQuiz(quiz.id, key, editTitle.trim());
       setIsEditingTitle(false);
       onTitleSaved();
     } catch {
       setError("タイトルの更新に失敗しました");
+    } finally {
+      setIsSavingTitle(false);
     }
   }
 
@@ -56,14 +60,14 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
         <button
           type="button"
           onClick={() => setError("")}
-          className="w-full px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150"
+          className="w-full px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
         >
           {error}（タップで閉じる）
         </button>
       )}
 
       {/* クイズタイトル */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="border border-gray-100 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-500 mb-3">クイズタイトル</h3>
         {isEditingTitle ? (
           <div className="flex items-center gap-2">
@@ -76,15 +80,20 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                 if (e.key === "Escape") handleCancelEdit();
               }}
               onBlur={handleSaveTitle}
+              aria-label="クイズタイトル"
               autoFocus
               className="flex-1 px-3 py-2 rounded-lg border-2 border-accent text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
             />
+            {isSavingTitle && (
+              <span className="text-sm text-gray-500">保存中…</span>
+            )}
           </div>
         ) : (
           <button
             type="button"
             onClick={handleStartEditTitle}
-            className="group flex items-center gap-2 text-left"
+            aria-label="クイズタイトルを編集"
+            className="group flex items-center gap-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg p-1 -m-1"
           >
             <span className="text-lg font-semibold text-gray-800">{quiz.title}</span>
             <svg
@@ -98,9 +107,9 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
       </div>
 
       {/* クイズ情報 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="border border-gray-100 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-500 mb-3">クイズ情報</h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <span className="text-gray-500">ルームコード</span>
             <div className="font-bold text-lg text-gray-800 mt-0.5">{quiz.room_code}</div>
@@ -117,13 +126,14 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
       </div>
 
       {/* ロビーを開く */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div>
         <button
           type="button"
           onClick={onStartLobby}
           disabled={!canStartLobby}
           className={[
             "w-full py-4 rounded-xl text-lg font-bold text-white transition-opacity duration-200 min-h-[44px]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
             canStartLobby
               ? "bg-gradient-to-r from-primary to-primary-dark shadow-lg hover:opacity-95 cursor-pointer"
               : "bg-gray-300 cursor-not-allowed",
@@ -143,7 +153,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
         <button
           type="button"
           onClick={onChangeQuiz}
-          className="text-sm text-gray-500 hover:text-accent transition-colors duration-150 underline"
+          className="text-sm text-gray-500 hover:text-accent transition-colors duration-150 underline cursor-pointer py-2 px-4 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg"
         >
           別のクイズを選択
         </button>

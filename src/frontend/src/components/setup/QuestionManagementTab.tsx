@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Quiz } from "../../types";
 import { reorderQuestions, importBankToQuiz } from "../../services/api";
 import { QuestionRow } from "./QuestionRow";
@@ -15,6 +15,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
   const [expandedQuestionId, setExpandedQuestionId] = useState<number | "new" | null>(null);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const questions = quiz.questions ?? [];
 
@@ -39,7 +40,6 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
     async (questionIndex: number, direction: "up" | "down") => {
       const targetIndex = direction === "up" ? questionIndex - 1 : questionIndex + 1;
       if (targetIndex < 0 || targetIndex >= questions.length) return;
-      // 並べ替え時は展開中のフォームを閉じる
       setExpandedQuestionId(null);
       const ids = questions.map((q) => q.id);
       [ids[questionIndex], ids[targetIndex]] = [ids[targetIndex], ids[questionIndex]];
@@ -62,6 +62,8 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
     [quiz.id, quiz.host_secret, onUpdate],
   );
 
+  const motionTransition = prefersReducedMotion ? { duration: 0 } : { type: "spring" as const, stiffness: 300, damping: 30 };
+
   return (
     <div>
       {/* アクションバー */}
@@ -69,14 +71,14 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
         <button
           type="button"
           onClick={handleAddNew}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#1e88e5] hover:opacity-90 transition-colors duration-150 min-h-[44px] cursor-pointer"
+          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-choice-blue hover:opacity-90 transition-colors duration-150 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-choice-blue/50"
         >
           + 新しい問題を追加
         </button>
         <button
           type="button"
           onClick={() => setIsTemplateOpen((prev) => !prev)}
-          className="text-sm font-semibold text-purple-700 hover:text-purple-900 transition-colors duration-150"
+          className="text-sm font-semibold text-purple-700 hover:text-purple-900 transition-colors duration-150 cursor-pointer py-2 px-3 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50 rounded-lg"
         >
           {isTemplateOpen ? "テンプレートを閉じる" : "テンプレートから追加"}
         </button>
@@ -86,7 +88,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
         <button
           type="button"
           onClick={() => setError(null)}
-          className="w-full mb-4 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150"
+          className="w-full mb-4 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
         >
           {error}（タップで閉じる）
         </button>
@@ -96,10 +98,10 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
       <AnimatePresence>
         {isTemplateOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            transition={motionTransition}
             style={{ overflow: "hidden" }}
           >
             <TemplatePanel
@@ -137,20 +139,20 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
         )
       )}
 
-      {/* 新規追加フォーム（リスト末尾にアコーディオン展開） */}
+      {/* 新規追加フォーム */}
       <AnimatePresence>
         {expandedQuestionId === "new" && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            transition={motionTransition}
             style={{ overflow: "hidden" }}
             className="mt-2"
           >
-            <div className="border border-[#1e88e5] rounded-lg overflow-hidden bg-white">
+            <div className="border border-choice-blue rounded-lg overflow-hidden bg-white">
               <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
-                <span className="text-sm font-semibold text-[#1e88e5]">新しい問題を追加</span>
+                <span className="text-sm font-semibold text-choice-blue">新しい問題を追加</span>
               </div>
               <QuestionInlineForm
                 question={null}

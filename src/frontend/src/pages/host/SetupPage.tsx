@@ -21,6 +21,8 @@ export function SetupPage() {
   const [quizList, setQuizList] = useState<QuizSummary[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingQuizList, setIsLoadingQuizList] = useState(true);
+  const [isSelectingQuiz, setIsSelectingQuiz] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"config" | "questions">("config");
 
@@ -29,11 +31,14 @@ export function SetupPage() {
   }, []);
 
   async function loadQuizzes() {
+    setIsLoadingQuizList(true);
     try {
       const data = await listQuizzes();
       setQuizList(data);
     } catch {
       setError("クイズ一覧の取得に失敗しました");
+    } finally {
+      setIsLoadingQuizList(false);
     }
   }
 
@@ -60,12 +65,15 @@ export function SetupPage() {
       setError("このクイズの管理キーがありません（別のブラウザで作成された可能性があります）");
       return;
     }
+    setIsSelectingQuiz(true);
     try {
       const quiz = await getQuiz(summary.id, key);
       setSelectedQuiz(quiz);
       setActiveTab("config");
     } catch {
       setError("クイズの取得に失敗しました（キーが不正な可能性があります）");
+    } finally {
+      setIsSelectingQuiz(false);
     }
   }
 
@@ -114,30 +122,50 @@ export function SetupPage() {
           /* クイズ選択後: タブ表示 */
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-            {activeTab === "config" ? (
-              <QuizConfigTab
-                quiz={selectedQuiz}
-                onTitleSaved={handleTitleSaved}
-                onStartLobby={handleStartLobby}
-                onChangeQuiz={handleChangeQuiz}
-                getHostSecret={getHostSecret}
-              />
-            ) : (
-              <QuestionManagementTab
-                quiz={selectedQuiz}
-                onUpdate={handleQuestionUpdate}
-              />
-            )}
+            <div
+              id="tabpanel-config"
+              role="tabpanel"
+              aria-labelledby="tab-config"
+              hidden={activeTab !== "config"}
+            >
+              {activeTab === "config" && (
+                <QuizConfigTab
+                  quiz={selectedQuiz}
+                  onTitleSaved={handleTitleSaved}
+                  onStartLobby={handleStartLobby}
+                  onChangeQuiz={handleChangeQuiz}
+                  getHostSecret={getHostSecret}
+                />
+              )}
+            </div>
+            <div
+              id="tabpanel-questions"
+              role="tabpanel"
+              aria-labelledby="tab-questions"
+              hidden={activeTab !== "questions"}
+            >
+              {activeTab === "questions" && (
+                <QuestionManagementTab
+                  quiz={selectedQuiz}
+                  onUpdate={handleQuestionUpdate}
+                />
+              )}
+            </div>
           </div>
         ) : (
           /* クイズ未選択時: 新規作成 + 既存一覧 */
           <>
             <NewQuizForm isLoading={isLoading} onCreateQuiz={handleCreateQuiz} />
-            <QuizSelector
-              quizList={quizList}
-              onSelectQuiz={handleSelectQuiz}
-              getHostSecret={getHostSecret}
-            />
+            {isLoadingQuizList ? (
+              <div className="text-center py-8 text-gray-500 text-sm">読み込み中...</div>
+            ) : (
+              <QuizSelector
+                quizList={quizList}
+                isSelectingQuiz={isSelectingQuiz}
+                onSelectQuiz={handleSelectQuiz}
+                getHostSecret={getHostSecret}
+              />
+            )}
           </>
         )}
       </div>

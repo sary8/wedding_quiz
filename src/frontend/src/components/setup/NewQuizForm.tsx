@@ -33,7 +33,7 @@ export function NewQuizForm({ isLoading, onCreateQuiz }: Props) {
           onClick={handleCreate}
           disabled={isLoading || !title.trim()}
           className={[
-            "px-7 py-3 rounded-lg text-base font-bold text-white whitespace-nowrap transition-colors duration-200 min-h-[44px]",
+            "px-7 py-3 rounded-lg text-base font-bold text-white whitespace-nowrap transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
             title.trim() && !isLoading
               ? "bg-accent hover:opacity-90 cursor-pointer"
               : "bg-gray-300 cursor-not-allowed",

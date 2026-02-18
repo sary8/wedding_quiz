@@ -181,6 +181,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
   }
 
   const canSave = text.trim() && choices.every((c) => c.trim()) && !isSaving && !isUploading;
+  const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
 
   return (
     <div className="p-4 border-t border-gray-100">
@@ -188,7 +189,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
         <button
           type="button"
           onClick={() => setError(null)}
-          className="w-full mb-4 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150"
+          className={cn("w-full mb-4 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200 hover:bg-red-100 transition-colors duration-150 cursor-pointer", btnFocus)}
         >
           {error}（タップで閉じる）
         </button>
@@ -223,7 +224,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
         {!previewUrl ? (
           <label
             htmlFor={`question-image-${formId}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-sm text-gray-500 cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-sm text-gray-500 cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150 min-h-[44px]"
           >
             画像を選択
           </label>
@@ -244,7 +245,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
               )}
               {!isUploading && mediaUrl && (
                 <div className="absolute top-1 right-1 bg-green-500 rounded-full w-5 h-5 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">✓</span>
+                  <span className="text-white text-xs font-bold" aria-hidden="true">✓</span>
                 </div>
               )}
             </div>
@@ -252,14 +253,14 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
               <button
                 type="button"
                 onClick={clearImage}
-                className="px-3 py-1 rounded text-sm text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[32px]"
+                className={cn("px-3 py-2 rounded text-sm text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
               >
                 削除
               </button>
               {!isUploading && !uploadError && (
                 <label
                   htmlFor={`question-image-${formId}`}
-                  className="px-3 py-1 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 cursor-pointer text-center"
+                  className="px-3 py-2 rounded text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 cursor-pointer text-center min-h-[44px] flex items-center justify-center"
                 >
                   変更
                 </label>
@@ -275,11 +276,11 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
       </div>
 
       {/* 選択肢 */}
-      <div className="mb-4">
-        <span className="block text-sm text-gray-600 mb-2 font-semibold">
+      <fieldset className="mb-4">
+        <legend className="block text-sm text-gray-600 mb-2 font-semibold">
           選択肢（正解をクリックして選択）
-        </span>
-        <div className="grid grid-cols-2 gap-2">
+        </legend>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {choices.map((c, i) => {
             const isSelected = correctChoice === i + 1;
             return (
@@ -289,7 +290,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
                   "flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150",
                   isSelected
                     ? `${CHOICE_BORDER_CLASSES[i]} ${CHOICE_BG_LIGHT_CLASSES[i]}`
-                    : "border-gray-300 bg-white",
+                    : "border-gray-300 bg-white hover:border-gray-400",
                 )}
               >
                 <button
@@ -298,8 +299,9 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
                   aria-label={`選択肢${CHOICE_LABELS[i]}を正解に設定`}
                   aria-pressed={isSelected}
                   className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 min-h-[28px]",
-                    isSelected ? CHOICE_BG_CLASSES[i] : "bg-gray-300",
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 cursor-pointer",
+                    btnFocus,
+                    isSelected ? CHOICE_BG_CLASSES[i] : "bg-gray-300 hover:bg-gray-400",
                   )}
                 >
                   {CHOICE_LABELS[i]}
@@ -314,7 +316,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
                   }}
                   placeholder={`選択肢${CHOICE_LABELS[i]}…`}
                   aria-label={`選択肢${CHOICE_LABELS[i]}のテキスト`}
-                  className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded"
+                  className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded min-w-0"
                 />
                 {isSelected && (
                   <span aria-hidden="true" className={`text-xs font-bold shrink-0 ${CHOICE_TEXT_CLASSES[i]}`}>
@@ -325,19 +327,22 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
             );
           })}
         </div>
-      </div>
+      </fieldset>
 
       {/* 制限時間 */}
-      <div className="flex flex-wrap gap-3 items-center mb-5">
-        <span className="text-sm text-gray-600 font-semibold">制限時間:</span>
-        <div className="flex flex-wrap gap-1.5">
+      <fieldset className="flex flex-wrap gap-3 items-center mb-4">
+        <legend className="text-sm text-gray-600 font-semibold">制限時間:</legend>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="制限時間">
           {[10, 15, 20, 30, 45, 60].map((t) => (
             <button
               key={t}
               type="button"
+              role="radio"
+              aria-checked={timeLimit === t}
               onClick={() => setTimeLimit(t)}
               className={cn(
-                "px-3.5 py-2 rounded-full text-sm border transition-colors duration-150 min-h-[44px]",
+                "px-3.5 py-2 rounded-full text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
+                btnFocus,
                 timeLimit === t
                   ? "bg-accent text-white border-accent"
                   : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
@@ -347,16 +352,17 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* 編集時のみ: テンプレート保存 + 削除 */}
       {isEditing && (
-        <div className="pt-4 border-t border-gray-100 flex justify-between items-center mb-4">
+        <div className="pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2 mb-4">
           <button
             type="button"
             onClick={handleSaveToTemplate}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px]",
+              "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
+              btnFocus,
               savedToTemplate
                 ? "text-green-600 border-green-600 bg-green-50"
                 : "text-purple-600 border-purple-600 hover:bg-purple-50",
@@ -370,14 +376,14 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px]"
+                className={cn("px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
               >
                 本当に削除する
               </button>
               <button
                 type="button"
                 onClick={() => setPendingDelete(false)}
-                className="px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px]"
+                className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
               >
                 戻る
               </button>
@@ -386,7 +392,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
             <button
               type="button"
               onClick={() => setPendingDelete(true)}
-              className="px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px]"
+              className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
             >
               この問題を削除
             </button>
@@ -399,7 +405,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors duration-150 min-h-[44px]"
+          className={cn("px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
         >
           キャンセル
         </button>
@@ -409,8 +415,9 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
           disabled={!canSave}
           className={cn(
             "px-7 py-2.5 rounded-lg text-sm font-bold text-white transition-colors duration-150 min-h-[44px]",
+            btnFocus,
             canSave
-              ? "bg-[#1e88e5] hover:opacity-90 cursor-pointer"
+              ? "bg-choice-blue hover:opacity-90 cursor-pointer"
               : "bg-gray-300 cursor-not-allowed",
           )}
         >

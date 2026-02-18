@@ -17,6 +17,8 @@ export function TemplatePanel({ onImport, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
+  const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50";
+
   useEffect(() => {
     loadBank();
   }, []);
@@ -78,7 +80,7 @@ export function TemplatePanel({ onImport, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="text-sm text-purple-600 hover:text-purple-800 transition-colors duration-150"
+          className={cn("text-sm text-purple-600 hover:text-purple-800 transition-colors duration-150 cursor-pointer py-2 px-3 min-h-[44px] rounded-lg", btnFocus)}
         >
           閉じる
         </button>
@@ -100,18 +102,19 @@ export function TemplatePanel({ onImport, onClose }: Props) {
         <>
           <div className="flex flex-col gap-1.5 mb-4">
             {bankQuestions.map((q) => (
-              <div
+              <label
                 key={q.id}
                 className={cn(
-                  "flex items-start gap-3 p-3 rounded-lg border transition-colors duration-150",
-                  selectedIds.has(q.id) ? "bg-purple-100 border-purple-400" : "bg-white border-gray-200",
+                  "flex items-start gap-3 p-3 rounded-lg border transition-colors duration-150 cursor-pointer",
+                  selectedIds.has(q.id) ? "bg-purple-100 border-purple-400" : "bg-white border-gray-200 hover:border-purple-300",
                 )}
               >
                 <input
                   type="checkbox"
                   checked={selectedIds.has(q.id)}
                   onChange={() => toggleSelect(q.id)}
-                  className="mt-1 w-4 h-4 shrink-0 accent-purple-600"
+                  aria-label={`${q.text}を選択`}
+                  className="mt-1 w-5 h-5 shrink-0 accent-purple-600 cursor-pointer"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-gray-800 truncate">{q.text}</div>
@@ -126,20 +129,24 @@ export function TemplatePanel({ onImport, onClose }: Props) {
                     ))}
                   </div>
                 </div>
-                <div className="shrink-0">
+                <div
+                  className="shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {pendingDeleteId === q.id ? (
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => handleDeleteBank(q.id)}
-                        className="px-2 py-1 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[32px]"
+                        aria-label={`「${q.text}」をテンプレートから削除`}
+                        className={cn("px-3 py-1.5 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
                       >
                         確認
                       </button>
                       <button
                         type="button"
                         onClick={() => setPendingDeleteId(null)}
-                        className="px-2 py-1 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[32px]"
+                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
                       >
                         戻る
                       </button>
@@ -148,13 +155,14 @@ export function TemplatePanel({ onImport, onClose }: Props) {
                     <button
                       type="button"
                       onClick={() => setPendingDeleteId(q.id)}
-                      className="px-2 py-1 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[32px]"
+                      aria-label={`「${q.text}」を削除`}
+                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
                     >
                       削除
                     </button>
                   )}
                 </div>
-              </div>
+              </label>
             ))}
           </div>
 
@@ -164,6 +172,7 @@ export function TemplatePanel({ onImport, onClose }: Props) {
             disabled={selectedIds.size === 0 || isImporting}
             className={cn(
               "w-full py-3 rounded-lg text-base font-bold text-white transition-colors duration-150 min-h-[44px]",
+              btnFocus,
               selectedIds.size > 0 && !isImporting
                 ? "bg-purple-600 hover:opacity-90 cursor-pointer"
                 : "bg-gray-300 cursor-not-allowed",
