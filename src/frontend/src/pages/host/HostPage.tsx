@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
@@ -36,6 +36,7 @@ export function HostPage() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdownValue, setCountdownValue] = useState(5);
+  const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -51,6 +52,10 @@ export function HostPage() {
         setQuestionResult(null);
         setPhase("question");
         sounds.playQuestionStart();
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
       }),
       on("timeUpdate", (data) => {
         setTimeRemaining(data.remaining);
@@ -61,8 +66,16 @@ export function HostPage() {
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionClosed", () => {
         sounds.playBuzzer();
+        // 5秒以内にquestionResultが届かなければ自動で results フェーズへ遷移
+        resultTimeoutRef.current = setTimeout(() => {
+          setPhase("results");
+        }, 5000);
       }),
       on("questionResult", (data) => {
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
         setQuestionResult(data);
         setPhase("results");
         sounds.playResultReveal();

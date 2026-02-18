@@ -18,7 +18,31 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
     maxCount: result?.distribution.reduce((max, n) => Math.max(max, n), 1) ?? 1,
   }), [result?.distribution]);
 
-  if (!result) return null;
+  if (!result) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-6">
+        <p className="text-xl text-gray-400">結果データを取得中...</p>
+        {!isDisplay && (
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={onShowRanking}
+              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px]"
+            >
+              ランキング表示
+            </button>
+            <button
+              type="button"
+              onClick={onNextQuestion}
+              className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px]"
+            >
+              次の問題
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">

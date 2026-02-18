@@ -31,6 +31,8 @@ export function PlayPage() {
     hasAnsweredRef.current = hasAnswered;
   });
 
+  const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
@@ -41,15 +43,28 @@ export function PlayPage() {
         setHasAnswered(false);
         setQuestionResult(null);
         setPhase("answer");
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
       }),
       on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
       on("questionClosed", () => {
-        // 未回答の場合のみ結果画面へ遷移（questionResultが来ない可能性があるため）
         if (!hasAnsweredRef.current) {
+          // 未回答の場合は即座に結果画面へ遷移
           setPhase("result");
+        } else {
+          // 回答済みの場合: 3秒以内にquestionResultが届かなければ自動遷移
+          resultTimeoutRef.current = setTimeout(() => {
+            setPhase("result");
+          }, 3000);
         }
       }),
       on("questionResult", (data) => {
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
         setQuestionResult(data);
         setPhase("result");
       }),

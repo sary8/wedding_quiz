@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
@@ -34,6 +34,7 @@ export function DisplayPage() {
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [countdownValue, setCountdownValue] = useState(5);
+  const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -57,6 +58,10 @@ export function DisplayPage() {
         setQuestionResult(null);
         setPhase("question");
         sounds.playQuestionStart();
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
       }),
       on("timeUpdate", (data) => {
         setTimeRemaining(data.remaining);
@@ -67,8 +72,15 @@ export function DisplayPage() {
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionClosed", () => {
         sounds.playBuzzer();
+        resultTimeoutRef.current = setTimeout(() => {
+          setPhase("results");
+        }, 5000);
       }),
       on("questionResult", (data) => {
+        if (resultTimeoutRef.current) {
+          clearTimeout(resultTimeoutRef.current);
+          resultTimeoutRef.current = null;
+        }
         setQuestionResult(data);
         setPhase("results");
         sounds.playResultReveal();

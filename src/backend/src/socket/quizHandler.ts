@@ -305,6 +305,11 @@ export function setupQuizSocket(io: QuizIO) {
               await distributeQuestionResult(io, roomCode, questionId);
             } catch (e) {
               console.error("Timer auto-close result distribution error:", e);
+              io.to(roomCode).emit("questionResult", {
+                questionId,
+                correctChoice: 0,
+                distribution: [0, 0, 0, 0],
+              });
             }
           }
         );
