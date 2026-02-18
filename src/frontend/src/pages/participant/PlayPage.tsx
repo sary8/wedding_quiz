@@ -134,10 +134,7 @@ export function PlayPage() {
       emit("submitAnswer", { questionId, choiceIndex }, (res) => {
         if (!res.success) {
           setAnswerError(res.error || "回答の送信に失敗しました");
-          // 送信失敗時は再選択可能にする（ただし「既に回答済み」エラーの場合は維持）
-          if (!res.error?.includes("既に回答済み")) {
-            setHasAnswered(false);
-          }
+          setHasAnswered(false);
         }
       });
     },

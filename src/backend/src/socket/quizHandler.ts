@@ -185,6 +185,11 @@ export function setupQuizSocket(io: QuizIO) {
         );
 
         if ("error" in result) {
+          // 既に回答済みの場合はフロントに成功として返す（二重タップ対策）
+          if (result.error === "既に回答済みです") {
+            callback({ success: true });
+            return;
+          }
           callback({ success: false, error: result.error });
           return;
         }
