@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 
 export const quizzes = sqliteTable("quizzes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  room_code: text("room_code", { length: 6 }).notNull().unique(),
+  room_code: text("room_code", { length: 4 }).notNull().unique(),
   host_secret: text("host_secret", { length: 64 }).notNull(),
   title: text("title", { length: 200 }).notNull(),
   status: text("status", { enum: ["draft", "lobby", "in_progress", "finished"] })

@@ -8,7 +8,7 @@ export const quizRoutes = new Hono();
 function generateRoomCode(): string {
   const chars = "0123456789";
   let code = "";
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;

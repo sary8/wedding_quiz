@@ -27,8 +27,8 @@ describe("quiz routes", () => {
       const data = await res.json();
       expect(data.title).toBe("結婚式クイズ");
       expect(data.room_code).toBeTruthy();
-      expect(data.room_code).toHaveLength(6);
-      expect(data.room_code).toMatch(/^\d{6}$/);
+      expect(data.room_code).toHaveLength(4);
+      expect(data.room_code).toMatch(/^\d{4}$/);
       expect(data.host_secret).toBeTruthy();
       expect(data.status).toBe("draft");
     });
