@@ -62,7 +62,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
     [quiz.id, quiz.host_secret, onUpdate],
   );
 
-  const motionTransition = prefersReducedMotion ? { duration: 0 } : { type: "spring" as const, stiffness: 300, damping: 30 };
+  const motionTransition = prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const };
 
   return (
     <div>
@@ -98,11 +98,10 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
       <AnimatePresence>
         {isTemplateOpen && (
           <motion.div
-            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
             transition={motionTransition}
-            style={{ overflow: "hidden" }}
           >
             <TemplatePanel
               onImport={handleTemplateImport}
@@ -143,11 +142,10 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
       <AnimatePresence>
         {expandedQuestionId === "new" && (
           <motion.div
-            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
             transition={motionTransition}
-            style={{ overflow: "hidden" }}
             className="mt-2"
           >
             <div className="border border-choice-blue rounded-lg overflow-hidden bg-white">

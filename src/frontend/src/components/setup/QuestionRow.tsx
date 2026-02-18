@@ -33,23 +33,16 @@ export function QuestionRow({
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
       {/* コンパクト行 */}
-      <div
+      <button
+        type="button"
         className={cn(
-          "flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors duration-150",
+          "w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors duration-150 text-left",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50",
           isExpanded && "bg-gray-50",
         )}
         onClick={onToggle}
-        role="button"
-        tabIndex={0}
         aria-expanded={isExpanded}
         aria-label={`問題${index + 1}: ${question.text}`}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
       >
         <span className="text-sm font-bold text-gray-400 shrink-0">[{index + 1}]</span>
         <span className="flex-1 text-sm font-medium text-gray-800 truncate min-w-0">{question.text}</span>
@@ -95,17 +88,16 @@ export function QuestionRow({
         </div>
         {/* 展開/折りたたみインジケーター */}
         <span className="text-gray-400 text-sm shrink-0" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
-      </div>
+      </button>
 
       {/* アコーディオン展開 */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
-            style={{ overflow: "hidden" }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const }}
           >
             <QuestionInlineForm
               question={question}

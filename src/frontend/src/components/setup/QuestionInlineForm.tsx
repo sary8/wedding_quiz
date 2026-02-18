@@ -203,6 +203,8 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
         <input
           id={`question-text-${formId}`}
           type="text"
+          name={`question-text-${formId}`}
+          autoComplete="off"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="例：新郎の出身地はどこ？…"
@@ -236,6 +238,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
                 alt="プレビュー"
                 width={120}
                 height={80}
+                loading="lazy"
                 className="w-30 h-20 object-cover rounded-lg border border-gray-200"
               />
               {isUploading && (
@@ -308,6 +311,8 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
                 </button>
                 <input
                   type="text"
+                  name={`choice-${CHOICE_LABELS[i]}-${formId}`}
+                  autoComplete="off"
                   value={c}
                   onChange={(e) => {
                     const next = [...choices];

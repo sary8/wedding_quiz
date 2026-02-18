@@ -25,6 +25,7 @@ export function NewQuizForm({ isLoading, onCreateQuiz }: Props) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="例：太郎＆花子 結婚式クイズ…"
           aria-label="クイズのタイトル"
+          autoComplete="off"
           className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-200 text-base focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 transition-[border-color,box-shadow] duration-200"
           onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleCreate()}
         />
@@ -39,7 +40,7 @@ export function NewQuizForm({ isLoading, onCreateQuiz }: Props) {
               : "bg-gray-300 cursor-not-allowed",
           ].join(" ")}
         >
-          {isLoading ? "作成中..." : "作成"}
+          {isLoading ? "作成中…" : "作成"}
         </button>
       </div>
     </section>

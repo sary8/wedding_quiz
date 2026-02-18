@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createQuiz, getQuiz, listQuizzes } from "../../services/api";
 import type { Quiz, QuizSummary } from "../../types";
 import { NewQuizForm } from "../../components/setup/NewQuizForm";
@@ -16,15 +16,29 @@ function getHostSecret(quizId: number): string | null {
   return localStorage.getItem(`host_secret_${quizId}`);
 }
 
+function parseTab(value: string | null): "config" | "questions" {
+  return value === "questions" ? "questions" : "config";
+}
+
 export function SetupPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [quizList, setQuizList] = useState<QuizSummary[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingQuizList, setIsLoadingQuizList] = useState(true);
   const [isSelectingQuiz, setIsSelectingQuiz] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"config" | "questions">("config");
+
+  const activeTab = parseTab(searchParams.get("tab"));
+  function setActiveTab(tab: "config" | "questions") {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === "config") next.delete("tab");
+      else next.set("tab", tab);
+      return next;
+    }, { replace: true });
+  }
 
   useEffect(() => {
     loadQuizzes();
@@ -157,7 +171,7 @@ export function SetupPage() {
           <>
             <NewQuizForm isLoading={isLoading} onCreateQuiz={handleCreateQuiz} />
             {isLoadingQuizList ? (
-              <div className="text-center py-8 text-gray-500 text-sm">読み込み中...</div>
+              <div className="text-center py-8 text-gray-500 text-sm">読み込み中…</div>
             ) : (
               <QuizSelector
                 quizList={quizList}

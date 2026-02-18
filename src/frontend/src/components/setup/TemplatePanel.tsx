@@ -93,7 +93,7 @@ export function TemplatePanel({ onImport, onClose }: Props) {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-gray-500 py-6 text-center">読み込み中...</p>
+        <p className="text-sm text-gray-500 py-6 text-center">読み込み中…</p>
       ) : bankQuestions.length === 0 ? (
         <p className="text-sm text-gray-500 py-6 text-center">
           テンプレートに問題がありません。問題の編集画面から「テンプレートに保存」で問題を追加できます。

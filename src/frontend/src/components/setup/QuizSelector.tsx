@@ -23,7 +23,7 @@ export function QuizSelector({ quizList, isSelectingQuiz, onSelectQuiz, getHostS
               onClick={() => onSelectQuiz(q)}
               disabled={!hasKey || isSelectingQuiz}
               className={[
-                "px-4 py-3 rounded-lg border-2 flex justify-between items-center text-left w-full transition-all duration-150 min-h-[44px]",
+                "px-4 py-3 rounded-lg border-2 flex justify-between items-center text-left w-full transition-[border-color,opacity] duration-150 min-h-[44px]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
                 "border-transparent bg-gray-50 hover:border-gray-200",
                 !hasKey || isSelectingQuiz ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
@@ -40,7 +40,7 @@ export function QuizSelector({ quizList, isSelectingQuiz, onSelectQuiz, getHostS
         })}
       </div>
       {isSelectingQuiz && (
-        <p className="text-center mt-3 text-gray-500 text-sm">読み込み中...</p>
+        <p className="text-center mt-3 text-gray-500 text-sm">読み込み中…</p>
       )}
     </section>
   );

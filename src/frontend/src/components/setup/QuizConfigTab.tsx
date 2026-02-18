@@ -80,7 +80,9 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                 if (e.key === "Escape") handleCancelEdit();
               }}
               onBlur={handleSaveTitle}
+              name="quiz-title-edit"
               aria-label="クイズタイトル"
+              autoComplete="off"
               autoFocus
               className="flex-1 px-3 py-2 rounded-lg border-2 border-accent text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
             />
