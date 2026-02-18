@@ -32,8 +32,8 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
   }, [capture]);
 
   function handleSubmit() {
-    if (!nickname.trim() || isJoining) return;
-    onJoin(nickname.trim(), capturedImage || undefined);
+    if (!nickname.trim() || !capturedImage || isJoining) return;
+    onJoin(nickname.trim(), capturedImage);
   }
 
   return (
@@ -76,7 +76,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-rose-text/50 mb-3">自撮り（任意）</p>
+          <p className="text-sm text-rose-text/50 mb-3">自撮り（必須）</p>
 
           {cameraError !== null ? (
             <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
@@ -163,10 +163,10 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!nickname.trim() || isJoining}
+          disabled={!nickname.trim() || !capturedImage || isJoining}
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-all duration-200 min-h-[44px]",
-            nickname.trim() && !isJoining
+            nickname.trim() && capturedImage && !isJoining
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}
