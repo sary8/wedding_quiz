@@ -30,7 +30,8 @@
 | question | 問題文・選択肢・カウントダウン・回答数 | 回答を締め切るボタン |
 | results | 回答分布グラフ・正解表示 | ランキング表示 / 次の問題 |
 | ranking | Top10 スコアバーアニメーション | 次の問題 / 最終結果発表 |
-| final | オールスター感謝祭式カウントダウン発表 | なし（自動進行） |
+| final | オールスター感謝祭式カウントダウン発表 | もう一度プレイ（リプレイ） |
+| recovering | ホスト復旧画面（ゲーム中に再接続時） | 次の問題を配信 / ランキング表示 |
 
 > `key` パラメータ = `host_secret`（localStorage に保存済み）
 > `quizId` パラメータ = クイズID
@@ -80,6 +81,7 @@
 | DELETE | `/api/quizzes/:id?key=` | クイズ削除 |
 | POST | `/api/questions` | 問題追加 |
 | PUT | `/api/questions/:id` | 問題更新 |
+| PUT | `/api/questions/reorder` | 問題並べ替え |
 | DELETE | `/api/questions/:id?key=` | 問題削除 |
 | POST | `/api/media/upload` | 画像・動画アップロード |
 | POST | `/api/media/selfie` | 自撮りアップロード（base64） |
@@ -99,8 +101,9 @@
 | `closeQuestion` | ホスト | 回答を手動締め切り |
 | `showRanking` | ホスト | ランキング計算・配信 |
 | `endGame` | ホスト | ゲーム終了・最終結果配信 |
+| `replayQuiz` | ホスト | ゲームリプレイ（finished → lobby リセット） |
 | `watchRoom` | プロジェクター | 読み取り専用参加（既存参加者も取得） |
-| `joinRoom` | 参加者 | ニックネーム・自撮りで参加 |
+| `joinRoom` | 参加者 | ニックネーム・自撮りで参加（同名重複は拒否） |
 | `submitAnswer` | 参加者 | 回答送信（`questionId`, `choiceIndex: 1-4`） |
 
 ### Server → Client
@@ -117,4 +120,6 @@
 | `questionResult` | 全員 | 正解・分布（参加者は個人結果も含む） |
 | `rankingUpdate` | 全員 | ランキングデータ |
 | `gameEnded` | 全員 | 最終結果データ |
+| `quizReset` | 全員 | リプレイ時のゲームリセット通知 |
 | `reconnected` | 参加者 | 再接続時のステータス通知 |
+| `hostReconnected` | ホスト | ホスト復旧時の状態復元（quizStatus, currentQuestionIndex, participants） |
