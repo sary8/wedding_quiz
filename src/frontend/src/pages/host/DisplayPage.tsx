@@ -15,7 +15,7 @@ import { ResultsPage } from "./ResultsPage";
 import { RankingPage } from "./RankingPage";
 import { FinalPage } from "./FinalPage";
 
-type DisplayPhase = "lobby" | "question" | "results" | "ranking" | "final";
+type DisplayPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final";
 
 const NOOP = () => {}; // stable reference for display-only props
 
@@ -33,11 +33,16 @@ export function DisplayPage() {
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [countdownValue, setCountdownValue] = useState(5);
 
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
       on("lobbyUpdate", (data) => setParticipants(data.participants)),
+      on("gameStarted", () => {
+        setCountdownValue(5);
+        setPhase("countdown");
+      }),
       on("participantJoined", (participant) => {
         setParticipants((prev) => {
           if (prev.some((p) => p.id === participant.id)) return prev;
@@ -92,6 +97,14 @@ export function DisplayPage() {
     return () => unsubs.forEach((u) => u());
   }, [on]);
 
+  // カウントダウン表示（表示のみ、nextQuestionは呼ばない）
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (countdownValue <= 0) return;
+    const timer = setTimeout(() => setCountdownValue((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [phase, countdownValue]);
+
   // watchRoom でルームに参加（read-only）
   useEffect(() => {
     if (!isConnected || !roomCode) return;
@@ -134,6 +147,15 @@ export function DisplayPage() {
             isDisplay={true}
           />
         </>
+      );
+    case "countdown":
+      return (
+        <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
+          <p className="text-2xl font-bold mb-4">ゲーム開始</p>
+          <p className="text-[10rem] font-bold leading-none text-accent animate-pulse">
+            {countdownValue > 0 ? countdownValue : ""}
+          </p>
+        </div>
       );
     case "question":
       return (

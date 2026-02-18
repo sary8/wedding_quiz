@@ -15,7 +15,7 @@ import { ResultsPage } from "./ResultsPage";
 import { RankingPage } from "./RankingPage";
 import { FinalPage } from "./FinalPage";
 
-type HostPhase = "lobby" | "question" | "results" | "ranking" | "final" | "recovering";
+type HostPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "recovering";
 
 export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -35,6 +35,7 @@ export function HostPage() {
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [countdownValue, setCountdownValue] = useState(5);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -109,26 +110,32 @@ export function HostPage() {
     return unsub;
   }, [isConnected, roomCode, quizId, hostSecret, emit, on]);
 
-  // ゲーム開始 → 成功後に即 nextQuestion で最初の問題を配信
+  // ゲーム開始 → カウントダウンへ遷移
   const handleStartGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
     setError(null);
     emit("startGame", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
       if (!res.success) {
         setError(res.error || "ゲームの開始に失敗しました");
-        setIsProcessing(false);
         return;
       }
-      // 開始成功 → 最初の問題を自動配信
-      emit("nextQuestion", { roomCode, hostSecret }, (nextRes) => {
-        setIsProcessing(false);
-        if (!nextRes.success) {
-          setError(nextRes.error || "最初の問題の配信に失敗しました");
-        }
-      });
+      setCountdownValue(5);
+      setPhase("countdown");
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
+
+  // カウントダウン: 5→4→3→2→1→0 → 最初の問題を配信
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (countdownValue <= 0) {
+      handleNextQuestion();
+      return;
+    }
+    const timer = setTimeout(() => setCountdownValue((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [phase, countdownValue]);
 
   const handleNextQuestion = useCallback(() => {
     if (!roomCode || isProcessing) return;
@@ -211,6 +218,15 @@ export function HostPage() {
             onStartGame={handleStartGame}
           />
         </>
+      );
+    case "countdown":
+      return (
+        <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
+          <p className="text-2xl font-bold mb-4">ゲーム開始</p>
+          <p className="text-[10rem] font-bold leading-none text-accent animate-pulse">
+            {countdownValue > 0 ? countdownValue : ""}
+          </p>
+        </div>
       );
     case "question":
       return (
