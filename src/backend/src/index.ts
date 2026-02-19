@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { Server as SocketIOServer } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents } from "./types/index.js";
-import { quizRoutes } from "./routes/quiz.js";
+import { quizRoutes, participantRoutes } from "./routes/quiz.js";
 import { questionRoutes } from "./routes/question.js";
 import { mediaRoutes } from "./routes/media.js";
 import { questionBankRoutes } from "./routes/questionBank.js";
@@ -32,6 +32,7 @@ app.onError((err, c) => {
 
 // REST API routes
 app.route("/api/quizzes", quizRoutes);
+app.route("/api/participants", participantRoutes);
 app.route("/api/questions", questionRoutes);
 app.route("/api/media", mediaRoutes);
 app.route("/api/question-bank", questionBankRoutes);

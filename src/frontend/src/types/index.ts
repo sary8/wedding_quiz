@@ -78,6 +78,27 @@ export type QuizSummary = {
   status: QuizStatus;
   current_question_index: number;
   created_at: string;
+  question_count: number;
+  participant_count: number;
+};
+
+export type ParticipantSummary = {
+  id: number;
+  nickname: string;
+  selfie_file_name: string | null;
+  total_score: number;
+  current_rank: number;
+  joined_at: string;
+};
+
+export type ParticipantWithQuiz = {
+  id: number;
+  nickname: string;
+  selfie_file_name: string | null;
+  total_score: number;
+  quiz_id: number;
+  quiz_title: string;
+  joined_at: string;
 };
 
 export type Quiz = QuizSummary & {

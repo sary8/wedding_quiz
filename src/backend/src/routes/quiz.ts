@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const quizRoutes = new Hono();
@@ -49,7 +49,7 @@ quizRoutes.post("/", async (c) => {
   return c.json({ error: "ルームコードの生成に失敗しました。もう一度お試しください" }, 500);
 });
 
-// クイズ一覧（host_secretは除外）
+// クイズ一覧（host_secretは除外、カウント付き）
 quizRoutes.get("/", async (c) => {
   const rows = await db
     .select({
@@ -59,6 +59,8 @@ quizRoutes.get("/", async (c) => {
       status: schema.quizzes.status,
       current_question_index: schema.quizzes.current_question_index,
       created_at: schema.quizzes.created_at,
+      question_count: sql<number>`(SELECT COUNT(*) FROM questions WHERE questions.quiz_id = quizzes.id)`.as("question_count"),
+      participant_count: sql<number>`(SELECT COUNT(*) FROM participants WHERE participants.quiz_id = quizzes.id)`.as("participant_count"),
     })
     .from(schema.quizzes);
   return c.json(rows);
@@ -128,4 +130,56 @@ quizRoutes.delete("/:id", async (c) => {
 
   await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
   return c.json({ success: true });
+});
+
+// 特定クイズの参加者一覧（host_secret認証）
+quizRoutes.get("/:id/participants", async (c) => {
+  const id = Number(c.req.param("id"));
+  const key = c.req.query("key");
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, id),
+  });
+
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+  if (quiz.host_secret !== key) {
+    return c.json({ error: "認証エラー" }, 403);
+  }
+
+  const rows = await db
+    .select({
+      id: schema.participants.id,
+      nickname: schema.participants.nickname,
+      selfie_file_name: schema.participants.selfie_file_name,
+      total_score: schema.participants.total_score,
+      current_rank: schema.participants.current_rank,
+      joined_at: schema.participants.joined_at,
+    })
+    .from(schema.participants)
+    .where(eq(schema.participants.quiz_id, id));
+
+  return c.json(rows);
+});
+
+// 全参加者一覧（クイズ情報付き、認証なし）
+// index.ts で /api/participants にマウント
+export const participantRoutes = new Hono();
+
+participantRoutes.get("/", async (c) => {
+  const rows = await db
+    .select({
+      id: schema.participants.id,
+      nickname: schema.participants.nickname,
+      selfie_file_name: schema.participants.selfie_file_name,
+      total_score: schema.participants.total_score,
+      quiz_id: schema.participants.quiz_id,
+      quiz_title: schema.quizzes.title,
+      joined_at: schema.participants.joined_at,
+    })
+    .from(schema.participants)
+    .innerJoin(schema.quizzes, eq(schema.participants.quiz_id, schema.quizzes.id));
+
+  return c.json(rows);
 });

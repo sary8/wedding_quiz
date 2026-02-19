@@ -1,0 +1,175 @@
+import { useState } from "react";
+import type { QuizSummary, ParticipantSummary, Quiz } from "../../types";
+import { QuizStatus } from "../../types";
+import { getQuiz, listQuizParticipants } from "../../services/api";
+import { cn } from "../../utils/cn";
+import { CHOICE_LABELS } from "./constants";
+
+type Props = {
+  quizList: QuizSummary[];
+  getHostSecret: (quizId: number) => string | null;
+};
+
+const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
+
+export function GameHistoryView({ quizList, getHostSecret }: Props) {
+  const finishedQuizzes = quizList.filter((q) => q.status === QuizStatus.Finished);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailCache, setDetailCache] = useState<Record<number, { quiz: Quiz; participants: ParticipantSummary[] }>>({});
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleToggle(quizId: number) {
+    if (expandedId === quizId) {
+      setExpandedId(null);
+      return;
+    }
+
+    setExpandedId(quizId);
+
+    if (detailCache[quizId]) return;
+
+    const key = getHostSecret(quizId);
+    if (!key) {
+      setError("管理キーがありません");
+      return;
+    }
+
+    setLoadingId(quizId);
+    setError(null);
+    try {
+      const [quiz, participants] = await Promise.all([
+        getQuiz(quizId, key),
+        listQuizParticipants(quizId, key),
+      ]);
+      setDetailCache((prev) => ({ ...prev, [quizId]: { quiz, participants } }));
+    } catch {
+      setError("詳細の取得に失敗しました");
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  if (finishedQuizzes.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-8 shadow-sm text-center">
+        <p className="text-gray-500">まだ完了したゲームはありません</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {error && (
+        <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
+          {error}
+        </div>
+      )}
+
+      {finishedQuizzes.map((q) => {
+        const isExpanded = expandedId === q.id;
+        const detail = detailCache[q.id];
+        const isLoading = loadingId === q.id;
+
+        return (
+          <div key={q.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => handleToggle(q.id)}
+              aria-expanded={isExpanded}
+              className={cn(
+                "w-full px-5 py-4 flex justify-between items-center text-left cursor-pointer hover:bg-gray-50 transition-colors duration-150",
+                btnFocus,
+              )}
+            >
+              <div>
+                <div className="font-semibold text-base text-gray-800">{q.title}</div>
+                <div className="text-sm text-gray-500 mt-0.5">
+                  {new Date(q.created_at).toLocaleDateString("ja-JP")} ・ {q.participant_count}人参加 ・ {q.question_count}問
+                </div>
+              </div>
+              <span className={cn(
+                "text-gray-400 transition-transform duration-200 text-lg shrink-0 ml-3",
+                isExpanded && "rotate-180",
+              )}>
+                ▼
+              </span>
+            </button>
+
+            {isExpanded && (
+              <div className="border-t border-gray-100 px-5 py-4">
+                {isLoading ? (
+                  <p className="text-sm text-gray-500 text-center py-4">読み込み中…</p>
+                ) : detail ? (
+                  <div className="flex flex-col gap-4">
+                    {/* 参加者ランキング */}
+                    {detail.participants.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">参加者ランキング</h4>
+                        <div className="flex flex-col gap-1">
+                          {detail.participants
+                            .sort((a, b) => a.current_rank - b.current_rank || b.total_score - a.total_score)
+                            .slice(0, 10)
+                            .map((p, i) => (
+                              <div key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
+                                <span className={cn(
+                                  "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
+                                  i === 0 ? "bg-yellow-400 text-white" : i === 1 ? "bg-gray-300 text-white" : i === 2 ? "bg-orange-300 text-white" : "bg-gray-200 text-gray-600",
+                                )}>
+                                  {p.current_rank || i + 1}
+                                </span>
+                                {p.selfie_file_name ? (
+                                  <img
+                                    src={`/api/media/${p.selfie_file_name}`}
+                                    alt={p.nickname}
+                                    className="w-8 h-8 rounded-full object-cover shrink-0"
+                                  />
+                                ) : (
+                                  <span className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center text-sm font-bold shrink-0">
+                                    {p.nickname.charAt(0)}
+                                  </span>
+                                )}
+                                <span className="text-sm text-gray-800 font-medium flex-1 min-w-0 truncate">{p.nickname}</span>
+                                <span className="text-sm text-gray-500 shrink-0">{p.total_score}点</span>
+                              </div>
+                            ))}
+                          {detail.participants.length > 10 && (
+                            <p className="text-xs text-gray-400 text-center mt-1">
+                              他{detail.participants.length - 10}人
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 出題された問題 */}
+                    {detail.quiz.questions && detail.quiz.questions.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">出題された問題</h4>
+                        <div className="flex flex-col gap-1">
+                          {detail.quiz.questions.map((question, qi) => (
+                            <div key={question.id} className="px-3 py-2 rounded-lg bg-gray-50">
+                              <div className="text-sm text-gray-800">
+                                <span className="text-gray-400 mr-1">Q{qi + 1}.</span>
+                                {question.text}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                正解: {CHOICE_LABELS[question.correct_choice - 1]}.{
+                                  [question.choice1, question.choice2, question.choice3, question.choice4][question.correct_choice - 1]
+                                }
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

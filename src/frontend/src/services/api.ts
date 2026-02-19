@@ -1,4 +1,4 @@
-import type { Quiz, QuizSummary, Question, QuestionBankItem } from "../types";
+import type { Quiz, QuizSummary, Question, QuestionBankItem, ParticipantSummary, ParticipantWithQuiz } from "../types";
 
 const API_BASE = "/api";
 
@@ -32,6 +32,14 @@ export function listQuizzes() {
 
 export function deleteQuiz(id: number, key: string) {
   return request<void>(`/quizzes/${id}?key=${key}`, { method: "DELETE" });
+}
+
+export function listQuizParticipants(quizId: number, key: string) {
+  return request<ParticipantSummary[]>(`/quizzes/${quizId}/participants?key=${key}`);
+}
+
+export function listAllParticipants() {
+  return request<ParticipantWithQuiz[]>("/participants");
 }
 
 // Question
