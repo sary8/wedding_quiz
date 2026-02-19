@@ -61,7 +61,7 @@ export const answers = sqliteTable(
       .references(() => questions.id, { onDelete: "cascade" }),
     participant_id: integer("participant_id")
       .notNull()
-      .references(() => participants.id),
+      .references(() => participants.id, { onDelete: "cascade" }),
     choice_index: integer("choice_index").notNull(), // 1-4
     is_correct: integer("is_correct", { mode: "boolean" }).notNull(),
     response_time_ms: real("response_time_ms").notNull(),

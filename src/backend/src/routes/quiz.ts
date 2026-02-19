@@ -172,6 +172,7 @@ quizRoutes.delete("/:id/participants/:participantId", async (c) => {
     return c.json({ error: "参加者が見つかりません" }, 404);
   }
 
+  await db.delete(schema.answers).where(eq(schema.answers.participant_id, participantId));
   await db.delete(schema.participants).where(eq(schema.participants.id, participantId));
   return c.json({ success: true });
 });
@@ -196,6 +197,9 @@ quizRoutes.delete("/:id/participants", async (c) => {
   const body = await c.req.json<{ ids?: number[] }>().catch(() => ({}));
 
   if ("ids" in body && Array.isArray(body.ids) && body.ids.length > 0) {
+    await db.delete(schema.answers).where(
+      inArray(schema.answers.participant_id, body.ids),
+    );
     await db.delete(schema.participants).where(
       and(
         eq(schema.participants.quiz_id, quizId),
@@ -205,6 +209,16 @@ quizRoutes.delete("/:id/participants", async (c) => {
     return c.json({ success: true, deleted: body.ids.length });
   }
 
+  const participantIds = await db
+    .select({ id: schema.participants.id })
+    .from(schema.participants)
+    .where(eq(schema.participants.quiz_id, quizId));
+
+  if (participantIds.length > 0) {
+    await db.delete(schema.answers).where(
+      inArray(schema.answers.participant_id, participantIds.map((p) => p.id)),
+    );
+  }
   await db.delete(schema.participants).where(
     eq(schema.participants.quiz_id, quizId),
   );

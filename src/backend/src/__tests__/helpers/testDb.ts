@@ -42,7 +42,7 @@ const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS answers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-    participant_id INTEGER NOT NULL REFERENCES participants(id),
+    participant_id INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
     choice_index INTEGER NOT NULL,
     is_correct INTEGER NOT NULL,
     response_time_ms REAL NOT NULL,
@@ -74,6 +74,7 @@ export let db: LibSQLDatabase<typeof schema>;
 export async function initTestDb() {
   client = createClient({ url: "file::memory:" });
   db = drizzle(client, { schema });
+  await client.execute("PRAGMA foreign_keys = ON");
   for (const sql of CREATE_TABLES_SQL) {
     await client.execute(sql);
   }

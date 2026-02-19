@@ -15,6 +15,13 @@
       "when": 1771451992383,
       "tag": "0001_powerful_adam_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771512191187,
+      "tag": "0002_massive_titanium_man",
+      "breakpoints": true
     }
   ]
 }

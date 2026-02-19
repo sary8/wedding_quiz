@@ -1,6 +1,7 @@
+import { Hono } from "hono";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { initTestDb, resetTestDb, db, testSchema as schema } from "../helpers/testDb.js";
-import { createTestQuiz, createTestQuestion, createTestParticipant } from "../helpers/fixtures.js";
+import { createTestQuiz, createTestQuestion, createTestParticipant, createTestAnswer } from "../helpers/fixtures.js";
 
 vi.mock("../../db/index.js", async () => {
   const testDb = await import("../helpers/testDb.js");
@@ -9,6 +10,11 @@ vi.mock("../../db/index.js", async () => {
 });
 
 const { quizRoutes, participantRoutes } = await import("../../routes/quiz.js");
+
+// メインアプリと同じ構成で app.route() マウントしたテスト用アプリ
+const app = new Hono();
+app.route("/api/quizzes", quizRoutes);
+app.route("/api/participants", participantRoutes);
 
 describe("quiz routes", () => {
   beforeEach(async () => {
@@ -301,6 +307,95 @@ describe("quiz routes", () => {
     });
   });
 
+  describe("DELETE - 回答済み参加者の削除（FK制約テスト）", () => {
+    it("個別削除: 回答を持つ参加者を削除できる", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id, { text: "テスト問題" });
+      const p = await createTestParticipant(quiz.id, { nickname: "太郎" });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1500,
+        scoreAwarded: 1000,
+      });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants/${p.id}?key=test-secret-123`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(200);
+
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("一括削除（全員）: 回答を持つ参加者を削除できる", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id, { text: "テスト問題" });
+      const p1 = await createTestParticipant(quiz.id, { nickname: "太郎" });
+      const p2 = await createTestParticipant(quiz.id, { nickname: "花子" });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1500,
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p2.id,
+        choiceIndex: 2,
+        isCorrect: false,
+        responseTimeMs: 2000,
+      });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(200);
+
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("一括削除（指定ID）: 回答を持つ参加者を指定削除できる", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id, { text: "テスト問題" });
+      const p1 = await createTestParticipant(quiz.id, { nickname: "太郎" });
+      const p2 = await createTestParticipant(quiz.id, { nickname: "花子" });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1500,
+      });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [p1.id] }),
+      });
+      expect(res.status).toBe(200);
+
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0].nickname).toBe("花子");
+    });
+  });
+
   describe("GET /:id/participants", () => {
     it("正しいkey → 参加者一覧を返却", async () => {
       const quiz = await createTestQuiz();
@@ -376,5 +471,110 @@ describe("participant routes", () => {
       const data = await res.json();
       expect(data).toHaveLength(0);
     });
+  });
+});
+
+// ============================================================
+// app.route() マウント経由の統合テスト
+// ユニットテスト（quizRoutes.request）では見つからないルーティング問題を検出
+// ============================================================
+describe("app.route() 経由のルーティング", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("DELETE /api/quizzes/:id/participants → 参加者一括削除（クイズは残る）", async () => {
+    const quiz = await createTestQuiz();
+    await createTestParticipant(quiz.id, { nickname: "太郎" });
+    await createTestParticipant(quiz.id, { nickname: "花子" });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+
+    // 参加者が消えていること
+    const pRes = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
+      method: "GET",
+    });
+    const participants = await pRes.json();
+    expect(participants).toHaveLength(0);
+
+    // クイズは残っていること（DELETE /:id に誤マッチしていないことを確認）
+    const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
+      method: "GET",
+    });
+    expect(qRes.status).toBe(200);
+    const quizData = await qRes.json();
+    expect(quizData.title).toBe("テストクイズ");
+  });
+
+  it("DELETE /api/quizzes/:id/participants/:participantId → 個別削除", async () => {
+    const quiz = await createTestQuiz();
+    const p1 = await createTestParticipant(quiz.id, { nickname: "太郎" });
+    const p2 = await createTestParticipant(quiz.id, { nickname: "花子" });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/participants/${p1.id}?key=test-secret-123`, {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(200);
+
+    // 花子だけ残る
+    const pRes = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
+      method: "GET",
+    });
+    const participants = await pRes.json();
+    expect(participants).toHaveLength(1);
+    expect(participants[0].nickname).toBe("花子");
+
+    // クイズは残っている
+    const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
+      method: "GET",
+    });
+    expect(qRes.status).toBe(200);
+  });
+
+  it("DELETE /api/quizzes/:id → クイズ削除は別途正しく動く", async () => {
+    const quiz = await createTestQuiz();
+
+    const res = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(200);
+
+    const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
+      method: "GET",
+    });
+    expect(qRes.status).toBe(404);
+  });
+
+  it("GET /api/quizzes/:id/participants → 参加者一覧（GET /:id に誤マッチしない）", async () => {
+    const quiz = await createTestQuiz();
+    await createTestParticipant(quiz.id, { nickname: "太郎" });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
+      method: "GET",
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // 配列が返ること（GET /:id だとquizオブジェクトが返る）
+    expect(Array.isArray(data)).toBe(true);
+    expect(data).toHaveLength(1);
+    expect(data[0].nickname).toBe("太郎");
+  });
+
+  it("GET /api/participants → 全参加者横断取得", async () => {
+    const quiz = await createTestQuiz();
+    await createTestParticipant(quiz.id, { nickname: "太郎" });
+
+    const res = await app.request("/api/participants", { method: "GET" });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+    expect(data).toHaveLength(1);
   });
 });
