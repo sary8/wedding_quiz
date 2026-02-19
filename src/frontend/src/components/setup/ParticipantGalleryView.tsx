@@ -96,25 +96,8 @@ export function ParticipantGalleryView({ getHostSecret }: Props) {
     setError(null);
     setConfirmMode(null);
 
-    // いずれかのクイズのhost_secretを取得して認証に使う
-    const quizIds = [...new Set(participants.map((p) => p.quiz_id))];
-    let anyKey: string | null = null;
-    for (const quizId of quizIds) {
-      const key = getHostSecret(quizId);
-      if (key) {
-        anyKey = key;
-        break;
-      }
-    }
-
-    if (!anyKey) {
-      setError("管理キーが見つかりません。クイズを作成したブラウザで操作してください");
-      setIsDeleting(false);
-      return;
-    }
-
     try {
-      await deleteAllParticipants(anyKey);
+      await deleteAllParticipants();
       setSelectedIds(new Set());
       const data = await listAllParticipants();
       setParticipants(data);

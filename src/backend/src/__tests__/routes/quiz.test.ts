@@ -474,13 +474,13 @@ describe("participant routes", () => {
   });
 
   describe("DELETE /", () => {
-    it("有効なhost_secretで全参加者を削除できる", async () => {
+    it("全参加者を削除できる", async () => {
       const quiz1 = await createTestQuiz({ title: "クイズ1" });
       const quiz2 = await createTestQuiz({ title: "クイズ2", roomCode: "5678", hostSecret: "secret-2" });
       await createTestParticipant(quiz1.id, { nickname: "太郎" });
       await createTestParticipant(quiz2.id, { nickname: "花子" });
 
-      const res = await participantRoutes.request("/?key=test-secret-123", {
+      const res = await participantRoutes.request("/", {
         method: "DELETE",
       });
       expect(res.status).toBe(200);
@@ -504,7 +504,7 @@ describe("participant routes", () => {
         responseTimeMs: 1500,
       });
 
-      const res = await participantRoutes.request("/?key=test-secret-123", {
+      const res = await participantRoutes.request("/", {
         method: "DELETE",
       });
       expect(res.status).toBe(200);
@@ -514,15 +514,9 @@ describe("participant routes", () => {
       expect(remaining).toHaveLength(0);
     });
 
-    it("keyなし → 400", async () => {
+    it("参加者がいなくても成功する", async () => {
       const res = await participantRoutes.request("/", { method: "DELETE" });
-      expect(res.status).toBe(400);
-    });
-
-    it("無効なkey → 403", async () => {
-      await createTestQuiz();
-      const res = await participantRoutes.request("/?key=invalid", { method: "DELETE" });
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(200);
     });
   });
 });
