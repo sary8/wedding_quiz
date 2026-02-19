@@ -98,6 +98,7 @@ export function QuestionRow({
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const }}
           >
             <QuestionInlineForm
+              key={question.id}
               question={question}
               quizId={quizId}
               onSaved={onSaved}

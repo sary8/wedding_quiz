@@ -12,12 +12,16 @@ type Props = {
 };
 
 export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Props) {
-  const [text, setText] = useState("");
-  const [choices, setChoices] = useState(["", "", "", ""]);
-  const [correctChoice, setCorrectChoice] = useState(1);
-  const [timeLimit, setTimeLimit] = useState(20);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [text, setText] = useState(question?.text ?? "");
+  const [choices, setChoices] = useState(() =>
+    question
+      ? [question.choice1, question.choice2, question.choice3, question.choice4]
+      : ["", "", "", ""],
+  );
+  const [correctChoice, setCorrectChoice] = useState(question?.correct_choice ?? 1);
+  const [timeLimit, setTimeLimit] = useState(question?.time_limit_seconds ?? 20);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(question?.media_url ?? null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(question?.media_url ?? null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -30,25 +34,8 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
   const isEditing = question !== null;
   const formId = question ? `edit-${question.id}` : "new";
 
-  useEffect(() => {
-    if (question) {
-      setText(question.text);
-      setChoices([question.choice1, question.choice2, question.choice3, question.choice4]);
-      setCorrectChoice(question.correct_choice);
-      setTimeLimit(question.time_limit_seconds);
-      if (question.media_url) {
-        setPreviewUrl(question.media_url);
-        setMediaUrl(question.media_url);
-      } else {
-        clearImage();
-      }
-    } else {
-      resetForm();
-    }
-    setError(null);
-    setPendingDelete(false);
-    setSavedToTemplate(false);
-  }, [question]);
+  // NOTE: state is initialized from question prop at mount.
+  // Parent must use key={question?.id ?? "new"} to remount when question changes.
 
   useEffect(() => {
     return () => {
@@ -57,14 +44,6 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
       }
     };
   }, []);
-
-  function resetForm() {
-    setText("");
-    setChoices(["", "", "", ""]);
-    setCorrectChoice(1);
-    setTimeLimit(20);
-    clearImage();
-  }
 
   function clearImage() {
     if (previewObjectUrlRef.current) {

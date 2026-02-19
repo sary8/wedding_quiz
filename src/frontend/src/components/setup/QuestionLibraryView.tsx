@@ -39,16 +39,11 @@ export function QuestionLibraryView({ quizList }: Props) {
   async function loadPastQuizzes() {
     setIsLoadingPast(true);
     const finished = quizList.filter((q) => q.status === QuizStatus.Finished && q.question_count > 0);
-    const results: Quiz[] = [];
 
-    for (const q of finished) {
-      try {
-        const quiz = await getQuiz(q.id);
-        results.push(quiz);
-      } catch {
-        // skip quizzes we can't load
-      }
-    }
+    const settled = await Promise.allSettled(finished.map((q) => getQuiz(q.id)));
+    const results = settled
+      .filter((r): r is PromiseFulfilledResult<Quiz> => r.status === "fulfilled")
+      .map((r) => r.value);
 
     setPastQuizzes(results);
     setIsLoadingPast(false);

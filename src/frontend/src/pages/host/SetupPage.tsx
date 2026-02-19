@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createQuiz, getQuiz, listQuizzes } from "../../services/api";
 import type { Quiz, QuizSummary } from "../../types";
@@ -8,8 +8,11 @@ import { ParticipantGalleryView } from "../../components/setup/ParticipantGaller
 import { QuestionLibraryView } from "../../components/setup/QuestionLibraryView";
 import { TabBar } from "../../components/setup/TabBar";
 import { QuizConfigTab } from "../../components/setup/QuizConfigTab";
-import { QuestionManagementTab } from "../../components/setup/QuestionManagementTab";
 import { cn } from "../../utils/cn";
+
+const QuestionManagementTab = lazy(() =>
+  import("../../components/setup/QuestionManagementTab").then((m) => ({ default: m.QuestionManagementTab })),
+);
 
 type SetupView = "dashboard" | "history" | "participants" | "questions" | "edit";
 
@@ -139,16 +142,16 @@ export function SetupPage() {
 
   const handleQuestionUpdate = useCallback(async () => {
     if (!selectedQuiz) return;
-    const updated = await getQuiz(selectedQuiz.id);
+    const [updated] = await Promise.all([getQuiz(selectedQuiz.id), loadQuizzes()]);
     setSelectedQuiz(updated);
-    await loadQuizzes();
   }, [selectedQuiz]);
 
   const handleTitleSaved = useCallback(async () => {
-    await loadQuizzes();
     if (selectedQuiz) {
-      const updated = await getQuiz(selectedQuiz.id);
+      const [, updated] = await Promise.all([loadQuizzes(), getQuiz(selectedQuiz.id)]);
       setSelectedQuiz(updated);
+    } else {
+      await loadQuizzes();
     }
   }, [selectedQuiz]);
 
@@ -247,10 +250,12 @@ export function SetupPage() {
                   hidden={activeTab !== "questions"}
                 >
                   {activeTab === "questions" && (
-                    <QuestionManagementTab
-                      quiz={selectedQuiz}
-                      onUpdate={handleQuestionUpdate}
-                    />
+                    <Suspense fallback={<div className="text-center py-8 text-gray-500 text-sm">読み込み中…</div>}>
+                      <QuestionManagementTab
+                        quiz={selectedQuiz}
+                        onUpdate={handleQuestionUpdate}
+                      />
+                    </Suspense>
                   )}
                 </div>
               </div>

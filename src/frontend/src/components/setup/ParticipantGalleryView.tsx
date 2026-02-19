@@ -9,7 +9,7 @@ export function ParticipantGalleryView() {
   const [participants, setParticipants] = useState<ParticipantWithQuiz[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmMode, setConfirmMode] = useState<"selected" | "all" | null>(null);
 
@@ -68,13 +68,13 @@ export function ParticipantGalleryView() {
     }
 
     try {
-      for (const [quizId, ids] of grouped) {
-        if (ids.length === 1) {
-          await deleteParticipant(quizId, ids[0]);
-        } else {
-          await deleteParticipantsBulk(quizId, ids);
-        }
-      }
+      await Promise.all(
+        Array.from(grouped, ([quizId, ids]) =>
+          ids.length === 1
+            ? deleteParticipant(quizId, ids[0])
+            : deleteParticipantsBulk(quizId, ids),
+        ),
+      );
       setSelectedIds(new Set());
       const data = await listAllParticipants();
       setParticipants(data);
