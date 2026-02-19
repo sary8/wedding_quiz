@@ -5,6 +5,61 @@ import { getQuiz, listQuizParticipants, deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_LABELS } from "./constants";
 
+function triggerDownload(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function buildSortedParticipants(participants: ParticipantSummary[]) {
+  return [...participants].sort((a, b) => a.current_rank - b.current_rank || b.total_score - a.total_score);
+}
+
+function exportCSV(quiz: Quiz, participants: ParticipantSummary[]) {
+  const sorted = buildSortedParticipants(participants);
+  const bom = "\uFEFF";
+  const header = ["順位", "ニックネーム", "スコア"].map(escapeCsvField).join(",");
+  const rows = sorted.map((p, i) =>
+    [String(p.current_rank || i + 1), escapeCsvField(p.nickname), String(p.total_score)].join(","),
+  );
+  const csv = bom + [header, ...rows].join("\r\n");
+  triggerDownload(csv, `${quiz.title}_結果.csv`, "text/csv;charset=utf-8");
+}
+
+function exportJSON(quiz: Quiz, participants: ParticipantSummary[]) {
+  const sorted = buildSortedParticipants(participants);
+  const data = {
+    quiz: {
+      id: quiz.id,
+      title: quiz.title,
+      roomCode: quiz.room_code,
+      questionCount: quiz.questions?.length ?? 0,
+      createdAt: quiz.created_at,
+    },
+    participants: sorted.map((p, i) => ({
+      rank: p.current_rank || i + 1,
+      nickname: p.nickname,
+      totalScore: p.total_score,
+      joinedAt: p.joined_at,
+    })),
+  };
+  const json = JSON.stringify(data, null, 2);
+  triggerDownload(json, `${quiz.title}_結果.json`, "application/json;charset=utf-8");
+}
+
 type Props = {
   quizList: QuizSummary[];
   onQuizDeleted: () => void;
@@ -180,8 +235,27 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                       </div>
                     )}
 
-                    {/* 削除ボタン */}
-                    <div className="pt-3 border-t border-gray-100">
+                    {/* エクスポート + 削除 */}
+                    <div className="pt-3 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => exportCSV(detail.quiz, detail.participants)}
+                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                        >
+                          CSV出力
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => exportJSON(detail.quiz, detail.participants)}
+                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                        >
+                          JSON出力
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-3">
                       {pendingDeleteId === q.id ? (
                         <div className="flex gap-2">
                           <button
