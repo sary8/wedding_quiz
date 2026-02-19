@@ -1,12 +1,14 @@
 import { useState } from "react";
 import type { Quiz } from "../../types";
-import { updateQuiz } from "../../services/api";
+import { updateQuiz, deleteQuiz } from "../../services/api";
+import { cn } from "../../utils/cn";
 
 type Props = {
   quiz: Quiz;
   onTitleSaved: () => void;
   onStartLobby: () => void;
   onChangeQuiz: () => void;
+  onDeleted: () => void;
 };
 
 function statusLabel(status: string): string {
@@ -19,10 +21,14 @@ function statusLabel(status: string): string {
   }
 }
 
-export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz }: Props) {
+const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
+
+export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, onDeleted }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
 
   const questionCount = quiz.questions?.length ?? 0;
@@ -147,15 +153,56 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz }
         )}
       </div>
 
-      {/* 別のクイズを選択 */}
-      <div className="text-center">
+      {/* フッター */}
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <button
           type="button"
           onClick={onChangeQuiz}
-          className="text-sm text-gray-500 hover:text-accent transition-colors duration-150 underline cursor-pointer py-2 px-4 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg"
+          className={cn("text-sm text-gray-500 hover:text-accent transition-colors duration-150 underline cursor-pointer py-2 px-4 min-h-[44px] rounded-lg", btnFocus)}
         >
           別のクイズを選択
         </button>
+
+        {pendingDelete ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                setIsDeleting(true);
+                setError("");
+                try {
+                  await deleteQuiz(quiz.id);
+                  onDeleted();
+                } catch {
+                  setError("ゲームの削除に失敗しました");
+                  setPendingDelete(false);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+              disabled={isDeleting}
+              className={cn("px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+            >
+              {isDeleting ? "削除中…" : "本当に削除する"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDelete(false)}
+              disabled={isDeleting}
+              className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+            >
+              キャンセル
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPendingDelete(true)}
+            className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+          >
+            このゲームを削除
+          </button>
+        )}
       </div>
     </div>
   );

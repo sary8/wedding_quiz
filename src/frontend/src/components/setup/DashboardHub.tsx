@@ -48,7 +48,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
   const finished = quizList.filter((q) => q.status === QuizStatus.Finished);
 
   const totalParticipants = quizList.reduce((sum, q) => sum + q.participant_count, 0);
-  const totalQuestions = quizList.reduce((sum, q) => sum + q.question_count, 0);
+  const finishedQuestions = finished.reduce((sum, q) => sum + q.question_count, 0);
 
   async function handleDeleteQuiz(id: number) {
     setIsDeleting(true);
@@ -282,7 +282,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
         >
           <div className="text-2xl mb-2">❓</div>
           <div className="font-semibold text-gray-800">問題ライブラリ</div>
-          <div className="text-sm text-gray-500 mt-1">{totalQuestions}問</div>
+          <div className="text-sm text-gray-500 mt-1">{finishedQuestions > 0 ? `${finishedQuestions}問` : "テンプレート・過去問"}</div>
         </button>
       </div>
     </div>

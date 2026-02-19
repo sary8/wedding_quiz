@@ -1,17 +1,32 @@
 import { useState, useEffect, useRef } from "react";
-import type { Question } from "../../types";
-import { uploadMedia, addQuestion, updateQuestion, deleteQuestion, addBankQuestion } from "../../services/api";
+import type { Question, QuestionBankItem } from "../../types";
+import { uploadMedia, addQuestion, updateQuestion, deleteQuestion, addBankQuestion, updateBankQuestion, deleteBankQuestion } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_BG_CLASSES, CHOICE_BORDER_CLASSES, CHOICE_TEXT_CLASSES, CHOICE_BG_LIGHT_CLASSES, CHOICE_LABELS } from "./constants";
 
-type Props = {
-  question: Question | null;
-  quizId: number;
+type BaseProps = {
   onSaved: () => void;
   onCancel: () => void;
 };
 
-export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Props) {
+type QuizModeProps = BaseProps & {
+  mode?: "quiz";
+  question: Question | null;
+  quizId: number;
+};
+
+type BankModeProps = BaseProps & {
+  mode: "bank";
+  question: QuestionBankItem | null;
+  quizId?: never;
+};
+
+type Props = QuizModeProps | BankModeProps;
+
+export function QuestionInlineForm(props: Props) {
+  const { question, onSaved, onCancel } = props;
+  const mode = props.mode ?? "quiz";
+  const quizId = mode === "quiz" ? (props as QuizModeProps).quizId : 0;
   const [text, setText] = useState(question?.text ?? "");
   const [choices, setChoices] = useState(() =>
     question
@@ -85,32 +100,30 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
     if (isUploading || isSaving) return;
     setIsSaving(true);
     setError(null);
+    const payload = {
+      text: text.trim(),
+      choice1: choices[0].trim(),
+      choice2: choices[1].trim(),
+      choice3: choices[2].trim(),
+      choice4: choices[3].trim(),
+      correctChoice,
+      timeLimitSeconds: timeLimit,
+      mediaType: mediaUrl ? "image" : ("none" as const),
+      mediaUrl: mediaUrl ?? undefined,
+    };
     try {
-      if (isEditing) {
-        await updateQuestion(question.id, {
-          text: text.trim(),
-          choice1: choices[0].trim(),
-          choice2: choices[1].trim(),
-          choice3: choices[2].trim(),
-          choice4: choices[3].trim(),
-          correctChoice,
-          timeLimitSeconds: timeLimit,
-          mediaType: mediaUrl ? "image" : "none",
-          mediaUrl: mediaUrl,
-        });
+      if (mode === "bank") {
+        if (isEditing) {
+          await updateBankQuestion(question.id, payload);
+        } else {
+          await addBankQuestion(payload);
+        }
       } else {
-        await addQuestion({
-          quizId,
-          text: text.trim(),
-          choice1: choices[0].trim(),
-          choice2: choices[1].trim(),
-          choice3: choices[2].trim(),
-          choice4: choices[3].trim(),
-          correctChoice,
-          timeLimitSeconds: timeLimit,
-          mediaType: mediaUrl ? "image" : undefined,
-          mediaUrl: mediaUrl ?? undefined,
-        });
+        if (isEditing) {
+          await updateQuestion(question.id, { ...payload, mediaUrl: mediaUrl });
+        } else {
+          await addQuestion({ ...payload, quizId });
+        }
       }
       onSaved();
     } catch {
@@ -125,7 +138,11 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
     setIsSaving(true);
     setError(null);
     try {
-      await deleteQuestion(question.id);
+      if (mode === "bank") {
+        await deleteBankQuestion(question.id);
+      } else {
+        await deleteQuestion(question.id);
+      }
       onSaved();
     } catch {
       setError("問題の削除に失敗しました");
@@ -336,7 +353,7 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
       </fieldset>
 
       {/* 編集時のみ: テンプレート保存 + 削除 */}
-      {isEditing && (
+      {isEditing && mode === "quiz" && (
         <div className="pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2 mb-4">
           <button
             type="button"
@@ -376,6 +393,38 @@ export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Prop
               className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
             >
               この問題を削除
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* bank編集時: 削除のみ */}
+      {isEditing && mode === "bank" && (
+        <div className="pt-4 border-t border-gray-100 flex justify-end items-center gap-2 mb-4">
+          {pendingDelete ? (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className={cn("px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+              >
+                本当に削除する
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingDelete(false)}
+                className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+              >
+                戻る
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPendingDelete(true)}
+              className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+            >
+              このテンプレートを削除
             </button>
           )}
         </div>

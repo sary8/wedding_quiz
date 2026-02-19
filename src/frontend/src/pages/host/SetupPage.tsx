@@ -135,6 +135,12 @@ export function SetupPage() {
     setView("dashboard");
   }
 
+  async function handleQuizDeleted() {
+    setSelectedQuiz(null);
+    await loadQuizzes();
+    setView("dashboard");
+  }
+
   const handleStartLobby = useCallback(() => {
     if (!selectedQuiz) return;
     navigate(`/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}`);
@@ -240,6 +246,7 @@ export function SetupPage() {
                       onTitleSaved={handleTitleSaved}
                       onStartLobby={handleStartLobby}
                       onChangeQuiz={handleChangeQuiz}
+                      onDeleted={handleQuizDeleted}
                     />
                   )}
                 </div>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import type { QuizSummary, Quiz, QuestionBankItem } from "../../types";
 import { QuizStatus } from "../../types";
-import { getQuiz, listBankQuestions, deleteBankQuestion } from "../../services/api";
+import { getQuiz, listBankQuestions } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_LABELS } from "./constants";
+import { QuestionInlineForm } from "./QuestionInlineForm";
 
 type Props = {
   quizList: QuizSummary[];
@@ -17,7 +18,7 @@ export function QuestionLibraryView({ quizList }: Props) {
   const [isLoadingBank, setIsLoadingBank] = useState(true);
   const [isLoadingPast, setIsLoadingPast] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [expandedBankId, setExpandedBankId] = useState<number | "new" | null>(null);
 
   useEffect(() => {
     loadBank();
@@ -49,14 +50,9 @@ export function QuestionLibraryView({ quizList }: Props) {
     setIsLoadingPast(false);
   }
 
-  async function handleDeleteBank(id: number) {
-    setPendingDeleteId(null);
-    try {
-      await deleteBankQuestion(id);
-      setBankQuestions((prev) => prev.filter((q) => q.id !== id));
-    } catch {
-      setError("テンプレートからの削除に失敗しました");
-    }
+  function handleBankSaved() {
+    setExpandedBankId(null);
+    loadBank();
   }
 
   return (
@@ -69,63 +65,81 @@ export function QuestionLibraryView({ quizList }: Props) {
 
       {/* テンプレート */}
       <section className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-3 text-gray-800">テンプレート</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold text-gray-800">テンプレート</h2>
+          <button
+            type="button"
+            onClick={() => setExpandedBankId(expandedBankId === "new" ? null : "new")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-semibold text-white bg-choice-blue hover:opacity-90 transition-colors duration-150 min-h-[44px] cursor-pointer",
+              btnFocus,
+            )}
+          >
+            + 新規追加
+          </button>
+        </div>
+
+        {/* 新規追加フォーム */}
+        {expandedBankId === "new" && (
+          <div className="mb-4 border border-choice-blue rounded-lg overflow-hidden">
+            <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+              <span className="text-sm font-semibold text-choice-blue">新しいテンプレートを追加</span>
+            </div>
+            <QuestionInlineForm
+              key="new"
+              mode="bank"
+              question={null}
+              onSaved={handleBankSaved}
+              onCancel={() => setExpandedBankId(null)}
+            />
+          </div>
+        )}
+
         {isLoadingBank ? (
           <p className="text-sm text-gray-500 text-center py-4">読み込み中…</p>
-        ) : bankQuestions.length === 0 ? (
+        ) : bankQuestions.length === 0 && expandedBankId !== "new" ? (
           <p className="text-sm text-gray-500 text-center py-4">
-            テンプレートに問題がありません。問題の編集画面から「テンプレートに保存」で追加できます。
+            テンプレートに問題がありません。上のボタンから追加できます。
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
             {bankQuestions.map((q) => (
-              <div
-                key={q.id}
-                className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-gray-800">{q.text}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    正解: {CHOICE_LABELS[q.correct_choice - 1]} ・ {q.time_limit_seconds}秒 ・ {q.points}点
-                  </div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
-                      <span key={ci} className={ci + 1 === q.correct_choice ? "font-semibold text-gray-600" : ""}>
-                        {CHOICE_LABELS[ci]}.{c}{ci < 3 ? " / " : ""}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="shrink-0">
-                  {pendingDeleteId === q.id ? (
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteBank(q.id)}
-                        aria-label={`「${q.text}」を削除`}
-                        className={cn("px-3 py-1.5 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
-                      >
-                        確認
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDeleteId(null)}
-                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
-                      >
-                        戻る
-                      </button>
+              <div key={q.id}>
+                {expandedBankId === q.id ? (
+                  <div className="border border-accent rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-accent/5 border-b border-accent/20">
+                      <span className="text-sm font-semibold text-gray-700">テンプレートを編集</span>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setPendingDeleteId(q.id)}
-                      aria-label={`「${q.text}」を削除`}
-                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
-                    >
-                      削除
-                    </button>
-                  )}
-                </div>
+                    <QuestionInlineForm
+                      key={q.id}
+                      mode="bank"
+                      question={q}
+                      onSaved={handleBankSaved}
+                      onCancel={() => setExpandedBankId(null)}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedBankId(q.id)}
+                    className={cn(
+                      "w-full text-left p-3 rounded-lg border border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 transition-colors duration-150 cursor-pointer",
+                      btnFocus,
+                    )}
+                  >
+                    <div className="font-semibold text-sm text-gray-800">{q.text}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      正解: {CHOICE_LABELS[q.correct_choice - 1]} ・ {q.time_limit_seconds}秒 ・ {q.points}点
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
+                        <span key={ci} className={ci + 1 === q.correct_choice ? "font-semibold text-gray-600" : ""}>
+                          {CHOICE_LABELS[ci]}.{c}{ci < 3 ? " / " : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                )}
               </div>
             ))}
           </div>
