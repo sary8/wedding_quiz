@@ -112,26 +112,6 @@ quizRoutes.put("/:id", async (c) => {
   return c.json(updated[0]);
 });
 
-// クイズ削除
-quizRoutes.delete("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  const key = c.req.query("key");
-
-  const quiz = await db.query.quizzes.findFirst({
-    where: eq(schema.quizzes.id, id),
-  });
-
-  if (!quiz) {
-    return c.json({ error: "クイズが見つかりません" }, 404);
-  }
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
-  }
-
-  await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
-  return c.json({ success: true });
-});
-
 // 特定クイズの参加者一覧（host_secret認証）
 quizRoutes.get("/:id/participants", async (c) => {
   const id = Number(c.req.param("id"));
@@ -164,6 +144,7 @@ quizRoutes.get("/:id/participants", async (c) => {
 });
 
 // 参加者個別削除（host_secret認証）
+// ※ /:id より具体的なパスを先に定義（Honoのルート優先順位対策）
 quizRoutes.delete("/:id/participants/:participantId", async (c) => {
   const quizId = Number(c.req.param("id"));
   const participantId = Number(c.req.param("participantId"));
@@ -224,9 +205,29 @@ quizRoutes.delete("/:id/participants", async (c) => {
     return c.json({ success: true, deleted: body.ids.length });
   }
 
-  const result = await db.delete(schema.participants).where(
+  await db.delete(schema.participants).where(
     eq(schema.participants.quiz_id, quizId),
   );
+  return c.json({ success: true });
+});
+
+// クイズ削除（/:id は最も汎用的なので最後に定義）
+quizRoutes.delete("/:id", async (c) => {
+  const id = Number(c.req.param("id"));
+  const key = c.req.query("key");
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, id),
+  });
+
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+  if (quiz.host_secret !== key) {
+    return c.json({ error: "認証エラー" }, 403);
+  }
+
+  await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
   return c.json({ success: true });
 });
 
