@@ -55,6 +55,12 @@ export function deleteParticipantsBulk(quizId: number, key: string, ids?: number
   });
 }
 
+export function deleteAllParticipants(key: string) {
+  return request<{ success: boolean }>(`/participants?key=${key}`, {
+    method: "DELETE",
+  });
+}
+
 // Question
 export function addQuestion(data: {
   quizId: number;

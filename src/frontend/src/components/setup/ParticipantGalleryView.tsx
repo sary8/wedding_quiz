@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ParticipantWithQuiz } from "../../types";
-import { listAllParticipants, deleteParticipant, deleteParticipantsBulk } from "../../services/api";
+import { listAllParticipants, deleteParticipant, deleteParticipantsBulk, deleteAllParticipants } from "../../services/api";
 import { cn } from "../../utils/cn";
 
 type Props = {
@@ -82,7 +82,8 @@ export function ParticipantGalleryView({ getHostSecret }: Props) {
         }
       }
       setSelectedIds(new Set());
-      await loadParticipants();
+      const data = await listAllParticipants();
+      setParticipants(data);
     } catch {
       setError("削除に失敗しました");
     } finally {
@@ -95,17 +96,28 @@ export function ParticipantGalleryView({ getHostSecret }: Props) {
     setError(null);
     setConfirmMode(null);
 
-    // quiz_idごとに全削除
+    // いずれかのクイズのhost_secretを取得して認証に使う
     const quizIds = [...new Set(participants.map((p) => p.quiz_id))];
+    let anyKey: string | null = null;
+    for (const quizId of quizIds) {
+      const key = getHostSecret(quizId);
+      if (key) {
+        anyKey = key;
+        break;
+      }
+    }
+
+    if (!anyKey) {
+      setError("管理キーが見つかりません。クイズを作成したブラウザで操作してください");
+      setIsDeleting(false);
+      return;
+    }
 
     try {
-      for (const quizId of quizIds) {
-        const key = getHostSecret(quizId);
-        if (!key) continue;
-        await deleteParticipantsBulk(quizId, key);
-      }
+      await deleteAllParticipants(anyKey);
       setSelectedIds(new Set());
-      await loadParticipants();
+      const data = await listAllParticipants();
+      setParticipants(data);
     } catch {
       setError("削除に失敗しました");
     } finally {

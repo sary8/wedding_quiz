@@ -249,6 +249,33 @@ quizRoutes.delete("/:id", async (c) => {
 // index.ts で /api/participants にマウント
 export const participantRoutes = new Hono();
 
+// 全参加者削除（いずれかのクイズのhost_secretで認証）
+participantRoutes.delete("/", async (c) => {
+  const key = c.req.query("key");
+  if (!key) {
+    return c.json({ error: "認証キーが必要です" }, 400);
+  }
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.host_secret, key),
+  });
+  if (!quiz) {
+    return c.json({ error: "認証エラー" }, 403);
+  }
+
+  const allParticipants = await db
+    .select({ id: schema.participants.id })
+    .from(schema.participants);
+
+  if (allParticipants.length > 0) {
+    await db.delete(schema.answers).where(
+      inArray(schema.answers.participant_id, allParticipants.map((p) => p.id)),
+    );
+  }
+  await db.delete(schema.participants);
+  return c.json({ success: true });
+});
+
 participantRoutes.get("/", async (c) => {
   const rows = await db
     .select({
