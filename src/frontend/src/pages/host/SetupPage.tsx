@@ -13,14 +13,6 @@ import { cn } from "../../utils/cn";
 
 type SetupView = "dashboard" | "history" | "participants" | "questions" | "edit";
 
-function saveHostSecret(quizId: number, secret: string) {
-  localStorage.setItem(`host_secret_${quizId}`, secret);
-}
-
-function getHostSecret(quizId: number): string | null {
-  return localStorage.getItem(`host_secret_${quizId}`);
-}
-
 function parseView(value: string | null): SetupView {
   if (value === "history" || value === "participants" || value === "questions" || value === "edit") {
     return value;
@@ -87,12 +79,9 @@ export function SetupPage() {
   useEffect(() => {
     if (currentView === "edit" && editQuizId && !selectedQuiz) {
       const id = Number(editQuizId);
-      const key = getHostSecret(id);
-      if (key) {
-        getQuiz(id, key)
-          .then((quiz) => setSelectedQuiz(quiz))
-          .catch(() => setError("クイズの取得に失敗しました"));
-      }
+      getQuiz(id)
+        .then((quiz) => setSelectedQuiz(quiz))
+        .catch(() => setError("クイズの取得に失敗しました"));
     }
   }, [currentView, editQuizId, selectedQuiz]);
 
@@ -112,7 +101,6 @@ export function SetupPage() {
     setError("");
     try {
       const quiz = await createQuiz(title);
-      saveHostSecret(quiz.id, quiz.host_secret);
       await loadQuizzes();
       setSelectedQuiz(quiz);
       setView("edit", quiz.id);
@@ -128,12 +116,7 @@ export function SetupPage() {
 
   function handleNavigate(view: "history" | "participants" | "questions" | "edit", quizId?: number) {
     if (view === "edit" && quizId) {
-      const key = getHostSecret(quizId);
-      if (!key) {
-        setError("このクイズの管理キーがありません（別のブラウザで作成された可能性があります）");
-        return;
-      }
-      getQuiz(quizId, key)
+      getQuiz(quizId)
         .then((quiz) => {
           setSelectedQuiz(quiz);
           setView("edit", quizId);
@@ -151,27 +134,21 @@ export function SetupPage() {
 
   const handleStartLobby = useCallback(() => {
     if (!selectedQuiz) return;
-    navigate(`/host/${selectedQuiz.room_code}?key=${selectedQuiz.host_secret}&quizId=${selectedQuiz.id}`);
+    navigate(`/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}`);
   }, [selectedQuiz, navigate]);
 
   const handleQuestionUpdate = useCallback(async () => {
     if (!selectedQuiz) return;
-    const key = getHostSecret(selectedQuiz.id);
-    if (key) {
-      const updated = await getQuiz(selectedQuiz.id, key);
-      setSelectedQuiz(updated);
-      await loadQuizzes();
-    }
+    const updated = await getQuiz(selectedQuiz.id);
+    setSelectedQuiz(updated);
+    await loadQuizzes();
   }, [selectedQuiz]);
 
   const handleTitleSaved = useCallback(async () => {
     await loadQuizzes();
     if (selectedQuiz) {
-      const key = getHostSecret(selectedQuiz.id);
-      if (key) {
-        const updated = await getQuiz(selectedQuiz.id, key);
-        setSelectedQuiz(updated);
-      }
+      const updated = await getQuiz(selectedQuiz.id);
+      setSelectedQuiz(updated);
     }
   }, [selectedQuiz]);
 
@@ -224,24 +201,24 @@ export function SetupPage() {
                 quizList={quizList}
                 onCreateQuiz={handleCreateQuiz}
                 onNavigate={handleNavigate}
+                onQuizDeleted={loadQuizzes}
               />
             )}
 
             {currentView === "history" && (
               <GameHistoryView
                 quizList={quizList}
-                getHostSecret={getHostSecret}
+                onQuizDeleted={loadQuizzes}
               />
             )}
 
             {currentView === "participants" && (
-              <ParticipantGalleryView getHostSecret={getHostSecret} />
+              <ParticipantGalleryView />
             )}
 
             {currentView === "questions" && (
               <QuestionLibraryView
                 quizList={quizList}
-                getHostSecret={getHostSecret}
               />
             )}
 
@@ -260,7 +237,6 @@ export function SetupPage() {
                       onTitleSaved={handleTitleSaved}
                       onStartLobby={handleStartLobby}
                       onChangeQuiz={handleChangeQuiz}
-                      getHostSecret={getHostSecret}
                     />
                   )}
                 </div>

@@ -66,10 +66,9 @@ quizRoutes.get("/", async (c) => {
   return c.json(rows);
 });
 
-// クイズ取得（ホスト用：secretで認証）
+// クイズ取得
 quizRoutes.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const key = c.req.query("key");
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -80,17 +79,13 @@ quizRoutes.get("/:id", async (c) => {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
 
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
-  }
-
   return c.json(quiz);
 });
 
 // クイズ更新
 quizRoutes.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const body = await c.req.json<{ title?: string; key: string }>();
+  const body = await c.req.json<{ title?: string }>();
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -98,9 +93,6 @@ quizRoutes.put("/:id", async (c) => {
 
   if (!quiz) {
     return c.json({ error: "クイズが見つかりません" }, 404);
-  }
-  if (quiz.host_secret !== body.key) {
-    return c.json({ error: "認証エラー" }, 403);
   }
 
   const updated = await db
@@ -112,10 +104,9 @@ quizRoutes.put("/:id", async (c) => {
   return c.json(updated[0]);
 });
 
-// 特定クイズの参加者一覧（host_secret認証）
+// 特定クイズの参加者一覧
 quizRoutes.get("/:id/participants", async (c) => {
   const id = Number(c.req.param("id"));
-  const key = c.req.query("key");
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -123,9 +114,6 @@ quizRoutes.get("/:id/participants", async (c) => {
 
   if (!quiz) {
     return c.json({ error: "クイズが見つかりません" }, 404);
-  }
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
   }
 
   const rows = await db
@@ -143,23 +131,11 @@ quizRoutes.get("/:id/participants", async (c) => {
   return c.json(rows);
 });
 
-// 参加者個別削除（host_secret認証）
+// 参加者個別削除
 // ※ /:id より具体的なパスを先に定義（Honoのルート優先順位対策）
 quizRoutes.delete("/:id/participants/:participantId", async (c) => {
   const quizId = Number(c.req.param("id"));
   const participantId = Number(c.req.param("participantId"));
-  const key = c.req.query("key");
-
-  const quiz = await db.query.quizzes.findFirst({
-    where: eq(schema.quizzes.id, quizId),
-  });
-
-  if (!quiz) {
-    return c.json({ error: "クイズが見つかりません" }, 404);
-  }
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
-  }
 
   const participant = await db.query.participants.findFirst({
     where: and(
@@ -177,11 +153,10 @@ quizRoutes.delete("/:id/participants/:participantId", async (c) => {
   return c.json({ success: true });
 });
 
-// 参加者一括削除（host_secret認証）
+// 参加者一括削除
 // body.ids 指定時: 指定IDのみ削除、未指定時: クイズの全参加者削除
 quizRoutes.delete("/:id/participants", async (c) => {
   const quizId = Number(c.req.param("id"));
-  const key = c.req.query("key");
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
@@ -189,9 +164,6 @@ quizRoutes.delete("/:id/participants", async (c) => {
 
   if (!quiz) {
     return c.json({ error: "クイズが見つかりません" }, 404);
-  }
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
   }
 
   const body = await c.req.json<{ ids?: number[] }>().catch(() => ({}));
@@ -228,7 +200,6 @@ quizRoutes.delete("/:id/participants", async (c) => {
 // クイズ削除（/:id は最も汎用的なので最後に定義）
 quizRoutes.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const key = c.req.query("key");
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -237,19 +208,16 @@ quizRoutes.delete("/:id", async (c) => {
   if (!quiz) {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
-  if (quiz.host_secret !== key) {
-    return c.json({ error: "認証エラー" }, 403);
-  }
 
   await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
   return c.json({ success: true });
 });
 
-// 全参加者一覧（クイズ情報付き、認証なし）
+// 全参加者一覧（クイズ情報付き）
 // index.ts で /api/participants にマウント
 export const participantRoutes = new Hono();
 
-// 全参加者削除（認証なし：GETと同様、シングルホスト前提）
+// 全参加者削除
 participantRoutes.delete("/", async (c) => {
   const allParticipants = await db
     .select({ id: schema.participants.id })

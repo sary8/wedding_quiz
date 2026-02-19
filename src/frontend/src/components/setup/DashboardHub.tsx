@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { QuizSummary } from "../../types";
 import { QuizStatus } from "../../types";
+import { deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 
 type SetupView = "history" | "participants" | "questions" | "edit";
@@ -9,6 +10,7 @@ type Props = {
   quizList: QuizSummary[];
   onCreateQuiz: (title: string) => Promise<void>;
   onNavigate: (view: SetupView, quizId?: number) => void;
+  onQuizDeleted: () => void;
 };
 
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
@@ -33,10 +35,13 @@ function statusBadgeClass(status: string): string {
   }
 }
 
-export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
+export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted }: Props) {
   const [title, setTitle] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const drafts = quizList.filter((q) => q.status === QuizStatus.Draft);
   const active = quizList.filter((q) => q.status === QuizStatus.Lobby || q.status === QuizStatus.InProgress);
@@ -44,6 +49,20 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
 
   const totalParticipants = quizList.reduce((sum, q) => sum + q.participant_count, 0);
   const totalQuestions = quizList.reduce((sum, q) => sum + q.question_count, 0);
+
+  async function handleDeleteQuiz(id: number) {
+    setIsDeleting(true);
+    setDeleteError(null);
+    setPendingDeleteId(null);
+    try {
+      await deleteQuiz(id);
+      onQuizDeleted();
+    } catch {
+      setDeleteError("ゲームの削除に失敗しました");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   async function handleCreate() {
     if (!title.trim() || isCreating) return;
@@ -92,22 +111,30 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
         </div>
       </section>
 
+      {deleteError && (
+        <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
+          {deleteError}
+        </div>
+      )}
+
       {/* 下書き */}
       {drafts.length > 0 && (
         <section className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-base font-semibold mb-3 text-gray-800">編集中のゲーム</h2>
           <div className="flex flex-col gap-2">
             {drafts.map((q) => (
-              <button
+              <div
                 key={q.id}
-                type="button"
-                onClick={() => onNavigate("edit", q.id)}
-                className={cn(
-                  "px-4 py-3 rounded-lg border-2 border-transparent bg-gray-50 hover:border-accent/30 flex justify-between items-center text-left w-full transition-[border-color] duration-150 min-h-[44px] cursor-pointer",
-                  btnFocus,
-                )}
+                className="px-4 py-3 rounded-lg bg-gray-50 flex justify-between items-center gap-2"
               >
-                <div>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("edit", q.id)}
+                  className={cn(
+                    "flex-1 text-left min-w-0 cursor-pointer rounded-lg p-1 -m-1 hover:bg-gray-100 transition-colors duration-150",
+                    btnFocus,
+                  )}
+                >
                   <div className="font-semibold text-base text-gray-800">{q.title}</div>
                   <div className="text-sm text-gray-500 mt-0.5">
                     <span className={cn("inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-2", statusBadgeClass(q.status))}>
@@ -115,9 +142,38 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
                     </span>
                     {q.question_count}問
                   </div>
-                </div>
-                <span className="text-sm text-accent font-medium shrink-0 ml-3">編集を続ける →</span>
-              </button>
+                </button>
+                <span className="text-sm text-accent font-medium shrink-0">編集 →</span>
+                {pendingDeleteId === q.id ? (
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteQuiz(q.id)}
+                      disabled={isDeleting}
+                      className={cn("px-3 py-1.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                    >
+                      {isDeleting ? "削除中…" : "確認"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(null)}
+                      disabled={isDeleting}
+                      className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                    >
+                      戻る
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteId(q.id)}
+                    aria-label={`「${q.title}」を削除`}
+                    className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer shrink-0", btnFocus)}
+                  >
+                    削除
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </section>
@@ -131,9 +187,9 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
             {active.map((q) => (
               <div
                 key={q.id}
-                className="px-4 py-3 rounded-lg bg-green-50 border-2 border-green-200 flex justify-between items-center"
+                className="px-4 py-3 rounded-lg bg-green-50 border-2 border-green-200 flex flex-wrap justify-between items-center gap-2"
               >
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-base text-gray-800">{q.title}</div>
                   <div className="text-sm text-gray-500 mt-0.5">
                     <span className={cn("inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-2", statusBadgeClass(q.status))}>
@@ -142,15 +198,46 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate }: Props) {
                     {q.participant_count}人参加 ・ ルーム: {q.room_code}
                   </div>
                 </div>
-                <a
-                  href={`/host/${q.room_code}?quizId=${q.id}`}
-                  className={cn(
-                    "text-sm text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition-colors duration-150 min-h-[36px] shrink-0 ml-3",
-                    btnFocus,
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={`/host/${q.room_code}?quizId=${q.id}`}
+                    className={cn(
+                      "text-sm text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition-colors duration-150 min-h-[36px]",
+                      btnFocus,
+                    )}
+                  >
+                    ホスト画面へ →
+                  </a>
+                  {pendingDeleteId === q.id ? (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteQuiz(q.id)}
+                        disabled={isDeleting}
+                        className={cn("px-3 py-1.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                      >
+                        {isDeleting ? "削除中…" : "確認"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDeleteId(null)}
+                        disabled={isDeleting}
+                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                      >
+                        戻る
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(q.id)}
+                      aria-label={`「${q.title}」を削除`}
+                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                    >
+                      削除
+                    </button>
                   )}
-                >
-                  ホスト画面へ →
-                </a>
+                </div>
               </div>
             ))}
           </div>

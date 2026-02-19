@@ -44,22 +44,22 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
       const ids = questions.map((q) => q.id);
       [ids[questionIndex], ids[targetIndex]] = [ids[targetIndex], ids[questionIndex]];
       try {
-        await reorderQuestions(quiz.id, quiz.host_secret, ids);
+        await reorderQuestions(quiz.id, ids);
         onUpdate();
       } catch {
         setError("問題の並べ替えに失敗しました");
       }
     },
-    [questions, quiz.id, quiz.host_secret, onUpdate],
+    [questions, quiz.id, onUpdate],
   );
 
   const handleTemplateImport = useCallback(
     async (bankQuestionIds: number[]) => {
       if (bankQuestionIds.length === 0) return;
-      await importBankToQuiz(quiz.id, quiz.host_secret, bankQuestionIds);
+      await importBankToQuiz(quiz.id, bankQuestionIds);
       onUpdate();
     },
-    [quiz.id, quiz.host_secret, onUpdate],
+    [quiz.id, onUpdate],
   );
 
   const motionTransition = prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const };
@@ -125,7 +125,6 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
               onCollapse={handleCollapse}
               onReorder={handleReorder}
               quizId={quiz.id}
-              hostSecret={quiz.host_secret}
               onSaved={handleSaved}
             />
           ))}
@@ -155,7 +154,6 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
               <QuestionInlineForm
                 question={null}
                 quizId={quiz.id}
-                hostSecret={quiz.host_secret}
                 onSaved={handleSaved}
                 onCancel={handleCollapse}
               />

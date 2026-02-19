@@ -11,13 +11,12 @@ function isValidMediaType(v: unknown): v is ValidMediaType {
 
 export const questionRoutes = new Hono();
 
-// ホスト認証ヘルパー
-async function verifyHost(quizId: number, key: string) {
+// クイズ存在チェック
+async function verifyQuizExists(quizId: number) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
   });
   if (!quiz) return { error: "クイズが見つかりません", status: 404 as const };
-  if (quiz.host_secret !== key) return { error: "認証エラー", status: 403 as const };
   return { quiz };
 }
 
@@ -25,12 +24,11 @@ async function verifyHost(quizId: number, key: string) {
 questionRoutes.put("/reorder", async (c) => {
   const body = await c.req.json<{
     quizId: number;
-    key: string;
     questionIds: number[];
   }>();
 
-  const auth = await verifyHost(body.quizId, body.key);
-  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
+  const check = await verifyQuizExists(body.quizId);
+  if ("error" in check) return c.json({ error: check.error }, check.status);
 
   const reorderUpdates = body.questionIds.map((id, i) =>
     db
@@ -54,7 +52,6 @@ questionRoutes.put("/reorder", async (c) => {
 questionRoutes.post("/", async (c) => {
   const body = await c.req.json<{
     quizId: number;
-    key: string;
     text: string;
     mediaType?: string;
     mediaUrl?: string;
@@ -67,8 +64,8 @@ questionRoutes.post("/", async (c) => {
     points?: number;
   }>();
 
-  const auth = await verifyHost(body.quizId, body.key);
-  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
+  const check = await verifyQuizExists(body.quizId);
+  if ("error" in check) return c.json({ error: check.error }, check.status);
 
   // バリデーション
   if (!body.text?.trim()) {
@@ -127,7 +124,6 @@ questionRoutes.post("/", async (c) => {
 questionRoutes.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   const body = await c.req.json<{
-    key: string;
     text?: string;
     mediaType?: string;
     mediaUrl?: string;
@@ -144,9 +140,6 @@ questionRoutes.put("/:id", async (c) => {
     where: eq(schema.questions.id, id),
   });
   if (!question) return c.json({ error: "問題が見つかりません" }, 404);
-
-  const auth = await verifyHost(question.quiz_id, body.key);
-  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
 
   // バリデーション
   if (body.text !== undefined && body.text.length > 500) {
@@ -192,17 +185,12 @@ questionRoutes.put("/:id", async (c) => {
 // 問題削除
 questionRoutes.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const key = c.req.query("key") || "";
 
   const question = await db.query.questions.findFirst({
     where: eq(schema.questions.id, id),
   });
   if (!question) return c.json({ error: "問題が見つかりません" }, 404);
 
-  const auth = await verifyHost(question.quiz_id, key);
-  if ("error" in auth) return c.json({ error: auth.error }, auth.status);
-
   await db.delete(schema.questions).where(eq(schema.questions.id, id));
   return c.json({ success: true });
 });
-

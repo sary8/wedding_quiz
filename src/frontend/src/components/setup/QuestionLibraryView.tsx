@@ -7,12 +7,11 @@ import { CHOICE_LABELS } from "./constants";
 
 type Props = {
   quizList: QuizSummary[];
-  getHostSecret: (quizId: number) => string | null;
 };
 
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
 
-export function QuestionLibraryView({ quizList, getHostSecret }: Props) {
+export function QuestionLibraryView({ quizList }: Props) {
   const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
   const [pastQuizzes, setPastQuizzes] = useState<Quiz[]>([]);
   const [isLoadingBank, setIsLoadingBank] = useState(true);
@@ -43,10 +42,8 @@ export function QuestionLibraryView({ quizList, getHostSecret }: Props) {
     const results: Quiz[] = [];
 
     for (const q of finished) {
-      const key = getHostSecret(q.id);
-      if (!key) continue;
       try {
-        const quiz = await getQuiz(q.id, key);
+        const quiz = await getQuiz(q.id);
         results.push(quiz);
       } catch {
         // skip quizzes we can't load

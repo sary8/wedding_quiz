@@ -1,23 +1,25 @@
 import { useState } from "react";
 import type { QuizSummary, ParticipantSummary, Quiz } from "../../types";
 import { QuizStatus } from "../../types";
-import { getQuiz, listQuizParticipants } from "../../services/api";
+import { getQuiz, listQuizParticipants, deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_LABELS } from "./constants";
 
 type Props = {
   quizList: QuizSummary[];
-  getHostSecret: (quizId: number) => string | null;
+  onQuizDeleted: () => void;
 };
 
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
 
-export function GameHistoryView({ quizList, getHostSecret }: Props) {
+export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
   const finishedQuizzes = quizList.filter((q) => q.status === QuizStatus.Finished);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detailCache, setDetailCache] = useState<Record<number, { quiz: Quiz; participants: ParticipantSummary[] }>>({});
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleToggle(quizId: number) {
     if (expandedId === quizId) {
@@ -29,24 +31,38 @@ export function GameHistoryView({ quizList, getHostSecret }: Props) {
 
     if (detailCache[quizId]) return;
 
-    const key = getHostSecret(quizId);
-    if (!key) {
-      setError("管理キーがありません");
-      return;
-    }
-
     setLoadingId(quizId);
     setError(null);
     try {
       const [quiz, participants] = await Promise.all([
-        getQuiz(quizId, key),
-        listQuizParticipants(quizId, key),
+        getQuiz(quizId),
+        listQuizParticipants(quizId),
       ]);
       setDetailCache((prev) => ({ ...prev, [quizId]: { quiz, participants } }));
     } catch {
       setError("詳細の取得に失敗しました");
     } finally {
       setLoadingId(null);
+    }
+  }
+
+  async function handleDelete(quizId: number) {
+    setIsDeleting(true);
+    setError(null);
+    setPendingDeleteId(null);
+    try {
+      await deleteQuiz(quizId);
+      setDetailCache((prev) => {
+        const next = { ...prev };
+        delete next[quizId];
+        return next;
+      });
+      if (expandedId === quizId) setExpandedId(null);
+      onQuizDeleted();
+    } catch {
+      setError("ゲームの削除に失敗しました");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -163,6 +179,38 @@ export function GameHistoryView({ quizList, getHostSecret }: Props) {
                         </div>
                       </div>
                     )}
+
+                    {/* 削除ボタン */}
+                    <div className="pt-3 border-t border-gray-100">
+                      {pendingDeleteId === q.id ? (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(q.id)}
+                            disabled={isDeleting}
+                            className={cn("px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                          >
+                            {isDeleting ? "削除中…" : "本当に削除する"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteId(null)}
+                            disabled={isDeleting}
+                            className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeleteId(q.id)}
+                          className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                        >
+                          このゲームを削除
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </div>

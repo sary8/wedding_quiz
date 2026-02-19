@@ -86,14 +86,6 @@ describe("quiz routes", () => {
       expect(data.questions[0].text).toBe("質問1");
     });
 
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await quizRoutes.request(`/${quiz.id}?key=wrong`, {
-        method: "GET",
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("存在しないid → 404", async () => {
       const res = await quizRoutes.request("/9999?key=anything", {
         method: "GET",
@@ -127,21 +119,11 @@ describe("quiz routes", () => {
       expect(data.title).toBe("元のタイトル");
     });
 
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await quizRoutes.request(`/${quiz.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "wrong", title: "新タイトル" }),
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("存在しないid → 404", async () => {
       const res = await quizRoutes.request("/9999", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "anything", title: "新タイトル" }),
+        body: JSON.stringify({ title: "新タイトル" }),
       });
       expect(res.status).toBe(404);
     });
@@ -164,16 +146,8 @@ describe("quiz routes", () => {
       expect(check.status).toBe(404);
     });
 
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await quizRoutes.request(`/${quiz.id}?key=wrong`, {
-        method: "DELETE",
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("存在しないid → 404", async () => {
-      const res = await quizRoutes.request("/9999?key=anything", {
+      const res = await quizRoutes.request("/9999", {
         method: "DELETE",
       });
       expect(res.status).toBe(404);
@@ -223,15 +197,6 @@ describe("quiz routes", () => {
       });
       const checkData = await check.json();
       expect(checkData).toHaveLength(0);
-    });
-
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const p = await createTestParticipant(quiz.id);
-      const res = await quizRoutes.request(`/${quiz.id}/participants/${p.id}?key=wrong`, {
-        method: "DELETE",
-      });
-      expect(res.status).toBe(403);
     });
 
     it("存在しない参加者 → 404", async () => {
@@ -296,15 +261,6 @@ describe("quiz routes", () => {
       expect(remaining).toHaveLength(0);
     });
 
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await quizRoutes.request(`/${quiz.id}/participants?key=wrong`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      expect(res.status).toBe(403);
-    });
   });
 
   describe("DELETE - 回答済み参加者の削除（FK制約テスト）", () => {
@@ -425,16 +381,8 @@ describe("quiz routes", () => {
       expect(data).toHaveLength(0);
     });
 
-    it("間違ったkey → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await quizRoutes.request(`/${quiz.id}/participants?key=wrong`, {
-        method: "GET",
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("存在しないid → 404", async () => {
-      const res = await quizRoutes.request("/9999/participants?key=anything", {
+      const res = await quizRoutes.request("/9999/participants", {
         method: "GET",
       });
       expect(res.status).toBe(404);

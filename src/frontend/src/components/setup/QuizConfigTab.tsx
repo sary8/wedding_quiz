@@ -7,7 +7,6 @@ type Props = {
   onTitleSaved: () => void;
   onStartLobby: () => void;
   onChangeQuiz: () => void;
-  getHostSecret: (quizId: number) => string | null;
 };
 
 function statusLabel(status: string): string {
@@ -20,7 +19,7 @@ function statusLabel(status: string): string {
   }
 }
 
-export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, getHostSecret }: Props) {
+export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [isSavingTitle, setIsSavingTitle] = useState(false);
@@ -36,11 +35,9 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
 
   async function handleSaveTitle() {
     if (!editTitle.trim() || isSavingTitle) return;
-    const key = getHostSecret(quiz.id);
-    if (!key) return;
     setIsSavingTitle(true);
     try {
-      await updateQuiz(quiz.id, key, editTitle.trim());
+      await updateQuiz(quiz.id, editTitle.trim());
       setIsEditingTitle(false);
       onTitleSaved();
     } catch {

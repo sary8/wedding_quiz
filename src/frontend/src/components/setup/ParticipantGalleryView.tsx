@@ -3,13 +3,9 @@ import type { ParticipantWithQuiz } from "../../types";
 import { listAllParticipants, deleteParticipant, deleteParticipantsBulk, deleteAllParticipants } from "../../services/api";
 import { cn } from "../../utils/cn";
 
-type Props = {
-  getHostSecret: (quizId: number) => string | null;
-};
-
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
 
-export function ParticipantGalleryView({ getHostSecret }: Props) {
+export function ParticipantGalleryView() {
   const [participants, setParticipants] = useState<ParticipantWithQuiz[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,12 +69,10 @@ export function ParticipantGalleryView({ getHostSecret }: Props) {
 
     try {
       for (const [quizId, ids] of grouped) {
-        const key = getHostSecret(quizId);
-        if (!key) continue;
         if (ids.length === 1) {
-          await deleteParticipant(quizId, ids[0], key);
+          await deleteParticipant(quizId, ids[0]);
         } else {
-          await deleteParticipantsBulk(quizId, key, ids);
+          await deleteParticipantsBulk(quizId, ids);
         }
       }
       setSelectedIds(new Set());

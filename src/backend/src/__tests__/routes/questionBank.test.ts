@@ -181,17 +181,6 @@ describe("questionBank routes", () => {
       expect(data.imported).toHaveLength(2);
     });
 
-    it("認証エラー → 403", async () => {
-      const quiz = await createTestQuiz();
-      const bq = await createTestBankQuestion();
-      const res = await jsonRequest("/import-to-quiz", "POST", {
-        quizId: quiz.id,
-        key: "wrong-key",
-        bankQuestionIds: [bq.id],
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("存在しないクイズ → 404", async () => {
       const bq = await createTestBankQuestion();
       const res = await jsonRequest("/import-to-quiz", "POST", {

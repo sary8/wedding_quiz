@@ -12,7 +12,6 @@ type Props = {
   onCollapse: () => void;
   onReorder: (index: number, direction: "up" | "down") => void;
   quizId: number;
-  hostSecret: string;
   onSaved: () => void;
 };
 
@@ -25,7 +24,6 @@ export function QuestionRow({
   onCollapse,
   onReorder,
   quizId,
-  hostSecret,
   onSaved,
 }: Props) {
   const prefersReducedMotion = useReducedMotion();
@@ -102,7 +100,6 @@ export function QuestionRow({
             <QuestionInlineForm
               question={question}
               quizId={quizId}
-              hostSecret={hostSecret}
               onSaved={onSaved}
               onCancel={onCollapse}
             />

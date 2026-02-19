@@ -75,25 +75,6 @@ describe("question routes", () => {
       expect(data2.order_index).toBe(1);
     });
 
-    it("認証エラー → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await questionRoutes.request("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quizId: quiz.id,
-          key: "wrong-key",
-          text: "質問",
-          choice1: "A",
-          choice2: "B",
-          choice3: "C",
-          choice4: "D",
-          correctChoice: 1,
-        }),
-      });
-      expect(res.status).toBe(403);
-    });
-
     it("correctChoiceが範囲外 → 400", async () => {
       const quiz = await createTestQuiz();
       const res = await questionRoutes.request("/", {
@@ -383,17 +364,6 @@ describe("question routes", () => {
       expect(res.status).toBe(404);
     });
 
-    it("認証エラー → 403", async () => {
-      const quiz = await createTestQuiz();
-      const question = await createTestQuestion(quiz.id);
-
-      const res = await questionRoutes.request(`/${question.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "wrong-key", text: "更新" }),
-      });
-      expect(res.status).toBe(403);
-    });
   });
 
   describe("DELETE /:id", () => {
@@ -423,26 +393,6 @@ describe("question routes", () => {
       expect(res.status).toBe(404);
     });
 
-    it("認証エラー → 403", async () => {
-      const quiz = await createTestQuiz();
-      const question = await createTestQuestion(quiz.id);
-
-      const res = await questionRoutes.request(
-        `/${question.id}?key=wrong-key`,
-        { method: "DELETE" }
-      );
-      expect(res.status).toBe(403);
-    });
-
-    it("keyパラメータなし → 403（空文字フォールバック）", async () => {
-      const quiz = await createTestQuiz();
-      const question = await createTestQuestion(quiz.id);
-
-      const res = await questionRoutes.request(`/${question.id}`, {
-        method: "DELETE",
-      });
-      expect(res.status).toBe(403);
-    });
   });
 
   describe("PUT /reorder", () => {
@@ -491,18 +441,5 @@ describe("question routes", () => {
       expect(updated2!.order_index).toBe(2);
     });
 
-    it("認証エラー → 403", async () => {
-      const quiz = await createTestQuiz();
-      const res = await questionRoutes.request("/reorder", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quizId: quiz.id,
-          key: "wrong-key",
-          questionIds: [],
-        }),
-      });
-      expect(res.status).toBe(403);
-    });
   });
 });

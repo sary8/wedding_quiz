@@ -7,12 +7,11 @@ import { CHOICE_BG_CLASSES, CHOICE_BORDER_CLASSES, CHOICE_TEXT_CLASSES, CHOICE_B
 type Props = {
   question: Question | null;
   quizId: number;
-  hostSecret: string;
   onSaved: () => void;
   onCancel: () => void;
 };
 
-export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCancel }: Props) {
+export function QuestionInlineForm({ question, quizId, onSaved, onCancel }: Props) {
   const [text, setText] = useState("");
   const [choices, setChoices] = useState(["", "", "", ""]);
   const [correctChoice, setCorrectChoice] = useState(1);
@@ -110,7 +109,6 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
     try {
       if (isEditing) {
         await updateQuestion(question.id, {
-          key: hostSecret,
           text: text.trim(),
           choice1: choices[0].trim(),
           choice2: choices[1].trim(),
@@ -124,7 +122,6 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
       } else {
         await addQuestion({
           quizId,
-          key: hostSecret,
           text: text.trim(),
           choice1: choices[0].trim(),
           choice2: choices[1].trim(),
@@ -149,7 +146,7 @@ export function QuestionInlineForm({ question, quizId, hostSecret, onSaved, onCa
     setIsSaving(true);
     setError(null);
     try {
-      await deleteQuestion(question.id, hostSecret);
+      await deleteQuestion(question.id);
       onSaved();
     } catch {
       setError("問題の削除に失敗しました");

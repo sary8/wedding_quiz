@@ -157,16 +157,13 @@ questionBankRoutes.delete("/:id", async (c) => {
 questionBankRoutes.post("/import-to-quiz", async (c) => {
   const body = await c.req.json<{
     quizId: number;
-    key: string;
     bankQuestionIds: number[];
   }>();
 
-  // ホスト認証
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, body.quizId),
   });
   if (!quiz) return c.json({ error: "クイズが見つかりません" }, 404);
-  if (quiz.host_secret !== body.key) return c.json({ error: "認証エラー" }, 403);
 
   if (!Array.isArray(body.bankQuestionIds) || body.bankQuestionIds.length === 0) {
     return c.json({ error: "インポートする問題を選択してください" }, 400);

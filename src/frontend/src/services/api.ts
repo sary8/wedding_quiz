@@ -22,37 +22,31 @@ export function createQuiz(title: string) {
   );
 }
 
-export function getQuiz(id: number, key: string) {
-  return request<Quiz>(`/quizzes/${id}?key=${key}`);
+export function getQuiz(id: number) {
+  return request<Quiz>(`/quizzes/${id}`);
 }
 
 export function listQuizzes() {
   return request<QuizSummary[]>("/quizzes");
 }
 
-export function deleteQuiz(id: number, key: string) {
-  return request<void>(`/quizzes/${id}?key=${key}`, { method: "DELETE" });
+export function updateQuiz(id: number, title: string) {
+  return request<Quiz>(`/quizzes/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ title }),
+  });
 }
 
-export function listQuizParticipants(quizId: number, key: string) {
-  return request<ParticipantSummary[]>(`/quizzes/${quizId}/participants?key=${key}`);
+export function deleteQuiz(id: number) {
+  return request<void>(`/quizzes/${id}`, { method: "DELETE" });
+}
+
+export function listQuizParticipants(quizId: number) {
+  return request<ParticipantSummary[]>(`/quizzes/${quizId}/participants`);
 }
 
 export function listAllParticipants() {
   return request<ParticipantWithQuiz[]>("/participants");
-}
-
-export function deleteParticipant(quizId: number, participantId: number, key: string) {
-  return request<{ success: boolean }>(`/quizzes/${quizId}/participants/${participantId}?key=${key}`, {
-    method: "DELETE",
-  });
-}
-
-export function deleteParticipantsBulk(quizId: number, key: string, ids?: number[]) {
-  return request<{ success: boolean }>(`/quizzes/${quizId}/participants?key=${key}`, {
-    method: "DELETE",
-    body: JSON.stringify(ids ? { ids } : {}),
-  });
 }
 
 export function deleteAllParticipants() {
@@ -61,10 +55,22 @@ export function deleteAllParticipants() {
   });
 }
 
+export function deleteParticipant(quizId: number, participantId: number) {
+  return request<{ success: boolean }>(`/quizzes/${quizId}/participants/${participantId}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteParticipantsBulk(quizId: number, ids?: number[]) {
+  return request<{ success: boolean }>(`/quizzes/${quizId}/participants`, {
+    method: "DELETE",
+    body: JSON.stringify(ids ? { ids } : {}),
+  });
+}
+
 // Question
 export function addQuestion(data: {
   quizId: number;
-  key: string;
   text: string;
   choice1: string;
   choice2: string;
@@ -81,15 +87,7 @@ export function addQuestion(data: {
   });
 }
 
-export function updateQuiz(id: number, key: string, title: string) {
-  return request<Quiz>(`/quizzes/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({ key, title }),
-  });
-}
-
 export function updateQuestion(id: number, data: {
-  key: string;
   text?: string;
   choice1?: string;
   choice2?: string;
@@ -107,15 +105,15 @@ export function updateQuestion(id: number, data: {
   });
 }
 
-export function reorderQuestions(quizId: number, key: string, questionIds: number[]) {
+export function reorderQuestions(quizId: number, questionIds: number[]) {
   return request<{ success: boolean }>("/questions/reorder", {
     method: "PUT",
-    body: JSON.stringify({ quizId, key, questionIds }),
+    body: JSON.stringify({ quizId, questionIds }),
   });
 }
 
-export function deleteQuestion(id: number, key: string) {
-  return request<void>(`/questions/${id}?key=${key}`, { method: "DELETE" });
+export function deleteQuestion(id: number) {
+  return request<void>(`/questions/${id}`, { method: "DELETE" });
 }
 
 // Question Bank
@@ -163,10 +161,10 @@ export function deleteBankQuestion(id: number) {
   return request<{ success: boolean }>(`/question-bank/${id}`, { method: "DELETE" });
 }
 
-export function importBankToQuiz(quizId: number, key: string, bankQuestionIds: number[]) {
+export function importBankToQuiz(quizId: number, bankQuestionIds: number[]) {
   return request<{ imported: number[]; count: number }>("/question-bank/import-to-quiz", {
     method: "POST",
-    body: JSON.stringify({ quizId, key, bankQuestionIds }),
+    body: JSON.stringify({ quizId, bankQuestionIds }),
   });
 }
 
