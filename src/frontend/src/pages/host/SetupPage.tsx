@@ -235,7 +235,7 @@ export function SetupPage() {
             )}
 
             {currentView === "participants" && (
-              <ParticipantGalleryView />
+              <ParticipantGalleryView getHostSecret={getHostSecret} />
             )}
 
             {currentView === "questions" && (

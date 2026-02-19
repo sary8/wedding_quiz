@@ -42,6 +42,19 @@ export function listAllParticipants() {
   return request<ParticipantWithQuiz[]>("/participants");
 }
 
+export function deleteParticipant(quizId: number, participantId: number, key: string) {
+  return request<{ success: boolean }>(`/quizzes/${quizId}/participants/${participantId}?key=${key}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteParticipantsBulk(quizId: number, key: string, ids?: number[]) {
+  return request<{ success: boolean }>(`/quizzes/${quizId}/participants?key=${key}`, {
+    method: "DELETE",
+    body: JSON.stringify(ids ? { ids } : {}),
+  });
+}
+
 // Question
 export function addQuestion(data: {
   quizId: number;

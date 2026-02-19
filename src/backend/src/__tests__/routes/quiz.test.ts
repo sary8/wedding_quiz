@@ -199,6 +199,108 @@ describe("quiz routes", () => {
     });
   });
 
+  describe("DELETE /:id/participants/:participantId", () => {
+    it("正しいkey → 個別削除成功", async () => {
+      const quiz = await createTestQuiz();
+      const p = await createTestParticipant(quiz.id, { nickname: "太郎" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants/${p.id}?key=test-secret-123`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+
+      // 削除確認
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const checkData = await check.json();
+      expect(checkData).toHaveLength(0);
+    });
+
+    it("間違ったkey → 403", async () => {
+      const quiz = await createTestQuiz();
+      const p = await createTestParticipant(quiz.id);
+      const res = await quizRoutes.request(`/${quiz.id}/participants/${p.id}?key=wrong`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it("存在しない参加者 → 404", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/participants/9999?key=test-secret-123`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("別クイズの参加者 → 404", async () => {
+      const quiz1 = await createTestQuiz();
+      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const p = await createTestParticipant(quiz2.id);
+
+      const res = await quizRoutes.request(`/${quiz1.id}/participants/${p.id}?key=test-secret-123`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("DELETE /:id/participants (一括)", () => {
+    it("ids指定 → 指定参加者のみ削除", async () => {
+      const quiz = await createTestQuiz();
+      const p1 = await createTestParticipant(quiz.id, { nickname: "太郎" });
+      const p2 = await createTestParticipant(quiz.id, { nickname: "花子" });
+      const p3 = await createTestParticipant(quiz.id, { nickname: "次郎" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [p1.id, p3.id] }),
+      });
+      expect(res.status).toBe(200);
+
+      // 花子だけ残っている
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0].nickname).toBe("花子");
+    });
+
+    it("ids未指定 → 全参加者削除", async () => {
+      const quiz = await createTestQuiz();
+      await createTestParticipant(quiz.id, { nickname: "太郎" });
+      await createTestParticipant(quiz.id, { nickname: "花子" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(200);
+
+      const check = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "GET",
+      });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("間違ったkey → 403", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=wrong`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe("GET /:id/participants", () => {
     it("正しいkey → 参加者一覧を返却", async () => {
       const quiz = await createTestQuiz();

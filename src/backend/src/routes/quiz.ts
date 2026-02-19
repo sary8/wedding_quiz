@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const quizRoutes = new Hono();
@@ -161,6 +161,73 @@ quizRoutes.get("/:id/participants", async (c) => {
     .where(eq(schema.participants.quiz_id, id));
 
   return c.json(rows);
+});
+
+// 参加者個別削除（host_secret認証）
+quizRoutes.delete("/:id/participants/:participantId", async (c) => {
+  const quizId = Number(c.req.param("id"));
+  const participantId = Number(c.req.param("participantId"));
+  const key = c.req.query("key");
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, quizId),
+  });
+
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+  if (quiz.host_secret !== key) {
+    return c.json({ error: "認証エラー" }, 403);
+  }
+
+  const participant = await db.query.participants.findFirst({
+    where: and(
+      eq(schema.participants.id, participantId),
+      eq(schema.participants.quiz_id, quizId),
+    ),
+  });
+
+  if (!participant) {
+    return c.json({ error: "参加者が見つかりません" }, 404);
+  }
+
+  await db.delete(schema.participants).where(eq(schema.participants.id, participantId));
+  return c.json({ success: true });
+});
+
+// 参加者一括削除（host_secret認証）
+// body.ids 指定時: 指定IDのみ削除、未指定時: クイズの全参加者削除
+quizRoutes.delete("/:id/participants", async (c) => {
+  const quizId = Number(c.req.param("id"));
+  const key = c.req.query("key");
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, quizId),
+  });
+
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+  if (quiz.host_secret !== key) {
+    return c.json({ error: "認証エラー" }, 403);
+  }
+
+  const body = await c.req.json<{ ids?: number[] }>().catch(() => ({}));
+
+  if ("ids" in body && Array.isArray(body.ids) && body.ids.length > 0) {
+    await db.delete(schema.participants).where(
+      and(
+        eq(schema.participants.quiz_id, quizId),
+        inArray(schema.participants.id, body.ids),
+      ),
+    );
+    return c.json({ success: true, deleted: body.ids.length });
+  }
+
+  const result = await db.delete(schema.participants).where(
+    eq(schema.participants.quiz_id, quizId),
+  );
+  return c.json({ success: true });
 });
 
 // 全参加者一覧（クイズ情報付き、認証なし）
