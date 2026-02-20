@@ -11,7 +11,6 @@ type Props = {
 };
 
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
-const CHOICE_ICONS = ["▲", "◆", "●", "■"];
 
 export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer }: Props) {
   const timeRemaining = Math.max(0, rawTimeRemaining);
@@ -39,25 +38,25 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   if (hasAnswered) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
-        <div className="mb-4 text-green-400" aria-hidden="true">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-rose-text">
+        <div className="mb-4 text-green-600" aria-hidden="true">
           <CheckCircle2 size={64} strokeWidth={1.5} />
         </div>
         <p className="text-2xl font-bold">回答済み</p>
-        <p className="text-base text-gray-300 mt-2">結果をお待ちください...</p>
+        <p className="text-base text-rose-text/50 mt-2">結果をお待ちください...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-dark">
+    <div className="h-[100dvh] flex flex-col bg-blush">
       {/* ヘッダー: 問題番号 + タイマー */}
-      <header className="flex justify-between items-center px-4 py-3 text-white">
+      <header className="flex justify-between items-center px-4 py-3 text-rose-text">
         <span className="text-sm">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <div
-          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-[#ef5350]" : "text-white"}`}
+          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-red-500" : "text-rose-text"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -68,7 +67,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
       </header>
 
       {/* 問題文 */}
-      <div className="px-4 py-2 text-white text-center">
+      <div className="px-4 py-2 text-rose-text text-center">
         {question.mediaUrl !== null && question.mediaType === "image" ? (
           <img
             src={question.mediaUrl}
@@ -93,7 +92,6 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
               key={`${question.questionIndex}-${i}`}
               choice={choice}
               color={CHOICE_COLORS[i]}
-              icon={CHOICE_ICONS[i]}
               isSelected={isSelected}
               disabled={selectedChoice !== null}
               choiceIndex={choiceIndex}

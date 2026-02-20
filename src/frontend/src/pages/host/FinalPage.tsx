@@ -156,9 +156,9 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
     return <GroupPhotoView rankings={rankings} onReplay={onReplay} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
   }
 
-  // Top3 スポットライト表示
+  // Top3 スポットライト表示（メダル背景はそのまま維持）
   if ((phase === "top3" || phase === "done") && spotlightEntry) {
-    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-dark text-white";
+    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-gradient-to-b from-blush to-white text-rose-text";
     const accuracyPercent = spotlightEntry.totalQuestions > 0
       ? Math.round((spotlightEntry.correctCount / spotlightEntry.totalQuestions) * 100)
       : 0;
@@ -237,7 +237,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
   return (
     <div
       ref={containerRef}
-      className="h-[100dvh] overflow-hidden bg-dark text-white flex flex-col items-center justify-end p-6"
+      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-rose-text flex flex-col items-center justify-end p-6"
     >
       <h2 className="font-script text-4xl text-accent absolute top-6">最終結果発表</h2>
       <AnimatePresence>
@@ -262,7 +262,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
                 loading="lazy"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
                 {entry.nickname?.[0] || "?"}
               </div>
             )}
@@ -289,7 +289,7 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
   }, [prefersReducedMotion]);
 
   return (
-    <div className="min-h-[100dvh] bg-dark flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* タイトル */}
       <motion.h2
         initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
@@ -321,15 +321,15 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
                   alt={`${entry.nickname}のアバター`}
                   width={80}
                   height={80}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-white/60 shadow-lg"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-rose-text/30 shadow-lg"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-white/60 shadow-lg">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-rose-text/30 shadow-lg">
                   {entry.nickname?.[0] || "?"}
                 </div>
               )}
-              <span className="text-white/80 text-xs mt-1 max-w-[80px] truncate text-center">
+              <span className="text-rose-text/80 text-xs mt-1 max-w-[80px] truncate text-center">
                 {entry.nickname}
               </span>
             </motion.div>

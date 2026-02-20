@@ -6,35 +6,34 @@ import { ChoiceButton } from "./ChoiceButton";
 const NOOP = () => {};
 
 describe("ChoiceButton", () => {
-  it("renders choice text and icon", () => {
-    render(<ChoiceButton choice="Answer A" color="red" icon="▲" choiceIndex={1} onClick={NOOP} />);
+  it("renders choice text", () => {
+    render(<ChoiceButton choice="Answer A" color="red" choiceIndex={1} onClick={NOOP} />);
     expect(screen.getByRole("button")).toHaveTextContent("Answer A");
-    expect(screen.getByText("▲")).toBeInTheDocument();
   });
 
-  it("applies correct color class", () => {
-    const { rerender } = render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={1} onClick={NOOP} />);
-    expect(screen.getByRole("button")).toHaveClass("bg-choice-red");
+  it("applies correct pastel color class", () => {
+    const { rerender } = render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} />);
+    expect(screen.getByRole("button")).toHaveClass("bg-choice-pastel-rose");
 
-    rerender(<ChoiceButton choice="B" color="blue" icon="◆" choiceIndex={2} onClick={NOOP} />);
-    expect(screen.getByRole("button")).toHaveClass("bg-choice-blue");
+    rerender(<ChoiceButton choice="B" color="blue" choiceIndex={2} onClick={NOOP} />);
+    expect(screen.getByRole("button")).toHaveClass("bg-choice-pastel-sky");
 
-    rerender(<ChoiceButton choice="C" color="green" icon="●" choiceIndex={3} onClick={NOOP} />);
-    expect(screen.getByRole("button")).toHaveClass("bg-choice-green");
+    rerender(<ChoiceButton choice="C" color="green" choiceIndex={3} onClick={NOOP} />);
+    expect(screen.getByRole("button")).toHaveClass("bg-choice-pastel-mint");
 
-    rerender(<ChoiceButton choice="D" color="yellow" icon="■" choiceIndex={4} onClick={NOOP} />);
-    expect(screen.getByRole("button")).toHaveClass("bg-choice-yellow");
+    rerender(<ChoiceButton choice="D" color="yellow" choiceIndex={4} onClick={NOOP} />);
+    expect(screen.getByRole("button")).toHaveClass("bg-choice-pastel-amber");
   });
 
   it("applies selected styles when isSelected is true", () => {
-    render(<ChoiceButton choice="A" color="red" icon="▲" isSelected choiceIndex={1} onClick={NOOP} />);
+    render(<ChoiceButton choice="A" color="red" isSelected choiceIndex={1} onClick={NOOP} />);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("scale-95", "ring-4", "ring-white");
+    expect(button).toHaveClass("scale-95", "ring-4", "ring-rose-text");
     expect(button).toHaveAttribute("aria-pressed", "true");
   });
 
   it("does not apply selected styles when isSelected is false", () => {
-    render(<ChoiceButton choice="A" color="red" icon="▲" isSelected={false} choiceIndex={1} onClick={NOOP} />);
+    render(<ChoiceButton choice="A" color="red" isSelected={false} choiceIndex={1} onClick={NOOP} />);
     const button = screen.getByRole("button");
     expect(button).not.toHaveClass("scale-95");
     expect(button).toHaveAttribute("aria-pressed", "false");
@@ -43,7 +42,7 @@ describe("ChoiceButton", () => {
   it("handles click events with choiceIndex", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
-    render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={3} onClick={handleClick} />);
+    render(<ChoiceButton choice="A" color="red" choiceIndex={3} onClick={handleClick} />);
 
     await user.click(screen.getByRole("button"));
     expect(handleClick).toHaveBeenCalledTimes(1);
@@ -53,27 +52,25 @@ describe("ChoiceButton", () => {
   it("does not call onClick when disabled", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
-    render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={1} onClick={handleClick} disabled />);
+    render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={handleClick} disabled />);
 
     await user.click(screen.getByRole("button"));
     expect(handleClick).not.toHaveBeenCalled();
   });
 
   it("applies disabled opacity when disabled and not selected", () => {
-    render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={1} onClick={NOOP} disabled />);
+    render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} disabled />);
     expect(screen.getByRole("button")).toHaveClass("opacity-40");
   });
 
   it("does not apply disabled opacity when selected", () => {
-    render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={1} onClick={NOOP} disabled isSelected />);
+    render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} disabled isSelected />);
     const button = screen.getByRole("button");
-    // Should have scale-95 and ring but not opacity-40
     expect(button).toHaveClass("scale-95");
   });
 
-  it("sets icon as aria-hidden", () => {
-    render(<ChoiceButton choice="A" color="red" icon="▲" choiceIndex={1} onClick={NOOP} />);
-    const icon = screen.getByText("▲");
-    expect(icon).toHaveAttribute("aria-hidden", "true");
+  it("uses dark text color for readability", () => {
+    render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} />);
+    expect(screen.getByRole("button")).toHaveClass("text-rose-text");
   });
 });

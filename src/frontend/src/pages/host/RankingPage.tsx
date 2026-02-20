@@ -17,7 +17,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   if (!data) return null;
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-dark to-[#16213e] text-white p-6">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush to-white text-rose-text p-6">
       <h2 className="font-script text-4xl text-accent text-center mb-6">Ranking</h2>
 
       <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" aria-live="polite" aria-label="ランキング">
@@ -26,7 +26,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             const barWidth = (entry.totalScore / maxScore) * 100;
             const rankChange = entry.previousRank - entry.rank;
             const changeText = rankChange > 0 ? `↑${rankChange}` : rankChange < 0 ? `↓${Math.abs(rankChange)}` : "";
-            const changeColorClass = rankChange > 0 ? "text-green-500" : rankChange < 0 ? "text-[#ef5350]" : "text-transparent";
+            const changeColorClass = rankChange > 0 ? "text-green-600" : rankChange < 0 ? "text-red-500" : "text-transparent";
 
             return (
               <motion.div
@@ -47,11 +47,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     alt={`${entry.nickname}のアバター`}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-white shrink-0"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-rose-text/30 shrink-0"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl font-bold shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl font-bold text-white shrink-0">
                     {entry.nickname?.[0] || "?"}
                   </div>
                 )}
@@ -62,7 +62,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* スコアバー */}
-                <div className="flex-1 h-9 bg-white/10 rounded-lg overflow-hidden relative">
+                <div className="flex-1 h-9 bg-rose-text/10 rounded-lg overflow-hidden relative">
                   <motion.div
                     initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${barWidth}%` }}
@@ -80,7 +80,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* 回答速度 */}
-                <span className="w-[70px] text-xs text-gray-300 text-right">
+                <span className="w-[70px] text-xs text-rose-text/50 text-right">
                   {entry.lastResponseTimeMs != null
                     ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
                     : "---"}
@@ -96,14 +96,14 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="px-8 py-4 rounded-xl bg-rose-text/10 text-rose-text text-lg font-bold hover:bg-rose-text/20 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
           >
             次の問題
           </button>
           <button
             type="button"
             onClick={onEndGame}
-            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
           >
             最終結果発表
           </button>

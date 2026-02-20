@@ -9,8 +9,12 @@ type Props = {
   isDisplay?: boolean;
 };
 
-const CHOICE_BG_CLASSES = ["bg-choice-red", "bg-choice-blue", "bg-choice-green", "bg-choice-yellow"];
-const CHOICE_ICONS = ["▲", "◆", "●", "■"];
+const CHOICE_PASTEL_CLASSES = [
+  "bg-choice-pastel-rose",
+  "bg-choice-pastel-sky",
+  "bg-choice-pastel-mint",
+  "bg-choice-pastel-amber",
+];
 
 export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
   if (!question) return null;
@@ -19,14 +23,14 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
   const isUrgent = timeRemaining <= 5;
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-dark">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush to-white">
       {/* ヘッダー */}
-      <div className="flex justify-between items-center px-6 py-4 text-white">
+      <div className="flex justify-between items-center px-6 py-4 text-rose-text">
         <span className="text-base">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <span
-          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-[#ef5350]" : "text-white"}`}
+          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-500" : "text-rose-text"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -60,7 +64,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
           />
         ) : null}
-        <h2 className="text-4xl text-white text-center">{question.text}</h2>
+        <h2 className="text-4xl text-rose-text text-center">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
@@ -68,9 +72,8 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
         {question.choices.map((choice, i) => (
           <div
             key={i}
-            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_BG_CLASSES[i]}`}
+            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-rose-text text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
           >
-            <span aria-hidden="true" className="text-3xl">{CHOICE_ICONS[i]}</span>
             {choice}
           </div>
         ))}
@@ -82,7 +85,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-6 py-3 rounded-lg bg-white/20 text-white text-sm min-h-[44px] hover:bg-white/30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="px-6 py-3 rounded-lg bg-rose-text/10 text-rose-text text-sm min-h-[44px] hover:bg-rose-text/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
           >
             回答を締め切る
           </button>

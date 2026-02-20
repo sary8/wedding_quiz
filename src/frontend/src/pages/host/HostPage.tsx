@@ -198,9 +198,9 @@ export function HostPage() {
   // 接続エラー表示
   if (connectionError) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-4">
-        <p className="text-xl text-red-400">{connectionError}</p>
-        <p className="text-sm text-gray-400">ページを再読み込みしてください</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text gap-4">
+        <p className="text-xl text-red-500">{connectionError}</p>
+        <p className="text-sm text-rose-text/50">ページを再読み込みしてください</p>
       </div>
     );
   }
@@ -231,7 +231,7 @@ export function HostPage() {
       );
     case "countdown":
       return (
-        <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white">
+        <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text">
           <p className="text-2xl font-bold mb-4">ゲーム開始</p>
           <p className="text-[10rem] font-bold leading-none text-accent animate-pulse">
             {countdownValue > 0 ? countdownValue : ""}
@@ -285,9 +285,9 @@ export function HostPage() {
       return (
         <>
           {errorBanner}
-          <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-6">
+          <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text gap-6">
             <p className="text-2xl font-bold">ゲームを再開</p>
-            <p className="text-gray-400">ゲームは進行中です。操作を続けてください。</p>
+            <p className="text-rose-text/50">ゲームは進行中です。操作を続けてください。</p>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -299,7 +299,7 @@ export function HostPage() {
               <button
                 type="button"
                 onClick={handleShowRanking}
-                className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px]"
+                className="px-8 py-4 rounded-xl bg-rose-text/10 text-rose-text text-lg font-bold min-h-[44px]"
               >
                 ランキング表示
               </button>

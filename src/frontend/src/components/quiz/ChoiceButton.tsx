@@ -6,20 +6,19 @@ type ChoiceColor = "red" | "blue" | "green" | "yellow";
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
   choice: string;
   color: ChoiceColor;
-  icon: string;
   isSelected?: boolean;
   choiceIndex: number;
   onClick: (choiceIndex: number) => void;
 };
 
 const colorStyles: Record<ChoiceColor, string> = {
-  red: "bg-choice-red",
-  blue: "bg-choice-blue",
-  green: "bg-choice-green",
-  yellow: "bg-choice-yellow",
+  red: "bg-choice-pastel-rose",
+  blue: "bg-choice-pastel-sky",
+  green: "bg-choice-pastel-mint",
+  yellow: "bg-choice-pastel-amber",
 };
 
-export const ChoiceButton = memo(function ChoiceButton({ choice, color, icon, isSelected = false, disabled, choiceIndex, onClick, ...props }: Props) {
+export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelected = false, disabled, choiceIndex, onClick, ...props }: Props) {
   const handleClick = useCallback(() => {
     onClick(choiceIndex);
   }, [onClick, choiceIndex]);
@@ -27,12 +26,12 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, icon, is
   return (
     <button
       className={cn(
-        "rounded-xl text-white font-bold flex flex-col items-center justify-center gap-2 p-3",
+        "rounded-xl text-rose-text font-bold flex items-center justify-center p-3",
         "transition-[opacity,transform,box-shadow] duration-200",
-        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50",
+        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-text/30",
         "disabled:cursor-not-allowed",
         colorStyles[color],
-        isSelected && "scale-95 ring-4 ring-white",
+        isSelected && "scale-95 ring-4 ring-rose-text",
         disabled && !isSelected && "opacity-40"
       )}
       disabled={disabled}
@@ -40,9 +39,6 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, icon, is
       onClick={handleClick}
       {...props}
     >
-      <span className="text-4xl" aria-hidden="true">
-        {icon}
-      </span>
       <span className="text-base">{choice}</span>
     </button>
   );

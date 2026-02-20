@@ -11,11 +11,17 @@
   --color-rose-text: #831843;
   --color-dark: #1a1a2e;
 
-  /* ゲーム選択肢カラー（変更なし） */
+  /* ゲーム選択肢カラー（管理画面用） */
   --color-choice-red: #e53935;
   --color-choice-blue: #1e88e5;
   --color-choice-green: #43a047;
   --color-choice-yellow: #f9a825;
+
+  /* パステル選択肢カラー（ゲーム画面用） */
+  --color-choice-pastel-rose: #FDA4AF;
+  --color-choice-pastel-sky: #7DD3FC;
+  --color-choice-pastel-mint: #6EE7B7;
+  --color-choice-pastel-amber: #FCD34D;
 
   /* フォント */
   --font-script: 'Great Vibes', cursive;

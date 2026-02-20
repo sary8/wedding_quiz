@@ -9,8 +9,18 @@ type Props = {
   isDisplay?: boolean;
 };
 
-const CHOICE_BAR_CLASSES = ["bg-choice-red", "bg-choice-blue", "bg-choice-green", "bg-choice-yellow"];
-const CHOICE_BAR_DIM_CLASSES = ["bg-choice-red/50", "bg-choice-blue/50", "bg-choice-green/50", "bg-choice-yellow/50"];
+const CHOICE_BAR_CLASSES = [
+  "bg-choice-pastel-rose",
+  "bg-choice-pastel-sky",
+  "bg-choice-pastel-mint",
+  "bg-choice-pastel-amber",
+];
+const CHOICE_BAR_DIM_CLASSES = [
+  "bg-choice-pastel-rose/50",
+  "bg-choice-pastel-sky/50",
+  "bg-choice-pastel-mint/50",
+  "bg-choice-pastel-amber/50",
+];
 
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
   const { totalAnswers, maxCount } = useMemo(() => ({
@@ -20,21 +30,21 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   if (!result) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-6">
-        <p className="text-xl text-gray-300">結果データを取得中…</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text gap-6">
+        <p className="text-xl text-rose-text/60">結果データを取得中…</p>
         {!isDisplay && (
           <div className="flex gap-4">
             <button
               type="button"
               onClick={onShowRanking}
-              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
             >
               ランキング表示
             </button>
             <button
               type="button"
               onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px] hover:bg-white/30 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="px-8 py-4 rounded-xl bg-rose-text/10 text-rose-text text-lg font-bold min-h-[44px] hover:bg-rose-text/20 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
             >
               次の問題
             </button>
@@ -45,7 +55,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white p-6">
+    <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text p-6">
       <h2 className="font-script text-4xl text-accent mb-8">Results</h2>
 
       {/* 回答分布グラフ */}
@@ -71,7 +81,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                 </span>
                 <span className="text-base">{count}人 ({percentage}%)</span>
               </div>
-              <div className="h-10 bg-white/10 rounded-lg overflow-hidden">
+              <div className="h-10 bg-rose-text/10 rounded-lg overflow-hidden">
                 <div
                   className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}
@@ -87,14 +97,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           <button
             type="button"
             onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
           >
             ランキング表示
           </button>
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold hover:bg-white/30 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="px-8 py-4 rounded-xl bg-rose-text/10 text-rose-text text-lg font-bold hover:bg-rose-text/20 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
           >
             次の問題
           </button>
