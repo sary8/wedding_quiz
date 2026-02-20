@@ -241,7 +241,7 @@ export function QuestionInlineForm(props: Props) {
               )}
               {!isUploading && mediaUrl && (
                 <div className="absolute top-1 right-1 bg-green-500 rounded-full w-5 h-5 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold" aria-hidden="true">✓</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                 </div>
               )}
             </div>

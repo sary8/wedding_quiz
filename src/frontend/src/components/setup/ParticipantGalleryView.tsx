@@ -136,7 +136,7 @@ export function ParticipantGalleryView() {
 
       {/* 操作バー */}
       <div className="bg-white rounded-xl p-4 shadow-sm flex flex-wrap items-center gap-3">
-        <label className={cn("flex items-center gap-2 cursor-pointer text-sm text-gray-700 min-h-[36px]", btnFocus)}>
+        <label className={cn("flex items-center gap-2 cursor-pointer text-sm text-gray-700 min-h-[44px]", btnFocus)}>
           <input
             type="checkbox"
             checked={selectedIds.size === participants.length && participants.length > 0}
@@ -160,7 +160,7 @@ export function ParticipantGalleryView() {
               onClick={handleDeleteSelected}
               disabled={isDeleting}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer",
                 btnFocus,
               )}
             >
@@ -171,7 +171,7 @@ export function ParticipantGalleryView() {
               onClick={() => setConfirmMode(null)}
               disabled={isDeleting}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                "px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer",
                 btnFocus,
               )}
             >
@@ -184,7 +184,7 @@ export function ParticipantGalleryView() {
             onClick={() => setConfirmMode("selected")}
             disabled={selectedIds.size === 0 || isDeleting}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[36px]",
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[44px]",
               btnFocus,
               selectedIds.size > 0
                 ? "text-red-600 hover:bg-red-50 cursor-pointer"
@@ -203,7 +203,7 @@ export function ParticipantGalleryView() {
               onClick={handleDeleteAll}
               disabled={isDeleting}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer",
                 btnFocus,
               )}
             >
@@ -214,7 +214,7 @@ export function ParticipantGalleryView() {
               onClick={() => setConfirmMode(null)}
               disabled={isDeleting}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                "px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer",
                 btnFocus,
               )}
             >
@@ -227,7 +227,7 @@ export function ParticipantGalleryView() {
             onClick={() => setConfirmMode("all")}
             disabled={isDeleting}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer",
+              "px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer",
               btnFocus,
             )}
           >
@@ -275,8 +275,8 @@ export function ParticipantGalleryView() {
                 <div className="text-xs text-accent font-medium mt-1">{p.total_score}点</div>
               )}
               {isSelected && (
-                <div className="mt-2 w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center text-xs">
-                  ✓
+                <div className="mt-2 w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                 </div>
               )}
             </label>

@@ -37,7 +37,7 @@ export function BgmControls({ volume, isMuted, onVolumeChange, onToggleMute }: P
             type="button"
             onClick={onToggleMute}
             aria-label={isMuted ? "ミュート解除" : "ミュート"}
-            className="p-1 text-gray-700 hover:text-gray-900 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-1 text-gray-700 hover:text-gray-900 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           >
             <SpeakerIcon muted={isMuted} />
           </button>
@@ -61,7 +61,7 @@ export function BgmControls({ volume, isMuted, onVolumeChange, onToggleMute }: P
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? "BGMコントロールを閉じる" : "BGMコントロールを開く"}
-        className="w-12 h-12 rounded-full bg-white/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 hover:text-gray-900 hover:bg-white transition-colors"
+        className="w-12 h-12 rounded-full bg-white/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 hover:text-gray-900 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
       >
         <SpeakerIcon muted={isMuted} />
       </button>

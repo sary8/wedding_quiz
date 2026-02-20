@@ -35,11 +35,10 @@ export function useBgm() {
   const [volume, setVolumeState] = useState(loadVolume);
   const [isMuted, setIsMutedState] = useState(loadMuted);
 
-  // audio要素の初期化
+  // audio要素の初期化（volumeは下のuseEffectで同期される）
   useEffect(() => {
     const audio = new Audio();
     audio.loop = true;
-    audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
 
     return () => {

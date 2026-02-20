@@ -72,7 +72,7 @@ export function JoinPage() {
       </div>
 
       {/* フッター装飾 */}
-      <p className="mt-8 text-primary/40 text-xs">本日はご参加いただきありがとうございます</p>
+      <p className="mt-8 text-primary/60 text-xs">本日はご参加いただきありがとうございます</p>
     </div>
   );
 }

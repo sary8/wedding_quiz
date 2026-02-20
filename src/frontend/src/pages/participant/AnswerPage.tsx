@@ -39,12 +39,12 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   if (hasAnswered) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900" role="status" aria-live="polite">
         <div className="mb-4 text-green-600" aria-hidden="true">
           <CheckCircle2 size={64} strokeWidth={1.5} />
         </div>
         <p className="text-2xl font-bold">回答済み</p>
-        <p className="text-base text-gray-500 mt-2">結果をお待ちください…</p>
+        <p className="text-base text-gray-600 mt-2">結果をお待ちください…</p>
       </div>
     );
   }
@@ -58,7 +58,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
             Q{question.questionIndex + 1} / {question.totalQuestions}
           </span>
           {answerCount !== undefined && answerCount > 0 && (
-            <span className="text-xs text-gray-400">回答済み: {answerCount}人</span>
+            <span className="text-xs text-gray-500">回答済み: {answerCount}人</span>
           )}
         </div>
         <div

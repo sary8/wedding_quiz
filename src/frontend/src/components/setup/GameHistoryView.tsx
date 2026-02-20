@@ -159,11 +159,8 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                   {new Date(q.created_at).toLocaleDateString("ja-JP")} ・ {q.participant_count}人参加 ・ {q.question_count}問
                 </div>
               </div>
-              <span className={cn(
-                "text-gray-400 transition-transform duration-200 text-lg shrink-0 ml-3",
-                isExpanded && "rotate-180",
-              )}>
-                ▼
+              <span className="text-gray-400 shrink-0 ml-3" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", isExpanded && "rotate-180")}><path d="m6 9 6 6 6-6"/></svg>
               </span>
             </button>
 
@@ -243,14 +240,14 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                         <button
                           type="button"
                           onClick={() => exportCSV(detail.quiz, detail.participants)}
-                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           CSV出力
                         </button>
                         <button
                           type="button"
                           onClick={() => exportJSON(detail.quiz, detail.participants)}
-                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           JSON出力
                         </button>
@@ -264,7 +261,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                             type="button"
                             onClick={() => handleDelete(q.id)}
                             disabled={isDeleting}
-                            className={cn("px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                            className={cn("px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                           >
                             {isDeleting ? "削除中…" : "本当に削除する"}
                           </button>
@@ -272,7 +269,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                             type="button"
                             onClick={() => setPendingDeleteId(null)}
                             disabled={isDeleting}
-                            className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                            className={cn("px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                           >
                             キャンセル
                           </button>
@@ -281,7 +278,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                         <button
                           type="button"
                           onClick={() => setPendingDeleteId(q.id)}
-                          className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                          className={cn("px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           このゲームを削除
                         </button>

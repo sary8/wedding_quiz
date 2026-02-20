@@ -454,7 +454,7 @@ function GroupAvatarBubble({ entry, index }: GroupAvatarProps) {
           {entry.nickname?.[0] || "?"}
         </div>
       )}
-      <span className="text-gray-600 text-xs mt-1 max-w-[80px] truncate text-center">
+      <span className="text-gray-700 text-xs mt-1 max-w-[80px] truncate text-center">
         {entry.nickname}
       </span>
     </div>

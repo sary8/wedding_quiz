@@ -61,7 +61,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
         </div>
       </div>
 
-      <p className="text-sm mt-8 text-rose-text/40">ご参加ありがとうございました！</p>
+      <p className="text-sm mt-8 text-rose-text/70">ご参加ありがとうございました！</p>
     </div>
   );
 }

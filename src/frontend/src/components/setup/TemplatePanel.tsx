@@ -139,14 +139,14 @@ export function TemplatePanel({ onImport, onClose }: Props) {
                         type="button"
                         onClick={() => handleDeleteBank(q.id)}
                         aria-label={`「${q.text}」をテンプレートから削除`}
-                        className={cn("px-3 py-1.5 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                        className={cn("px-3 py-1.5 rounded text-xs text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                       >
                         確認
                       </button>
                       <button
                         type="button"
                         onClick={() => setPendingDeleteId(null)}
-                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                       >
                         戻る
                       </button>
@@ -156,7 +156,7 @@ export function TemplatePanel({ onImport, onClose }: Props) {
                       type="button"
                       onClick={() => setPendingDeleteId(q.id)}
                       aria-label={`「${q.text}」を削除`}
-                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                     >
                       削除
                     </button>

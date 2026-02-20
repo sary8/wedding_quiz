@@ -66,14 +66,14 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
             onChange={(e) => setNickname(e.target.value.slice(0, 20))}
             placeholder="例：花子…"
             maxLength={20}
-            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-[border-color,box-shadow] duration-200"
+            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[border-color,box-shadow] duration-200"
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSubmit()}
           />
         </div>
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-rose-text/50 mb-3">自撮り（必須）</p>
+          <p className="text-sm text-rose-text/70 mb-3">自撮り（必須）</p>
 
           {cameraError !== null ? (
             <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
@@ -93,7 +93,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               <button
                 type="button"
                 onClick={retake}
-                className="mt-3 px-5 py-2.5 rounded-full bg-white border border-primary/30 text-primary text-sm hover:bg-primary/5 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="mt-3 px-5 py-2.5 rounded-full bg-white border border-primary/30 text-primary text-sm hover:bg-primary/5 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 撮り直す
               </button>
@@ -119,7 +119,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               <button
                 type="button"
                 onClick={handleCapture}
-                className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 撮影
               </button>
@@ -128,7 +128,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
             <button
               type="button"
               onClick={startCamera}
-              className="w-44 h-44 rounded-full border-2 border-dashed border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors duration-200 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="w-44 h-44 rounded-full border-2 border-dashed border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors duration-200 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
@@ -147,7 +147,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
           onClick={handleSubmit}
           disabled={!nickname.trim() || !capturedImage || isJoining}
           className={[
-            "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+            "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             nickname.trim() && capturedImage && !isJoining
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",

@@ -57,7 +57,7 @@ export function QuestionRow({
         {/* ドラッグハンドル */}
         <button
           type="button"
-          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors duration-150 p-1 shrink-0 touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded"
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors duration-150 p-2 shrink-0 touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label={`問題${index + 1}をドラッグして並べ替え`}
           {...attributes}
           {...listeners}
@@ -85,7 +85,9 @@ export function QuestionRow({
             <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">画像</span>
           )}
           {/* 展開/折りたたみインジケーター */}
-          <span className="text-gray-400 text-sm shrink-0" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
+          <span className="text-gray-400 shrink-0" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", isExpanded && "rotate-180")}><path d="m6 9 6 6 6-6"/></svg>
+          </span>
         </button>
         {/* 並べ替えボタン */}
         <div className="flex gap-0.5 shrink-0">
@@ -95,14 +97,14 @@ export function QuestionRow({
             disabled={index === 0}
             aria-label={`問題${index + 1}を上へ移動`}
             className={cn(
-              "w-8 h-8 flex items-center justify-center rounded text-sm transition-colors duration-150",
+              "min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-sm transition-colors duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
               index === 0
                 ? "text-gray-300 cursor-not-allowed"
                 : "text-gray-500 hover:bg-gray-200 cursor-pointer",
             )}
           >
-            ↑
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
           </button>
           <button
             type="button"
@@ -110,14 +112,14 @@ export function QuestionRow({
             disabled={index === totalCount - 1}
             aria-label={`問題${index + 1}を下へ移動`}
             className={cn(
-              "w-8 h-8 flex items-center justify-center rounded text-sm transition-colors duration-150",
+              "min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-sm transition-colors duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
               index === totalCount - 1
                 ? "text-gray-300 cursor-not-allowed"
                 : "text-gray-500 hover:bg-gray-200 cursor-pointer",
             )}
           >
-            ↓
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
           </button>
         </div>
       </div>
