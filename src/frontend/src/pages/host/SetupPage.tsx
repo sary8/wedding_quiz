@@ -117,8 +117,14 @@ export function SetupPage() {
     }
   }
 
-  function handleNavigate(view: "history" | "participants" | "questions" | "edit", quizId?: number) {
-    if (view === "edit" && quizId) {
+  function handleNavigate(view: "history" | "participants" | "questions" | "edit" | "host", quizId?: number) {
+    if (view === "host" && quizId) {
+      getQuiz(quizId)
+        .then((quiz) => {
+          navigate(`/host/${quiz.room_code}?quizId=${quiz.id}&key=${quiz.host_secret}`);
+        })
+        .catch(() => setError("クイズの取得に失敗しました"));
+    } else if (view === "edit" && quizId) {
       getQuiz(quizId)
         .then((quiz) => {
           setSelectedQuiz(quiz);
@@ -126,7 +132,7 @@ export function SetupPage() {
         })
         .catch(() => setError("クイズの取得に失敗しました"));
     } else {
-      setView(view);
+      setView(view as SetupView);
     }
   }
 
@@ -143,7 +149,7 @@ export function SetupPage() {
 
   const handleStartLobby = useCallback(() => {
     if (!selectedQuiz) return;
-    navigate(`/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}`);
+    navigate(`/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}&key=${selectedQuiz.host_secret}`);
   }, [selectedQuiz, navigate]);
 
   const handleQuestionUpdate = useCallback(async () => {

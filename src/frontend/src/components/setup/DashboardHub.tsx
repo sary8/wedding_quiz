@@ -4,7 +4,7 @@ import { QuizStatus } from "../../types";
 import { deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 
-type SetupView = "history" | "participants" | "questions" | "edit";
+type SetupView = "history" | "participants" | "questions" | "edit" | "host";
 
 type Props = {
   quizList: QuizSummary[];
@@ -199,15 +199,16 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={`/host/${q.room_code}?quizId=${q.id}`}
+                  <button
+                    type="button"
+                    onClick={() => onNavigate("host", q.id)}
                     className={cn(
-                      "text-sm text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition-colors duration-150 min-h-[36px]",
+                      "text-sm text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition-colors duration-150 min-h-[36px] cursor-pointer",
                       btnFocus,
                     )}
                   >
                     ホスト画面へ →
-                  </a>
+                  </button>
                   {pendingDeleteId === q.id ? (
                     <div className="flex gap-1">
                       <button
