@@ -9,6 +9,8 @@ import type {
   FinalResultData,
 } from "../../types";
 import { useGameSounds } from "../../hooks/useGameSounds";
+import { useBgm } from "../../hooks/useBgm";
+import { BgmControls } from "../../components/ui/BgmControls";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
 
@@ -25,6 +27,7 @@ export function DisplayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const { emit, on, isConnected, connectionError } = useSocket();
   const sounds = useGameSounds();
+  const bgm = useBgm();
 
   const [phase, setPhase] = useState<DisplayPhase>("lobby");
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
@@ -115,6 +118,27 @@ export function DisplayPage() {
     ];
     return () => unsubs.forEach((u) => u());
   }, [on, sounds]);
+
+  // フェーズに応じたBGMトラック自動切替
+  useEffect(() => {
+    switch (phase) {
+      case "lobby":
+        bgm.play("lobby");
+        break;
+      case "countdown":
+      case "question":
+        bgm.play("question");
+        break;
+      case "results":
+      case "ranking":
+      case "final":
+        bgm.play("results");
+        break;
+      case "closed":
+        bgm.fadeOut();
+        break;
+    }
+  }, [phase, bgm]);
 
   // カウントダウン表示（表示のみ、nextQuestionは呼ばない）
   useEffect(() => {
@@ -233,5 +257,15 @@ export function DisplayPage() {
     }
   })();
 
-  return <Suspense fallback={null}>{content}</Suspense>;
+  return (
+    <Suspense fallback={null}>
+      {content}
+      <BgmControls
+        volume={bgm.volume}
+        isMuted={bgm.isMuted}
+        onVolumeChange={bgm.setVolume}
+        onToggleMute={bgm.toggleMute}
+      />
+    </Suspense>
+  );
 }
