@@ -39,6 +39,7 @@ export function HostPage() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdownValue, setCountdownValue] = useState(5);
+  const countdownFiredRef = useRef(false);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -155,10 +156,16 @@ export function HostPage() {
 
   // カウントダウン: 5→4→3→2→1→0 → 最初の問題を配信
   useEffect(() => {
-    if (phase !== "countdown") return;
+    if (phase !== "countdown") {
+      countdownFiredRef.current = false;
+      return;
+    }
     if (countdownValue <= 0) {
-      const t = setTimeout(handleNextQuestion, 0);
-      return () => clearTimeout(t);
+      if (!countdownFiredRef.current) {
+        countdownFiredRef.current = true;
+        handleNextQuestion();
+      }
+      return;
     }
     const timer = setTimeout(() => setCountdownValue((v) => v - 1), 1000);
     return () => clearTimeout(timer);

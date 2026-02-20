@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
-import { eq, sql, and, inArray } from "drizzle-orm";
+import { eq, sql, and, inArray, asc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const quizRoutes = new Hono();
@@ -72,7 +72,11 @@ quizRoutes.get("/:id", async (c) => {
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
-    with: { questions: true },
+    with: {
+      questions: {
+        orderBy: [asc(schema.questions.order_index)],
+      },
+    },
   });
 
   if (!quiz) {

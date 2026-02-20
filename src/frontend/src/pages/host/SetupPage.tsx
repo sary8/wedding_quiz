@@ -154,16 +154,24 @@ export function SetupPage() {
 
   const handleQuestionUpdate = useCallback(async () => {
     if (!selectedQuiz) return;
-    const [updated] = await Promise.all([getQuiz(selectedQuiz.id), loadQuizzes()]);
-    setSelectedQuiz(updated);
+    try {
+      const [updated] = await Promise.all([getQuiz(selectedQuiz.id), loadQuizzes()]);
+      setSelectedQuiz(updated);
+    } catch {
+      setError("問題の更新に失敗しました");
+    }
   }, [selectedQuiz]);
 
   const handleTitleSaved = useCallback(async () => {
-    if (selectedQuiz) {
-      const [, updated] = await Promise.all([loadQuizzes(), getQuiz(selectedQuiz.id)]);
-      setSelectedQuiz(updated);
-    } else {
-      await loadQuizzes();
+    try {
+      if (selectedQuiz) {
+        const [, updated] = await Promise.all([loadQuizzes(), getQuiz(selectedQuiz.id)]);
+        setSelectedQuiz(updated);
+      } else {
+        await loadQuizzes();
+      }
+    } catch {
+      setError("クイズの更新に失敗しました");
     }
   }, [selectedQuiz]);
 
