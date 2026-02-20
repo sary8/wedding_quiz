@@ -31,28 +31,33 @@ export function QuestionRow({
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
       {/* コンパクト行 */}
-      <button
-        type="button"
+      <div
         className={cn(
-          "w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors duration-150 text-left",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50",
+          "w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3",
           isExpanded && "bg-gray-50",
         )}
-        onClick={onToggle}
-        aria-expanded={isExpanded}
-        aria-label={`問題${index + 1}: ${question.text}`}
       >
-        <span className="text-sm font-bold text-gray-400 shrink-0">[{index + 1}]</span>
-        <span className="flex-1 text-sm font-medium text-gray-800 truncate min-w-0">{question.text}</span>
-        {question.media_url && question.media_type === "image" && (
-          <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">画像</span>
-        )}
-        {/* 並べ替えボタン */}
-        <div
-          className="flex gap-0.5 shrink-0"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
+        {/* トグル部分 */}
+        <button
+          type="button"
+          className={cn(
+            "flex-1 flex items-center gap-2 sm:gap-3 cursor-pointer hover:bg-gray-50 transition-colors duration-150 text-left min-w-0",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded",
+          )}
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          aria-label={`問題${index + 1}: ${question.text}`}
         >
+          <span className="text-sm font-bold text-gray-400 shrink-0">[{index + 1}]</span>
+          <span className="flex-1 text-sm font-medium text-gray-800 truncate min-w-0">{question.text}</span>
+          {question.media_url && question.media_type === "image" && (
+            <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">画像</span>
+          )}
+          {/* 展開/折りたたみインジケーター */}
+          <span className="text-gray-400 text-sm shrink-0" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
+        </button>
+        {/* 並べ替えボタン */}
+        <div className="flex gap-0.5 shrink-0">
           <button
             type="button"
             onClick={() => onReorder(index, "up")}
@@ -84,9 +89,7 @@ export function QuestionRow({
             ↓
           </button>
         </div>
-        {/* 展開/折りたたみインジケーター */}
-        <span className="text-gray-400 text-sm shrink-0" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
-      </button>
+      </div>
 
       {/* アコーディオン展開 */}
       <AnimatePresence>
