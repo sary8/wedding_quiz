@@ -47,13 +47,13 @@ export function ResultPage({ result, question }: Props) {
         )}
       </div>
 
-      <p className="font-script text-5xl text-primary mb-6" aria-live="polite">
+      <p className="font-script text-5xl text-primary mb-6 [text-wrap:balance]" aria-live="polite">
         {isCorrect ? "正解！" : "不正解…"}
       </p>
 
       {/* スコアカード */}
       <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-6 text-center">
-        <p className="text-4xl font-bold text-rose-text mb-1">+{yourAnswer.scoreAwarded}<span className="text-lg">点</span></p>
+        <p className="text-4xl font-bold text-rose-text mb-1 [font-variant-numeric:tabular-nums]">+{yourAnswer.scoreAwarded}<span className="text-lg">点</span></p>
 
         <div className="flex items-center gap-3 my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
@@ -61,7 +61,7 @@ export function ResultPage({ result, question }: Props) {
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
         </div>
 
-        <div className="flex flex-col gap-1.5 text-sm text-rose-text/70">
+        <div className="flex flex-col gap-1.5 text-sm text-rose-text/70 [font-variant-numeric:tabular-nums]">
           <p>回答速度: {(yourAnswer.responseTimeMs / 1000).toFixed(2)}秒</p>
           <p>累計スコア: {yourAnswer.totalScore.toLocaleString()}点</p>
           <p className="text-base font-bold text-rose-text mt-1">現在 第{yourAnswer.currentRank}位</p>

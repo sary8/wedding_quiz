@@ -170,7 +170,7 @@ export function DisplayPage() {
       return (
         <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
           <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-          <p className="text-[10rem] font-bold leading-none text-amber-800 animate-pulse">
+          <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
             {countdownValue > 0 ? countdownValue : ""}
           </p>
         </div>

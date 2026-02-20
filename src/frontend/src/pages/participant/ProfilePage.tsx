@@ -37,7 +37,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
     <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-blush px-6 py-8">
       {/* タイトル */}
       <header className="text-center mb-6">
-        <h1 className="font-script text-4xl text-primary mb-1">プロフィール設定</h1>
+        <h1 className="font-script text-4xl text-primary mb-1 [text-wrap:balance]">プロフィール設定</h1>
         <div className="flex items-center gap-3 justify-center">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
           <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent" aria-hidden="true" />
@@ -86,12 +86,14 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               <img
                 src={capturedImage}
                 alt="自撮り"
+                width={176}
+                height={176}
                 className="w-44 h-44 rounded-full object-cover mx-auto border-4 border-primary/30 shadow-md"
               />
               <button
                 type="button"
                 onClick={retake}
-                className="mt-3 px-5 py-2.5 rounded-full bg-white border border-primary/30 text-primary text-sm hover:bg-primary/5 transition-colors duration-200 min-h-[44px]"
+                className="mt-3 px-5 py-2.5 rounded-full bg-white border border-primary/30 text-primary text-sm hover:bg-primary/5 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 撮り直す
               </button>
@@ -101,9 +103,12 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               <div className="w-44 h-44 rounded-full overflow-hidden mx-auto border-4 border-primary/30 shadow-md">
                 <video
                   ref={videoRef}
+                  width={176}
+                  height={176}
                   autoPlay
                   playsInline
                   muted
+                  aria-label="カメラプレビュー"
                   className="w-44 h-44 object-cover scale-x-[-1]"
                 />
               </div>
@@ -114,7 +119,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
               <button
                 type="button"
                 onClick={handleCapture}
-                className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+                className="mt-3 px-8 py-3 rounded-full bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 撮影
               </button>
@@ -123,7 +128,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
             <button
               type="button"
               onClick={startCamera}
-              className="w-44 h-44 rounded-full border-2 border-dashed border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors duration-200 mx-auto"
+              className="w-44 h-44 rounded-full border-2 border-dashed border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors duration-200 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
@@ -142,7 +147,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
           onClick={handleSubmit}
           disabled={!nickname.trim() || !capturedImage || isJoining}
           className={[
-            "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px]",
+            "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
             nickname.trim() && capturedImage && !isJoining
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",

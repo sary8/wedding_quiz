@@ -260,6 +260,8 @@ export function ParticipantGalleryView() {
                 <img
                   src={`/api/media/${p.selfie_file_name}`}
                   alt={p.nickname}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full object-cover mb-3"
                 />
               ) : (

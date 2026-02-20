@@ -17,7 +17,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 px-6">
       {/* タイトル */}
       <header className="text-center mb-8">
-        <h1 className="font-script text-6xl text-amber-800 mb-2">Wedding Quiz</h1>
+        <h1 className="font-script text-6xl text-amber-800 mb-2 [text-wrap:balance]">Wedding Quiz</h1>
         <div className="flex items-center gap-3 justify-center mb-2">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-800/40 max-w-[80px]" />
           <span className="inline-block w-1.5 h-1.5 rotate-45 bg-amber-800/60" aria-hidden="true" />
@@ -42,7 +42,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
 
       {/* 参加者一覧 */}
       <section className="mb-8 text-center w-full max-w-4xl">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">
+        <h2 className="text-xl font-bold mb-4 text-gray-700 [text-wrap:balance]">
           参加者: <span className="text-amber-800">{participants.length}</span>人
         </h2>
         {participants.length > 0 ? (

@@ -62,7 +62,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 p-6">
-      <h2 className="font-script text-4xl text-amber-800 mb-8">Results</h2>
+      <h2 className="font-script text-4xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
 
       {/* 回答分布グラフ */}
       <div className="w-full max-w-xl mb-12">
@@ -87,7 +87,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                     </>
                   )}
                 </span>
-                <span className="text-base">{count}人 ({percentage}%)</span>
+                <span className="text-base [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
               </div>
               <div className={`h-10 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
                 <div

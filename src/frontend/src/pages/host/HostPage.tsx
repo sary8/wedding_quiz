@@ -261,7 +261,7 @@ export function HostPage() {
       return (
         <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
           <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-          <p className="text-[10rem] font-bold leading-none text-amber-800 animate-pulse">
+          <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
             {countdownValue > 0 ? countdownValue : ""}
           </p>
         </div>
@@ -327,14 +327,14 @@ export function HostPage() {
               <button
                 type="button"
                 onClick={handleNextQuestion}
-                className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200"
+                className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
               >
                 次の問題を配信
               </button>
               <button
                 type="button"
                 onClick={handleShowRanking}
-                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200"
+                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
               >
                 ランキング表示
               </button>

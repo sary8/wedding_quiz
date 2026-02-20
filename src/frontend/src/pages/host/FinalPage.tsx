@@ -195,7 +195,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
             <button
               type="button"
               onClick={togglePause}
-              className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer"
+              className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               {isPaused ? "再開" : "一時停止"}
             </button>
@@ -207,7 +207,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
                 <button
                   type="button"
                   onClick={onReplay}
-                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
+                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                 >
                   もう一度プレイ
                 </button>
@@ -216,7 +216,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
                 <button
                   type="button"
                   onClick={onCloseGame}
-                  className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer"
+                  className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
                 >
                   ゲーム終了
                 </button>
@@ -271,7 +271,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
       ref={containerRef}
       className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col items-center justify-end p-6"
     >
-      <h2 className="font-script text-4xl text-amber-800 absolute top-6">最終結果発表</h2>
+      <h2 className="font-script text-4xl text-amber-800 absolute top-6 [text-wrap:balance]">最終結果発表</h2>
       <AnimatePresence>
         {reversed.slice(0, visibleIndex + 1).map((entry) => (
           <motion.div
@@ -298,7 +298,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
                 {entry.nickname?.[0] || "?"}
               </div>
             )}
-            <span className="w-28">{entry.nickname}</span>
+            <span className="w-28 truncate">{entry.nickname}</span>
             <span>{entry.totalScore.toLocaleString()}点</span>
           </motion.div>
         ))}
@@ -328,7 +328,7 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
         initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="font-script text-4xl md:text-5xl text-amber-800 mb-8 text-center z-10"
+        className="font-script text-4xl md:text-5xl text-amber-800 mb-8 text-center z-10 [text-wrap:balance]"
       >
         みんなで記念撮影！
       </motion.h2>
@@ -382,7 +382,7 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
             <button
               type="button"
               onClick={onReplay}
-              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
+              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
             >
               もう一度プレイ
             </button>
@@ -391,7 +391,7 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
             <button
               type="button"
               onClick={onCloseGame}
-              className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer"
+              className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
             >
               ゲーム終了
             </button>

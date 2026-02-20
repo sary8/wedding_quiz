@@ -201,7 +201,7 @@ export function SetupPage() {
               </button>
             )}
             <div>
-              <h1 className="text-3xl font-extrabold text-white m-0">Wedding Quiz</h1>
+              <h1 className="text-3xl font-extrabold text-white m-0 [text-wrap:balance]">Wedding Quiz</h1>
               <p className="text-white/80 mt-1 text-sm">{headerSubtext}</p>
             </div>
           </div>

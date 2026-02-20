@@ -176,7 +176,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                     {/* 参加者ランキング */}
                     {detail.participants.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">参加者ランキング</h4>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">参加者ランキング</h3>
                         <div className="flex flex-col gap-1">
                           {detail.participants
                             .sort((a, b) => a.current_rank - b.current_rank || b.total_score - a.total_score)
@@ -193,6 +193,8 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                                   <img
                                     src={`/api/media/${p.selfie_file_name}`}
                                     alt={p.nickname}
+                                    width={32}
+                                    height={32}
                                     className="w-8 h-8 rounded-full object-cover shrink-0"
                                   />
                                 ) : (
@@ -216,7 +218,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                     {/* 出題された問題 */}
                     {detail.quiz.questions && detail.quiz.questions.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">出題された問題</h4>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">出題された問題</h3>
                         <div className="flex flex-col gap-1">
                           {detail.quiz.questions.map((question, qi) => (
                             <div key={question.id} className="px-3 py-2 rounded-lg bg-gray-50">

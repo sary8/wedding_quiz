@@ -63,7 +63,7 @@ export function ThankYouScreen({ participants, onBackToSetup, isDisplay }: Props
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
       {/* タイトル */}
-      <h2 className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 mb-4">
+      <h2 className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 mb-4 [text-wrap:balance]">
         ご参加ありがとうございました！
       </h2>
 
@@ -109,7 +109,7 @@ export function ThankYouScreen({ participants, onBackToSetup, isDisplay }: Props
         <button
           type="button"
           onClick={onBackToSetup}
-          className="mt-8 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 z-10 cursor-pointer"
+          className="mt-8 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
         >
           管理画面に戻る
         </button>

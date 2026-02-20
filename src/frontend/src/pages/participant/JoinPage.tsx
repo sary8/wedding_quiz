@@ -31,7 +31,7 @@ export function JoinPage() {
     <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-blush px-6">
       {/* タイトル */}
       <header className="text-center mb-8">
-        <h1 className="font-script text-6xl text-primary mb-1">Wedding Quiz</h1>
+        <h1 className="font-script text-6xl text-primary mb-1 [text-wrap:balance]">Wedding Quiz</h1>
         <div className="flex items-center gap-3 justify-center my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
           <span className="inline-block w-2 h-2 rotate-45 bg-accent" aria-hidden="true" />

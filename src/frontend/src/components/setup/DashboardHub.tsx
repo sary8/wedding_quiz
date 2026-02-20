@@ -79,7 +79,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
     <div className="flex flex-col gap-6">
       {/* 新規作成 */}
       <section className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">新しいゲームを作成</h2>
+        <h2 className="text-lg font-semibold mb-4 text-gray-800 [text-wrap:balance]">新しいゲームを作成</h2>
         <div className="flex gap-3">
           <input
             type="text"

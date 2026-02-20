@@ -16,7 +16,7 @@ export function WaitingPage({ message = "まもなく開始します…" }: Prop
       </div>
 
       {/* タイトル */}
-      <h1 className="font-script text-4xl text-primary mb-2">Wedding Quiz</h1>
+      <h1 className="font-script text-4xl text-primary mb-2 [text-wrap:balance]">Wedding Quiz</h1>
 
       {/* セパレーター */}
       <div className="flex items-center gap-3 mb-4 w-40">

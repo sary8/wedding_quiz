@@ -58,13 +58,15 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
         {question.mediaUrl !== null && question.mediaType === "video" ? (
           <video
             src={question.mediaUrl}
+            width={600}
+            height={400}
             autoPlay
             muted
             aria-label="問題の動画"
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
           />
         ) : null}
-        <h2 className="text-4xl text-gray-900 text-center">{question.text}</h2>
+        <h2 className="text-4xl text-gray-900 text-center [text-wrap:balance]">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
