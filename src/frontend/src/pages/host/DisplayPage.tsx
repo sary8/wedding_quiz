@@ -131,7 +131,7 @@ export function DisplayPage() {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-4">
         <p className="text-xl text-red-400">{connectionError}</p>
-        <p className="text-sm text-gray-400">ページを再読み込みしてください</p>
+        <p className="text-sm text-gray-300">ページを再読み込みしてください</p>
       </div>
     );
   }

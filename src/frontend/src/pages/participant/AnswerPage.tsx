@@ -44,7 +44,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
           <CheckCircle2 size={64} strokeWidth={1.5} />
         </div>
         <p className="text-2xl font-bold">回答済み</p>
-        <p className="text-base text-gray-400 mt-2">結果をお待ちください...</p>
+        <p className="text-base text-gray-300 mt-2">結果をお待ちください...</p>
       </div>
     );
   }

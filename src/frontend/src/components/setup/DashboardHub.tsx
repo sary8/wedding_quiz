@@ -254,7 +254,11 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
             btnFocus,
           )}
         >
-          <div className="text-2xl mb-2">📋</div>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent mb-2" aria-hidden="true">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+            <path d="M9 12h6" /><path d="M9 16h6" />
+          </svg>
           <div className="font-semibold text-gray-800">ゲーム履歴</div>
           <div className="text-sm text-gray-500 mt-1">{finished.length}ゲーム</div>
         </button>
@@ -267,7 +271,11 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
             btnFocus,
           )}
         >
-          <div className="text-2xl mb-2">👥</div>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent mb-2" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
           <div className="font-semibold text-gray-800">参加者一覧</div>
           <div className="text-sm text-gray-500 mt-1">{totalParticipants}人</div>
         </button>
@@ -280,7 +288,11 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
             btnFocus,
           )}
         >
-          <div className="text-2xl mb-2">❓</div>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent mb-2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <path d="M12 17h.01" />
+          </svg>
           <div className="font-semibold text-gray-800">問題ライブラリ</div>
           <div className="text-sm text-gray-500 mt-1">{finishedQuestions > 0 ? `${finishedQuestions}問` : "テンプレート・過去問"}</div>
         </button>

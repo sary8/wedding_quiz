@@ -80,7 +80,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* 回答速度 */}
-                <span className="w-[70px] text-xs text-gray-400 text-right">
+                <span className="w-[70px] text-xs text-gray-300 text-right">
                   {entry.lastResponseTimeMs != null
                     ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
                     : "---"}
