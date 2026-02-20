@@ -77,13 +77,13 @@ describe("ProfilePage", () => {
     expect(handleJoin).toHaveBeenCalledWith("花子", "data:image/png;base64,selfie");
   });
 
-  it("isJoining=trueで参加ボタンが無効になり「参加中...」と表示される", async () => {
+  it("isJoining=trueで参加ボタンが無効になり「参加中…」と表示される", async () => {
     mockCapturedImage = "data:image/png;base64,test";
     const user = userEvent.setup();
     render(<ProfilePage onJoin={vi.fn()} isJoining={true} />);
 
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
-    const button = screen.getByRole("button", { name: "参加中..." });
+    const button = screen.getByRole("button", { name: "参加中…" });
 
     expect(button).toBeDisabled();
   });
@@ -95,7 +95,7 @@ describe("ProfilePage", () => {
     render(<ProfilePage onJoin={handleJoin} isJoining={true} />);
 
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
-    await user.click(screen.getByRole("button", { name: "参加中..." }));
+    await user.click(screen.getByRole("button", { name: "参加中…" }));
 
     expect(handleJoin).not.toHaveBeenCalled();
   });

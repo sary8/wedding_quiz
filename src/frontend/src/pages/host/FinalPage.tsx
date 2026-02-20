@@ -169,7 +169,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
           <button
             type="button"
             onClick={togglePause}
-            className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200"
+            className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer"
           >
             {isPaused ? "再開" : "一時停止"}
           </button>
@@ -178,7 +178,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
             <button
               type="button"
               onClick={onReplay}
-              className="absolute bottom-8 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-all duration-200"
+              className="absolute bottom-8 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200 cursor-pointer"
             >
               もう一度プレイ
             </button>
@@ -337,7 +337,7 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
           initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: Math.min(rankings.length * 0.05 + 0.5, 3) }}
-          className="mt-10 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-all duration-200 z-10"
+          className="mt-10 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200 z-10 cursor-pointer"
         >
           もう一度プレイ
         </motion.button>

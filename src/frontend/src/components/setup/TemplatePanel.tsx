@@ -121,7 +121,7 @@ export function TemplatePanel({ onImport, onClose }: Props) {
                   <div className="text-xs text-gray-500 mt-0.5">
                     正解: {CHOICE_LABELS[q.correct_choice - 1]} ・ {q.time_limit_seconds}秒 ・ {q.points}点
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-500 mt-0.5">
                     {[q.choice1, q.choice2, q.choice3, q.choice4].map((c, ci) => (
                       <span key={ci} className={ci + 1 === q.correct_choice ? "font-semibold text-gray-600" : ""}>
                         {CHOICE_LABELS[ci]}.{c}{ci < 3 ? " / " : ""}

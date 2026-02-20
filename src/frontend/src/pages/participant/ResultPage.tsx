@@ -48,7 +48,7 @@ export function ResultPage({ result, question }: Props) {
       </div>
 
       <p className="font-script text-5xl text-primary mb-6" aria-live="polite">
-        {isCorrect ? "正解！" : "不正解..."}
+        {isCorrect ? "正解！" : "不正解…"}
       </p>
 
       {/* スコアカード */}
@@ -57,7 +57,7 @@ export function ResultPage({ result, question }: Props) {
 
         <div className="flex items-center gap-3 my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
-          <span className="text-accent/60 text-xs">◆</span>
+          <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
         </div>
 

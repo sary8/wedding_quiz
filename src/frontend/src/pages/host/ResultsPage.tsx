@@ -21,20 +21,20 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
   if (!result) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-dark text-white gap-6">
-        <p className="text-xl text-gray-400">結果データを取得中...</p>
+        <p className="text-xl text-gray-300">結果データを取得中…</p>
         {!isDisplay && (
           <div className="flex gap-4">
             <button
               type="button"
               onClick={onShowRanking}
-              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px]"
+              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               ランキング表示
             </button>
             <button
               type="button"
               onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px]"
+              className="px-8 py-4 rounded-xl bg-white/20 text-white text-lg font-bold min-h-[44px] hover:bg-white/30 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               次の問題
             </button>

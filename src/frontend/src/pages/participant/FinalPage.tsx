@@ -29,7 +29,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
       <h2 className="font-script text-4xl text-primary mb-1">最終結果</h2>
       <div className="flex items-center gap-3 mb-6 w-40">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
-        <span className="text-accent/60 text-xs">◆</span>
+        <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
       </div>
 
@@ -50,7 +50,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
-          <span className="text-accent/60 text-xs">◆</span>
+          <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
         </div>
 

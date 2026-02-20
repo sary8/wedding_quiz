@@ -20,7 +20,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
         <h1 className="font-script text-6xl text-accent mb-2">Wedding Quiz</h1>
         <div className="flex items-center gap-3 justify-center mb-2">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40 max-w-[80px]" />
-          <span className="text-accent/60 text-xs">◆</span>
+          <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40 max-w-[80px]" />
         </div>
         <p className="font-serif-wedding text-white/50 tracking-widest text-sm uppercase">Celebration Game</p>
@@ -36,7 +36,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
           <p className="text-7xl font-bold tracking-widest text-accent" aria-label={`ルームコード: ${roomCode.split('').join(' ')}`}>
             {roomCode}
           </p>
-          <p className="text-white/40 text-sm mt-2">スマホで参加しよう！</p>
+          <p className="text-white/60 text-sm mt-2">スマホで参加しよう！</p>
         </div>
       </div>
 

@@ -142,13 +142,13 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
           onClick={handleSubmit}
           disabled={!nickname.trim() || !capturedImage || isJoining}
           className={[
-            "w-full py-4 rounded-xl text-xl font-bold transition-all duration-200 min-h-[44px]",
+            "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px]",
             nickname.trim() && capturedImage && !isJoining
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}
         >
-          {isJoining ? "参加中..." : "参加する"}
+          {isJoining ? "参加中…" : "参加する"}
         </button>
       </div>
     </div>

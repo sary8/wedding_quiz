@@ -4,7 +4,7 @@ type Props = {
   message?: string;
 };
 
-export function WaitingPage({ message = "まもなく開始します..." }: Props) {
+export function WaitingPage({ message = "まもなく開始します…" }: Props) {
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
       {/* ゴールドハート */}
@@ -21,7 +21,7 @@ export function WaitingPage({ message = "まもなく開始します..." }: Prop
       {/* セパレーター */}
       <div className="flex items-center gap-3 mb-4 w-40">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
-        <span className="text-accent/60 text-xs">◆</span>
+        <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
       </div>
 
