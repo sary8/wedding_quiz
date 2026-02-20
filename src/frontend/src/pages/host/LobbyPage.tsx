@@ -20,7 +20,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
         <h1 className="font-script text-6xl text-amber-800 mb-2">Wedding Quiz</h1>
         <div className="flex items-center gap-3 justify-center mb-2">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-800/40 max-w-[80px]" />
-          <span className="text-amber-800/60 text-xs" aria-hidden="true">&#9830;</span>
+          <span className="inline-block w-1.5 h-1.5 rotate-45 bg-amber-800/60" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-800/40 max-w-[80px]" />
         </div>
         <p className="font-serif-wedding text-gray-500 tracking-widest text-sm uppercase">Celebration Game</p>
@@ -54,7 +54,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
             ))}
           </ul>
         ) : (
-          <p className="text-gray-400 text-base">参加者を待っています…</p>
+          <p className="text-gray-500 text-base">参加者を待っています…</p>
         )}
       </section>
 
@@ -69,7 +69,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
           >
             ゲーム開始
           </Button>
-          <p className="mt-3 text-gray-400 text-xs">
+          <p className="mt-3 text-gray-500 text-xs">
             プロジェクター: {window.location.origin}/host/{roomCode}/screen
           </p>
         </>

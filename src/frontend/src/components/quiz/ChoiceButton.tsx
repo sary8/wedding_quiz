@@ -26,7 +26,7 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
   return (
     <button
       className={cn(
-        "rounded-xl text-gray-900 font-bold flex items-center justify-center p-3",
+        "rounded-xl text-gray-900 font-bold flex items-center justify-center p-3 min-h-[44px]",
         "transition-[opacity,transform,box-shadow] duration-200",
         "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/30",
         "disabled:cursor-not-allowed",

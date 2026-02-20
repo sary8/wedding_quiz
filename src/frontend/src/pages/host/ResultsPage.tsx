@@ -80,7 +80,9 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                   {choiceText}
                   {isCorrect && (
                     <>
-                      <span aria-hidden="true"> ✓</span>
+                      <svg className="inline w-4 h-4 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M2 6l3 3 5-5" />
+                      </svg>
                       <span> 正解</span>
                     </>
                   )}

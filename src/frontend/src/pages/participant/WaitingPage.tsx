@@ -21,7 +21,7 @@ export function WaitingPage({ message = "まもなく開始します…" }: Prop
       {/* セパレーター */}
       <div className="flex items-center gap-3 mb-4 w-40">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
-        <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
+        <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent/60" aria-hidden="true" />
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
       </div>
 

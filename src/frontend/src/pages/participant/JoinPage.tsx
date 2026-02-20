@@ -34,7 +34,7 @@ export function JoinPage() {
         <h1 className="font-script text-6xl text-primary mb-1">Wedding Quiz</h1>
         <div className="flex items-center gap-3 justify-center my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
-          <span className="text-accent text-base" aria-hidden="true">◆</span>
+          <span className="inline-block w-2 h-2 rotate-45 bg-accent" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
         </div>
         <p className="font-serif-wedding text-rose-text/70 tracking-widest text-sm uppercase">Celebration Game</p>

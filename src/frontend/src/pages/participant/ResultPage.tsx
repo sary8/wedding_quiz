@@ -33,7 +33,7 @@ export function ResultPage({ result, question }: Props) {
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush p-6">
       {/* 正解 / 不正解 アイコン */}
-      <div className={["mb-4", isCorrect ? "text-primary" : "text-gray-400"].join(" ")} aria-hidden="true">
+      <div className={["mb-4", isCorrect ? "text-primary" : "text-gray-500"].join(" ")} aria-hidden="true">
         {isCorrect ? (
           <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
@@ -57,7 +57,7 @@ export function ResultPage({ result, question }: Props) {
 
         <div className="flex items-center gap-3 my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
-          <span className="text-accent/60 text-xs" aria-hidden="true">◆</span>
+          <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent/60" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
         </div>
 

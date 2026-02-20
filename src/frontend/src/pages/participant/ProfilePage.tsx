@@ -40,7 +40,7 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
         <h1 className="font-script text-4xl text-primary mb-1">プロフィール設定</h1>
         <div className="flex items-center gap-3 justify-center">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
-          <span className="text-accent text-xs">◆</span>
+          <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
         </div>
       </header>

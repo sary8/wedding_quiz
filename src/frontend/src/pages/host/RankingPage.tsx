@@ -39,8 +39,6 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
             const rankChange = entry.previousRank - entry.rank;
-            const changeText = rankChange > 0 ? `↑${rankChange}` : rankChange < 0 ? `↓${Math.abs(rankChange)}` : "";
-            const changeColorClass = rankChange > 0 ? "text-green-600" : rankChange < 0 ? "text-red-500" : "text-transparent";
 
             return (
               <motion.div
@@ -89,8 +87,22 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </div>
 
                 {/* 順位変動 */}
-                <span className={`w-10 text-sm font-bold text-center ${changeColorClass}`}>
-                  {changeText}
+                <span className="w-10 text-sm font-bold flex items-center justify-center gap-0.5">
+                  {rankChange > 0 ? (
+                    <span className="flex items-center gap-0.5 text-green-600">
+                      <svg className="w-3 h-3 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                        <path d="M6 2L11 8H1z" />
+                      </svg>
+                      {rankChange}
+                    </span>
+                  ) : rankChange < 0 ? (
+                    <span className="flex items-center gap-0.5 text-red-500">
+                      <svg className="w-3 h-3 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                        <path d="M6 10L1 4h10z" />
+                      </svg>
+                      {Math.abs(rankChange)}
+                    </span>
+                  ) : null}
                 </span>
 
                 {/* 回答速度 */}
