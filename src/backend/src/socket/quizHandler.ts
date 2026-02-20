@@ -61,6 +61,14 @@ async function distributeQuestionResult(
       }
     }
   }
+
+  // ビューワー（Display画面）にも全体結果を送信
+  for (const s of sockets) {
+    const meta = socketMeta.get(s.id);
+    if (meta && meta.participantId === -2 && meta.roomCode === roomCode) {
+      s.emit("questionResult", hostResult);
+    }
+  }
 }
 
 export function setupQuizSocket(io: QuizIO) {
