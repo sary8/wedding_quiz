@@ -1,7 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents, QuizStatus } from "../types/index.js";
 import * as quizService from "../services/quizService.js";
-import { startTimer, stopTimer, getElapsedMs } from "../services/timerService.js";
+import { startTimer, stopTimer, getElapsedMs, getRemainingSeconds } from "../services/timerService.js";
 import { logger } from "../utils/logger.js";
 
 type QuizIO = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -281,10 +281,27 @@ export function setupQuizSocket(io: QuizIO) {
         const quiz = await quizService.getQuizByRoom(roomCode);
         if (quiz && quiz.status !== "draft") {
           const participants = await quizService.getLobbyParticipants(roomCode);
+
+          // in_progress時: 現在の問題データ・回答数・タイマー残り時間を復元
+          let currentQuestionData = null;
+          let answerCount = 0;
+          let timerRemaining = 0;
+          if (quiz.status === "in_progress") {
+            const activeQuestionId = activeQuestions.get(roomCode);
+            if (activeQuestionId) {
+              currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+              answerCount = await quizService.getAnswerCount(activeQuestionId);
+              timerRemaining = getRemainingSeconds(`question_${roomCode}`) ?? 0;
+            }
+          }
+
           socket.emit("hostReconnected", {
             quizStatus: quiz.status as QuizStatus,
             currentQuestionIndex: quiz.current_question_index,
             participants,
+            currentQuestionData,
+            answerCount,
+            timerRemaining,
           });
         }
       } catch (e) {

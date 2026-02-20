@@ -62,7 +62,7 @@ export function HostPage() {
         }
       }),
       on("timeUpdate", (data) => {
-        setTimeRemaining(data.remaining);
+        setTimeRemaining(Math.max(0, data.remaining));
         if (data.remaining <= 5 && data.remaining > 0) {
           sounds.playTick();
         }
@@ -107,7 +107,22 @@ export function HostPage() {
       on("hostReconnected", (data) => {
         setParticipants(data.participants);
         if (data.quizStatus === "in_progress") {
-          setPhase("recovering");
+          if (data.currentQuestionData && data.timerRemaining && data.timerRemaining > 0) {
+            // 出題中: question フェーズを復元
+            setCurrentQuestion(data.currentQuestionData);
+            setTimeRemaining(Math.max(0, data.timerRemaining));
+            setAnswerCount(data.answerCount ?? 0);
+            setQuestionResult(null);
+            setPhase("question");
+          } else if (data.currentQuestionData && (data.timerRemaining === 0 || !data.timerRemaining)) {
+            // タイムアップ済み: results フェーズへ
+            setCurrentQuestion(data.currentQuestionData);
+            setTimeRemaining(0);
+            setAnswerCount(data.answerCount ?? 0);
+            setPhase("results");
+          } else {
+            setPhase("recovering");
+          }
         }
       }),
       on("gameClosed", (data) => {

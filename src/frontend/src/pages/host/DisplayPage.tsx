@@ -66,7 +66,7 @@ export function DisplayPage() {
         }
       }),
       on("timeUpdate", (data) => {
-        setTimeRemaining(data.remaining);
+        setTimeRemaining(Math.max(0, data.remaining));
         if (data.remaining <= 5 && data.remaining > 0) {
           sounds.playTick();
         }

@@ -34,6 +34,9 @@ export type ServerToClientEvents = {
     quizStatus: QuizStatus;
     currentQuestionIndex: number;
     participants: ParticipantInfo[];
+    currentQuestionData?: QuestionData | null;
+    answerCount?: number;
+    timerRemaining?: number;
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
 };

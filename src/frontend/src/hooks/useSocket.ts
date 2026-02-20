@@ -27,6 +27,9 @@ type ServerToClientEvents = {
     quizStatus: QuizStatus;
     currentQuestionIndex: number;
     participants: ParticipantInfo[];
+    currentQuestionData?: QuestionData | null;
+    answerCount?: number;
+    timerRemaining?: number;
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
 };
@@ -93,12 +96,13 @@ export function useSocket() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
-    const socket: TypedSocket = io({
+    const socket: TypedSocket = io(import.meta.env.VITE_API_URL || undefined, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      timeout: 10000,
     });
 
     socket.on("connect", () => {

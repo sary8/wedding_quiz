@@ -50,7 +50,7 @@ export function PlayPage() {
           resultTimeoutRef.current = null;
         }
       }),
-      on("timeUpdate", (data) => setTimeRemaining(data.remaining)),
+      on("timeUpdate", (data) => setTimeRemaining(Math.max(0, data.remaining))),
       on("questionClosed", () => {
         if (!hasAnsweredRef.current) {
           // 未回答の場合は即座に結果画面へ遷移

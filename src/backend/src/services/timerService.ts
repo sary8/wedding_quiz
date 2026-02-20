@@ -54,3 +54,10 @@ export function getElapsedMs(key: string): number | null {
   if (!timer) return null;
   return Number(process.hrtime.bigint() - timer.startTime) / 1_000_000;
 }
+
+export function getRemainingSeconds(key: string): number | null {
+  const timer = activeTimers.get(key);
+  if (!timer) return null;
+  const elapsed = Number(process.hrtime.bigint() - timer.startTime) / 1_000_000;
+  return Math.max(0, Math.ceil(timer.durationMs / 1000 - elapsed / 1000));
+}
