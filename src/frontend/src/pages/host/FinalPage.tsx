@@ -307,6 +307,31 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
   );
 }
 
+type FloatConfig = {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration: number;
+};
+
+function generateFloatConfigs(rankings: FinalRankingEntry[]): FloatConfig[] {
+  return rankings.map((entry) => {
+    const r1 = seededRandom(entry.participantId);
+    const r2 = seededRandom(entry.participantId + 1000);
+    const r3 = seededRandom(entry.participantId + 2000);
+    const r4 = seededRandom(entry.participantId + 3000);
+    const r5 = seededRandom(entry.participantId + 4000);
+    return {
+      startX: r1 * 80 + 5,
+      startY: r2 * 70 + 10,
+      endX: r3 * 80 + 5,
+      endY: r4 * 70 + 10,
+      duration: 10 + r5 * 15,
+    };
+  });
+}
+
 type GroupPhotoProps = {
   rankings: FinalRankingEntry[];
   onReplay?: () => void;
@@ -316,67 +341,69 @@ type GroupPhotoProps = {
 };
 
 function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersReducedMotion }: GroupPhotoProps) {
+  const floatConfigs = useMemo(() => generateFloatConfigs(rankings), [rankings]);
+
   useEffect(() => {
     if (prefersReducedMotion) return;
     fireConfetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
   }, [prefersReducedMotion]);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
       {/* タイトル */}
       <motion.h2
         initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="font-script text-4xl md:text-5xl text-amber-800 mb-8 text-center z-10 [text-wrap:balance]"
+        className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 [text-wrap:balance]"
       >
         みんなで記念撮影！
       </motion.h2>
 
-      {/* グリッド */}
-      <div className="flex flex-wrap justify-center gap-3 max-w-5xl z-10">
-        {rankings.map((entry, i) => {
-          const rotate = seededRandom(entry.participantId) * 12 - 6;
-          return (
-            <motion.div
-              key={entry.participantId}
-              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0, rotate: rotate * 2 }}
-              animate={{ opacity: 1, scale: 1, rotate }}
-              transition={prefersReducedMotion
-                ? { duration: 0 }
-                : { delay: i * 0.05, duration: 0.4, type: "spring", stiffness: 200 }
-              }
-              className="flex flex-col items-center"
-            >
-              {entry.selfieUrl ? (
-                <img
-                  src={entry.selfieUrl}
-                  alt={`${entry.nickname}のアバター`}
-                  width={80}
-                  height={80}
-                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] ${PASTEL_BORDER_CLASSES[i % PASTEL_BORDER_CLASSES.length]} shadow-lg`}
-                  loading="lazy"
-                />
-              ) : (
-                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold ${PASTEL_BG_CLASSES[i % PASTEL_BG_CLASSES.length]} text-gray-900 border-[3px] ${PASTEL_BORDER_CLASSES[i % PASTEL_BORDER_CLASSES.length]} shadow-lg`}>
-                  {entry.nickname?.[0] || "?"}
-                </div>
-              )}
-              <span className="text-gray-600 text-xs mt-1 max-w-[80px] truncate text-center">
-                {entry.nickname}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
+      {/* 浮遊アバター or 静的グリッド */}
+      {prefersReducedMotion ? (
+        <div className="flex flex-wrap justify-center gap-3 max-w-5xl z-0 px-4 mt-8">
+          {rankings.map((entry, i) => (
+            <GroupAvatarBubble key={entry.participantId} entry={entry} index={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0">
+          {rankings.map((entry, i) => {
+            const config = floatConfigs[i];
+            return (
+              <motion.div
+                key={entry.participantId}
+                className="absolute"
+                initial={{
+                  left: `${config.startX}%`,
+                  top: `${config.startY}%`,
+                }}
+                animate={{
+                  left: [`${config.startX}%`, `${config.endX}%`],
+                  top: [`${config.startY}%`, `${config.endY}%`],
+                }}
+                transition={{
+                  duration: config.duration,
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  ease: "easeInOut",
+                }}
+              >
+                <GroupAvatarBubble entry={entry} index={i} />
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ボタン群 */}
       {!isDisplay && (onReplay || onCloseGame) && (
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: Math.min(rankings.length * 0.05 + 0.5, 3) }}
-          className="mt-10 flex gap-4 z-10"
+          transition={{ delay: 1 }}
+          className="absolute bottom-8 flex gap-4 z-10"
         >
           {onReplay && (
             <button
@@ -398,6 +425,38 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
           )}
         </motion.div>
       )}
+    </div>
+  );
+}
+
+type GroupAvatarProps = {
+  entry: FinalRankingEntry;
+  index: number;
+};
+
+function GroupAvatarBubble({ entry, index }: GroupAvatarProps) {
+  const borderClass = PASTEL_BORDER_CLASSES[index % PASTEL_BORDER_CLASSES.length];
+  const bgClass = PASTEL_BG_CLASSES[index % PASTEL_BG_CLASSES.length];
+
+  return (
+    <div className="flex flex-col items-center">
+      {entry.selfieUrl ? (
+        <img
+          src={entry.selfieUrl}
+          alt={`${entry.nickname}のアバター`}
+          width={80}
+          height={80}
+          className={`w-14 h-14 md:w-20 md:h-20 rounded-full object-cover border-[3px] ${borderClass} shadow-lg`}
+          loading="lazy"
+        />
+      ) : (
+        <div className={`w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center text-xl md:text-2xl font-bold ${bgClass} text-gray-900 border-[3px] ${borderClass} shadow-lg`}>
+          {entry.nickname?.[0] || "?"}
+        </div>
+      )}
+      <span className="text-gray-600 text-xs mt-1 max-w-[80px] truncate text-center">
+        {entry.nickname}
+      </span>
     </div>
   );
 }
