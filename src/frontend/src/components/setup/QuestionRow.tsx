@@ -1,4 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Question } from "../../types";
 import { cn } from "../../utils/cn";
 import { QuestionInlineForm } from "./QuestionInlineForm";
@@ -27,9 +29,24 @@ export function QuestionRow({
   onSaved,
 }: Props) {
   const prefersReducedMotion = useReducedMotion();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: question.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.8 : undefined,
+  };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div ref={setNodeRef} style={style} className={cn("border border-gray-200 rounded-lg overflow-hidden bg-white", isDragging && "shadow-lg")}>
       {/* コンパクト行 */}
       <div
         className={cn(
@@ -37,6 +54,20 @@ export function QuestionRow({
           isExpanded && "bg-gray-50",
         )}
       >
+        {/* ドラッグハンドル */}
+        <button
+          type="button"
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors duration-150 p-1 shrink-0 touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded"
+          aria-label={`問題${index + 1}をドラッグして並べ替え`}
+          {...attributes}
+          {...listeners}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
+            <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+            <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+          </svg>
+        </button>
         {/* トグル部分 */}
         <button
           type="button"

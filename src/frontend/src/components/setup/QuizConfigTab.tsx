@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Quiz } from "../../types";
 import { updateQuiz, deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
@@ -6,7 +7,7 @@ import { cn } from "../../utils/cn";
 type Props = {
   quiz: Quiz;
   onTitleSaved: () => void;
-  onStartLobby: () => void;
+  onStartLobby: (mode?: "rehearsal") => void;
   onChangeQuiz: () => void;
   onDeleted: () => void;
 };
@@ -24,6 +25,7 @@ function statusLabel(status: string): string {
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
 
 export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, onDeleted }: Props) {
+  const navigate = useNavigate();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [isSavingTitle, setIsSavingTitle] = useState(false);
@@ -130,11 +132,37 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
         </div>
       </div>
 
+      {/* プレビュー / リハーサル */}
+      {canStartLobby && (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(`/host/${quiz.id}/preview`)}
+            className={cn(
+              "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-amber-400 text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors duration-200 min-h-[44px] cursor-pointer",
+              btnFocus,
+            )}
+          >
+            プレビュー
+          </button>
+          <button
+            type="button"
+            onClick={() => onStartLobby("rehearsal")}
+            className={cn(
+              "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-yellow-400 text-yellow-800 bg-yellow-50 hover:bg-yellow-100 transition-colors duration-200 min-h-[44px] cursor-pointer",
+              btnFocus,
+            )}
+          >
+            リハーサル
+          </button>
+        </div>
+      )}
+
       {/* ロビーを開く */}
       <div>
         <button
           type="button"
-          onClick={onStartLobby}
+          onClick={() => onStartLobby()}
           disabled={!canStartLobby}
           className={[
             "w-full py-4 rounded-xl text-lg font-bold text-white transition-opacity duration-200 min-h-[44px]",

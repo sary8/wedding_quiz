@@ -26,6 +26,7 @@ export function HostPage() {
   const [searchParams] = useSearchParams();
   const hostSecret = searchParams.get("key") || "";
   const quizId = Number(searchParams.get("quizId")) || 0;
+  const isRehearsal = searchParams.get("rehearsal") === "true";
   const navigate = useNavigate();
   const { emit, on, isConnected, connectionError } = useSocket();
   const sounds = useGameSounds();
@@ -257,6 +258,15 @@ export function HostPage() {
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
 
+  // リハーサルモード: 最終問題後に自動リプレイ
+  useEffect(() => {
+    if (!isRehearsal || phase !== "final") return;
+    const timer = setTimeout(() => {
+      handleReplay();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isRehearsal, phase, handleReplay]);
+
   const handleBackToSetup = useCallback(() => {
     navigate(`/host/setup?view=edit&quizId=${quizId}`);
   }, [navigate, quizId]);
@@ -388,6 +398,11 @@ export function HostPage() {
 
   return (
     <Suspense fallback={null}>
+      {isRehearsal && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-300 text-yellow-900 text-center py-1.5 text-sm font-bold z-[999]">
+          リハーサルモード
+        </div>
+      )}
       {content}
       <BgmControls
         volume={bgm.volume}

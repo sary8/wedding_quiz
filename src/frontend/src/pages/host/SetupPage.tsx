@@ -147,9 +147,10 @@ export function SetupPage() {
     setView("dashboard");
   }
 
-  const handleStartLobby = useCallback(() => {
+  const handleStartLobby = useCallback((mode?: "rehearsal") => {
     if (!selectedQuiz) return;
-    navigate(`/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}&key=${selectedQuiz.host_secret}`);
+    const base = `/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}&key=${selectedQuiz.host_secret}`;
+    navigate(mode === "rehearsal" ? `${base}&rehearsal=true` : base);
   }, [selectedQuiz, navigate]);
 
   const handleQuestionUpdate = useCallback(async () => {

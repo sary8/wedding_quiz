@@ -7,6 +7,7 @@ const HostPage = lazy(() => import("./pages/host/HostPage").then((m) => ({ defau
 const DisplayPage = lazy(() => import("./pages/host/DisplayPage").then((m) => ({ default: m.DisplayPage })));
 const JoinPage = lazy(() => import("./pages/participant/JoinPage").then((m) => ({ default: m.JoinPage })));
 const PlayPage = lazy(() => import("./pages/participant/PlayPage").then((m) => ({ default: m.PlayPage })));
+const PreviewPage = lazy(() => import("./pages/host/PreviewPage").then((m) => ({ default: m.PreviewPage })));
 
 function LoadingFallback() {
   return (
@@ -22,6 +23,7 @@ export function App() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/host/setup" element={<SetupPage />} />
+          <Route path="/host/:quizId/preview" element={<PreviewPage />} />
           <Route path="/host/:roomCode/screen" element={<DisplayPage />} />
           <Route path="/host/:roomCode" element={<HostPage />} />
           <Route path="/play" element={<JoinPage />} />

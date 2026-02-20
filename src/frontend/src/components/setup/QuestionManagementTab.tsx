@@ -1,5 +1,8 @@
 import { useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Quiz } from "../../types";
 import { reorderQuestions, importBankToQuiz } from "../../services/api";
 import { QuestionRow } from "./QuestionRow";
@@ -18,6 +21,34 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
   const prefersReducedMotion = useReducedMotion();
 
   const questions = useMemo(() => quiz.questions ?? [], [quiz.questions]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = questions.findIndex((q) => q.id === active.id);
+      const newIndex = questions.findIndex((q) => q.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      setExpandedQuestionId(null);
+      const ids = questions.map((q) => q.id);
+      const [moved] = ids.splice(oldIndex, 1);
+      ids.splice(newIndex, 0, moved);
+      try {
+        await reorderQuestions(quiz.id, ids);
+        onUpdate();
+      } catch {
+        setError("問題の並べ替えに失敗しました");
+      }
+    },
+    [questions, quiz.id, onUpdate],
+  );
 
   function handleAddNew() {
     setExpandedQuestionId("new");
@@ -113,22 +144,26 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
 
       {/* 問題行リスト */}
       {questions.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          {questions.map((q, i) => (
-            <QuestionRow
-              key={q.id}
-              question={q}
-              index={i}
-              totalCount={questions.length}
-              isExpanded={expandedQuestionId === q.id}
-              onToggle={() => handleToggle(q.id)}
-              onCollapse={handleCollapse}
-              onReorder={handleReorder}
-              quizId={quiz.id}
-              onSaved={handleSaved}
-            />
-          ))}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={questions.map((q) => q.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-2">
+              {questions.map((q, i) => (
+                <QuestionRow
+                  key={q.id}
+                  question={q}
+                  index={i}
+                  totalCount={questions.length}
+                  isExpanded={expandedQuestionId === q.id}
+                  onToggle={() => handleToggle(q.id)}
+                  onCollapse={handleCollapse}
+                  onReorder={handleReorder}
+                  quizId={quiz.id}
+                  onSaved={handleSaved}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         !expandedQuestionId && (
           <p className="text-center py-8 text-gray-400 text-sm">
