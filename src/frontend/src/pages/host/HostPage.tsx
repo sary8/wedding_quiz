@@ -117,10 +117,7 @@ export function HostPage() {
       if (!res.success) setError(res.error || "ルームの開設に失敗しました");
     });
 
-    // 再接続時にロビー参加者を再取得
-    const unsub = on("lobbyUpdate", (data) => setParticipants(data.participants));
     emit("watchRoom", { roomCode }, () => {});
-    return unsub;
   }, [isConnected, roomCode, quizId, hostSecret, emit, on]);
 
   // ゲーム開始 → カウントダウンへ遷移
@@ -281,7 +278,7 @@ export function HostPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} onReplay={handleReplay} onSpotlight={(rank) => sounds.playFanfare(rank)} />
+          <FinalPage data={finalData} onReplay={handleReplay} onSpotlight={sounds.playFanfare} />
         </>
       );
     case "recovering":

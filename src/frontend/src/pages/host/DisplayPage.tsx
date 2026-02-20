@@ -212,7 +212,7 @@ export function DisplayPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} isDisplay={true} onSpotlight={(rank) => sounds.playFanfare(rank)} />
+          <FinalPage data={finalData} isDisplay={true} onSpotlight={sounds.playFanfare} />
         </>
       );
   }

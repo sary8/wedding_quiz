@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import confetti from "canvas-confetti";
 import type { FinalResultData, FinalRankingEntry } from "../../types";
+
+function fireConfetti(options: {
+  particleCount?: number;
+  spread?: number;
+  colors?: string[];
+  origin?: { x?: number; y?: number };
+}) {
+  void import("canvas-confetti").then((m) => m.default(options));
+}
 
 type Props = {
   data: FinalResultData | null;
@@ -113,13 +121,13 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
 
       if (!prefersReducedMotion) {
         if (entry.rank === 3) {
-          confetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
+          fireConfetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
         } else if (entry.rank === 2) {
-          confetti({ particleCount: 100, spread: 80, colors: ["#c0c0c0", "#d4d4d4"] });
+          fireConfetti({ particleCount: 100, spread: 80, colors: ["#c0c0c0", "#d4d4d4"] });
         } else if (entry.rank === 1) {
-          confetti({ particleCount: 200, spread: 120, colors: ["#ffd700", "#ffec8b", "#ff6347"] });
-          setTimeout(() => confetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
-          setTimeout(() => confetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
+          fireConfetti({ particleCount: 200, spread: 120, colors: ["#ffd700", "#ffec8b", "#ff6347"] });
+          setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
+          setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
         }
       }
 
@@ -277,7 +285,7 @@ type GroupPhotoProps = {
 function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }: GroupPhotoProps) {
   useEffect(() => {
     if (prefersReducedMotion) return;
-    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+    fireConfetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
   }, [prefersReducedMotion]);
 
   return (
