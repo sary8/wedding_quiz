@@ -8,11 +8,12 @@ type Props = {
   timeRemaining: number;
   hasAnswered: boolean;
   onAnswer: (choiceIndex: number) => void;
+  answerCount?: number;
 };
 
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
 
-export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer }: Props) {
+export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer, answerCount }: Props) {
   const timeRemaining = Math.max(0, rawTimeRemaining);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
@@ -50,11 +51,16 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   return (
     <div className="h-[100dvh] flex flex-col bg-blush">
-      {/* ヘッダー: 問題番号 + タイマー */}
+      {/* ヘッダー: 問題番号 + 回答数 + タイマー */}
       <header className="flex justify-between items-center px-4 py-3 text-gray-900">
-        <span className="text-sm">
-          Q{question.questionIndex + 1} / {question.totalQuestions}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm">
+            Q{question.questionIndex + 1} / {question.totalQuestions}
+          </span>
+          {answerCount !== undefined && answerCount > 0 && (
+            <span className="text-xs text-gray-400">回答済み: {answerCount}人</span>
+          )}
+        </div>
         <div
           className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-red-600" : "text-gray-900"}`}
           aria-live="polite"

@@ -1,0 +1,87 @@
+import { Trophy } from "lucide-react";
+import type { RankingData } from "../../types";
+
+type Props = {
+  data: RankingData | null;
+  participantId: number | null;
+};
+
+export function ParticipantRankingPage({ data, participantId }: Props) {
+  if (!data) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900">
+        <p className="text-lg text-gray-500">ランキングを読み込み中…</p>
+      </div>
+    );
+  }
+
+  const myEntry = participantId
+    ? data.rankings.find((r) => r.participantId === participantId)
+    : null;
+  const top5 = data.rankings.slice(0, 5);
+
+  return (
+    <div className="h-[100dvh] flex flex-col bg-blush">
+      {/* 自分の順位 */}
+      <div className="flex-shrink-0 flex flex-col items-center justify-center pt-10 pb-6 px-4">
+        <div className="text-accent mb-3" aria-hidden="true">
+          <Trophy size={48} strokeWidth={1.5} />
+        </div>
+        {myEntry ? (
+          <>
+            <p className="text-5xl font-extrabold text-primary">
+              第{myEntry.rank}位
+            </p>
+            <p className="text-lg text-gray-600 mt-2">
+              {myEntry.totalScore}点
+            </p>
+          </>
+        ) : (
+          <p className="text-xl text-gray-500">あなたの順位を確認中…</p>
+        )}
+      </div>
+
+      {/* セパレーター */}
+      <div className="flex items-center gap-3 mx-auto w-40 mb-4">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
+        <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent/60" aria-hidden="true" />
+        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
+      </div>
+
+      {/* 上位5名ミニランキング */}
+      <div className="flex-1 overflow-y-auto px-4 pb-6">
+        <h2 className="text-sm font-semibold text-gray-500 mb-3 text-center">上位ランキング</h2>
+        <ul className="space-y-2 max-w-sm mx-auto">
+          {top5.map((entry) => {
+            const isMe = entry.participantId === participantId;
+            return (
+              <li
+                key={entry.participantId}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
+                  isMe ? "bg-pink-100 ring-2 ring-pink-300" : "bg-white/80"
+                }`}
+              >
+                <span className="text-lg font-bold text-accent w-8 text-center shrink-0">
+                  {entry.rank}
+                </span>
+                {entry.selfieUrl ? (
+                  <img
+                    src={entry.selfieUrl}
+                    alt={entry.nickname}
+                    className="w-8 h-8 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+                )}
+                <span className={`flex-1 text-sm font-medium truncate ${isMe ? "text-pink-900 font-bold" : "text-gray-800"}`}>
+                  {entry.nickname}{isMe ? "（あなた）" : ""}
+                </span>
+                <span className="text-sm text-gray-500 shrink-0">{entry.totalScore}点</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}

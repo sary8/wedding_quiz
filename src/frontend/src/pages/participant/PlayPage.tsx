@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
-import type { QuestionData, QuestionResultData, FinalResultData, ParticipantInfo } from "../../types";
+import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo } from "../../types";
 import { uploadSelfie } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
 import { ResultPage } from "./ResultPage";
+import { ParticipantRankingPage } from "./ParticipantRankingPage";
 import { ParticipantFinalPage } from "./FinalPage";
 import { ThankYouScreen } from "../host/ThankYouScreen";
 
@@ -23,6 +24,8 @@ export function PlayPage() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [questionResult, setQuestionResult] = useState<QuestionResultData | null>(null);
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
+  const [answerCount, setAnswerCount] = useState(0);
+  const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
@@ -39,11 +42,13 @@ export function PlayPage() {
   useEffect(() => {
     const unsubs = [
       on("gameStarted", () => setPhase("waiting")),
+      on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionStarted", (data) => {
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setHasAnswered(false);
         setQuestionResult(null);
+        setAnswerCount(0);
         setPhase("answer");
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
@@ -70,7 +75,10 @@ export function PlayPage() {
         setQuestionResult(data);
         setPhase("result");
       }),
-      on("rankingUpdate", () => setPhase("ranking")),
+      on("rankingUpdate", (data) => {
+        setRankingData(data);
+        setPhase("ranking");
+      }),
       on("gameEnded", (data) => {
         setFinalData(data);
         setPhase("final");
@@ -81,7 +89,9 @@ export function PlayPage() {
         setTimeRemaining(0);
         setHasAnswered(false);
         setQuestionResult(null);
+        setRankingData(null);
         setFinalData(null);
+        setAnswerCount(0);
       }),
       on("reconnected", (data) => {
         setParticipantId(data.participantId);
@@ -181,7 +191,7 @@ export function PlayPage() {
         </>
       );
     case "waiting":
-      return <WaitingPage />;
+      return <WaitingPage roomCode={roomCode} message="次の問題を待っています…" />;
     case "answer":
       return (
         <>
@@ -200,13 +210,14 @@ export function PlayPage() {
             timeRemaining={timeRemaining}
             hasAnswered={hasAnswered}
             onAnswer={handleAnswer}
+            answerCount={answerCount}
           />
         </>
       );
     case "result":
       return <ResultPage result={questionResult} question={currentQuestion} />;
     case "ranking":
-      return <WaitingPage message="ランキング発表中…" />;
+      return <ParticipantRankingPage data={rankingData} participantId={participantId} />;
     case "final":
       return <ParticipantFinalPage data={finalData} participantId={participantId} />;
     case "closed":

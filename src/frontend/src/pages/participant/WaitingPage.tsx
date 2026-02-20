@@ -2,9 +2,10 @@ import { Heart } from "lucide-react";
 
 type Props = {
   message?: string;
+  roomCode?: string;
 };
 
-export function WaitingPage({ message = "まもなく開始します…" }: Props) {
+export function WaitingPage({ message = "まもなく開始します…", roomCode }: Props) {
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
       {/* ゴールドハート */}
@@ -26,6 +27,12 @@ export function WaitingPage({ message = "まもなく開始します…" }: Prop
       </div>
 
       <p className="text-rose-text/80 text-base">{message}</p>
+
+      {roomCode && (
+        <p className="mt-4 text-xs text-gray-400">
+          ルームコード: <span className="font-mono font-bold text-gray-500">{roomCode}</span>
+        </p>
+      )}
     </div>
   );
 }
