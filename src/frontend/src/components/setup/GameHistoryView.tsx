@@ -178,7 +178,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 mb-2">参加者ランキング</h3>
                         <div className="flex flex-col gap-1">
-                          {detail.participants
+                          {[...detail.participants]
                             .sort((a, b) => a.current_rank - b.current_rank || b.total_score - a.total_score)
                             .slice(0, 10)
                             .map((p, i) => (

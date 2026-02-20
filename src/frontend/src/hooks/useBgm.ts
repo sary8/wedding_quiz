@@ -39,7 +39,7 @@ export function useBgm() {
   useEffect(() => {
     const audio = new Audio();
     audio.loop = true;
-    audio.volume = loadMuted() ? 0 : loadVolume();
+    audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
 
     return () => {
