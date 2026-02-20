@@ -72,8 +72,8 @@
 /* メダル背景グラデーション（FinalPage用） */
 @layer components {
   .bg-medal-gold {
-    background: linear-gradient(135deg, #ffd700, #ffb300);
-    color: #1a1a2e;
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    color: #92400E;
   }
   .bg-medal-silver {
     background: linear-gradient(135deg, #c0c0c0, #e0e0e0);

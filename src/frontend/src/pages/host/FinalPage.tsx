@@ -33,6 +33,20 @@ const MEDAL_CLASSES: Record<number, string> = {
   3: "bg-medal-bronze",
 };
 
+const PASTEL_BORDER_CLASSES = [
+  "border-choice-pastel-rose",
+  "border-choice-pastel-sky",
+  "border-choice-pastel-mint",
+  "border-choice-pastel-amber",
+];
+
+const PASTEL_BG_CLASSES = [
+  "bg-choice-pastel-rose/40",
+  "bg-choice-pastel-sky/40",
+  "bg-choice-pastel-mint/40",
+  "bg-choice-pastel-amber/40",
+];
+
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
   return x - Math.floor(x);
@@ -188,7 +202,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
             <button
               type="button"
               onClick={onReplay}
-              className="absolute bottom-8 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200 cursor-pointer"
+              className="absolute bottom-8 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
             >
               もう一度プレイ
             </button>
@@ -260,11 +274,11 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
                 alt={`${entry.nickname}のアバター`}
                 width={36}
                 height={36}
-                className="w-9 h-9 rounded-full object-cover shrink-0"
+                className={`w-9 h-9 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
                 loading="lazy"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
+              <div className={`w-9 h-9 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-gray-900 shrink-0`}>
                 {entry.nickname?.[0] || "?"}
               </div>
             )}
@@ -323,15 +337,15 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
                   alt={`${entry.nickname}のアバター`}
                   width={80}
                   height={80}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-gray-300 shadow-lg"
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] ${PASTEL_BORDER_CLASSES[i % PASTEL_BORDER_CLASSES.length]} shadow-lg`}
                   loading="lazy"
                 />
               ) : (
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-gray-300 shadow-lg">
+                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold ${PASTEL_BG_CLASSES[i % PASTEL_BG_CLASSES.length]} text-gray-900 border-[3px] ${PASTEL_BORDER_CLASSES[i % PASTEL_BORDER_CLASSES.length]} shadow-lg`}>
                   {entry.nickname?.[0] || "?"}
                 </div>
               )}
-              <span className="text-gray-700 text-xs mt-1 max-w-[80px] truncate text-center">
+              <span className="text-gray-600 text-xs mt-1 max-w-[80px] truncate text-center">
                 {entry.nickname}
               </span>
             </motion.div>
@@ -347,7 +361,7 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
           initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: Math.min(rankings.length * 0.05 + 0.5, 3) }}
-          className="mt-10 px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200 z-10 cursor-pointer"
+          className="mt-10 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 z-10 cursor-pointer"
         >
           もう一度プレイ
         </motion.button>

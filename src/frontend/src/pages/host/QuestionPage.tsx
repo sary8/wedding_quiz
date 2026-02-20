@@ -85,7 +85,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-6 py-3 rounded-lg bg-primary text-white text-sm min-h-[44px] hover:brightness-110 transition-[filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="px-6 py-3 rounded-lg bg-pink-200/80 text-pink-900 text-sm font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             回答を締め切る
           </button>

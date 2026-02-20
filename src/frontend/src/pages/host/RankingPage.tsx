@@ -9,6 +9,20 @@ type Props = {
   isDisplay?: boolean;
 };
 
+const PASTEL_BORDER_CLASSES = [
+  "border-choice-pastel-rose",
+  "border-choice-pastel-sky",
+  "border-choice-pastel-mint",
+  "border-choice-pastel-amber",
+];
+
+const PASTEL_BG_CLASSES = [
+  "bg-choice-pastel-rose/40",
+  "bg-choice-pastel-sky/40",
+  "bg-choice-pastel-mint/40",
+  "bg-choice-pastel-amber/40",
+];
+
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
   const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data?.rankings]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
@@ -47,11 +61,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     alt={`${entry.nickname}のアバター`}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-300 shrink-0"
+                    className={`w-12 h-12 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl font-bold text-white shrink-0">
+                  <div className={`w-12 h-12 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-xl font-bold text-gray-900 shrink-0`}>
                     {entry.nickname?.[0] || "?"}
                   </div>
                 )}
@@ -62,7 +76,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* スコアバー */}
-                <div className="flex-1 h-9 bg-gray-900/10 rounded-lg overflow-hidden relative">
+                <div className="flex-1 h-9 bg-pink-100 rounded-lg overflow-hidden relative">
                   <motion.div
                     initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${barWidth}%` }}
@@ -96,14 +110,14 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:brightness-110 transition-[filter] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             次の問題
           </button>
           <button
             type="button"
             onClick={onEndGame}
-            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             最終結果発表
           </button>

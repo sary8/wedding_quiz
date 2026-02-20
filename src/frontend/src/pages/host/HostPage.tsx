@@ -292,14 +292,14 @@ export function HostPage() {
               <button
                 type="button"
                 onClick={handleNextQuestion}
-                className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px]"
+                className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200"
               >
                 次の問題を配信
               </button>
               <button
                 type="button"
                 onClick={handleShowRanking}
-                className="px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200"
+                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200"
               >
                 ランキング表示
               </button>
