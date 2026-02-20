@@ -19,4 +19,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-socket": ["socket.io-client"],
+          "vendor-motion": ["framer-motion"],
+        },
+      },
+    },
+  },
 });

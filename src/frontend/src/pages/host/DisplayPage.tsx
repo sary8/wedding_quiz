@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
@@ -11,10 +11,11 @@ import type {
 import { useGameSounds } from "../../hooks/useGameSounds";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
-import { ResultsPage } from "./ResultsPage";
-import { RankingPage } from "./RankingPage";
-import { FinalPage } from "./FinalPage";
-import { ThankYouScreen } from "./ThankYouScreen";
+
+const ResultsPage = lazy(() => import("./ResultsPage").then((m) => ({ default: m.ResultsPage })));
+const RankingPage = lazy(() => import("./RankingPage").then((m) => ({ default: m.RankingPage })));
+const FinalPage = lazy(() => import("./FinalPage").then((m) => ({ default: m.FinalPage })));
+const ThankYouScreen = lazy(() => import("./ThankYouScreen").then((m) => ({ default: m.ThankYouScreen })));
 
 type DisplayPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "closed";
 
@@ -153,80 +154,84 @@ export function DisplayPage() {
     </button>
   ) : null;
 
-  switch (phase) {
-    case "lobby":
-      return (
-        <>
-          {errorBanner}
-          <LobbyPage
-            roomCode={roomCode}
-            participants={participants}
-            onStartGame={NOOP}
+  const content = (() => {
+    switch (phase) {
+      case "lobby":
+        return (
+          <>
+            {errorBanner}
+            <LobbyPage
+              roomCode={roomCode}
+              participants={participants}
+              onStartGame={NOOP}
+              isDisplay={true}
+            />
+          </>
+        );
+      case "countdown":
+        return (
+          <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
+            <p className="text-2xl font-bold mb-4">ゲーム開始</p>
+            <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
+              {countdownValue > 0 ? countdownValue : ""}
+            </p>
+          </div>
+        );
+      case "question":
+        return (
+          <>
+            {errorBanner}
+            <QuestionPage
+              question={currentQuestion}
+              timeRemaining={timeRemaining}
+              answerCount={answerCount}
+              totalParticipants={participants.length}
+              onCloseQuestion={NOOP}
+              isDisplay={true}
+            />
+          </>
+        );
+      case "results":
+        return (
+          <>
+            {errorBanner}
+            <ResultsPage
+              result={questionResult}
+              question={currentQuestion}
+              onShowRanking={NOOP}
+              onNextQuestion={NOOP}
+              isDisplay={true}
+            />
+          </>
+        );
+      case "ranking":
+        return (
+          <>
+            {errorBanner}
+            <RankingPage
+              data={rankingData}
+              onNextQuestion={NOOP}
+              onEndGame={NOOP}
+              isDisplay={true}
+            />
+          </>
+        );
+      case "final":
+        return (
+          <>
+            {errorBanner}
+            <FinalPage data={finalData} isDisplay={true} onSpotlight={sounds.playFanfare} />
+          </>
+        );
+      case "closed":
+        return (
+          <ThankYouScreen
+            participants={closedParticipants}
             isDisplay={true}
           />
-        </>
-      );
-    case "countdown":
-      return (
-        <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
-          <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-          <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
-            {countdownValue > 0 ? countdownValue : ""}
-          </p>
-        </div>
-      );
-    case "question":
-      return (
-        <>
-          {errorBanner}
-          <QuestionPage
-            question={currentQuestion}
-            timeRemaining={timeRemaining}
-            answerCount={answerCount}
-            totalParticipants={participants.length}
-            onCloseQuestion={NOOP}
-            isDisplay={true}
-          />
-        </>
-      );
-    case "results":
-      return (
-        <>
-          {errorBanner}
-          <ResultsPage
-            result={questionResult}
-            question={currentQuestion}
-            onShowRanking={NOOP}
-            onNextQuestion={NOOP}
-            isDisplay={true}
-          />
-        </>
-      );
-    case "ranking":
-      return (
-        <>
-          {errorBanner}
-          <RankingPage
-            data={rankingData}
-            onNextQuestion={NOOP}
-            onEndGame={NOOP}
-            isDisplay={true}
-          />
-        </>
-      );
-    case "final":
-      return (
-        <>
-          {errorBanner}
-          <FinalPage data={finalData} isDisplay={true} onSpotlight={sounds.playFanfare} />
-        </>
-      );
-    case "closed":
-      return (
-        <ThankYouScreen
-          participants={closedParticipants}
-          isDisplay={true}
-        />
-      );
-  }
+        );
+    }
+  })();
+
+  return <Suspense fallback={null}>{content}</Suspense>;
 }

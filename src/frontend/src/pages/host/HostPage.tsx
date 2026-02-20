@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
@@ -11,10 +11,11 @@ import type {
 import { useGameSounds } from "../../hooks/useGameSounds";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
-import { ResultsPage } from "./ResultsPage";
-import { RankingPage } from "./RankingPage";
-import { FinalPage } from "./FinalPage";
-import { ThankYouScreen } from "./ThankYouScreen";
+
+const ResultsPage = lazy(() => import("./ResultsPage").then((m) => ({ default: m.ResultsPage })));
+const RankingPage = lazy(() => import("./RankingPage").then((m) => ({ default: m.RankingPage })));
+const FinalPage = lazy(() => import("./FinalPage").then((m) => ({ default: m.FinalPage })));
+const ThankYouScreen = lazy(() => import("./ThankYouScreen").then((m) => ({ default: m.ThankYouScreen })));
 
 type HostPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "closed" | "recovering";
 
@@ -260,102 +261,106 @@ export function HostPage() {
     </button>
   ) : null;
 
-  switch (phase) {
-    case "lobby":
-      return (
-        <>
-          {errorBanner}
-          <LobbyPage
-            roomCode={roomCode}
-            participants={participants}
-            onStartGame={handleStartGame}
-          />
-        </>
-      );
-    case "countdown":
-      return (
-        <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
-          <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-          <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
-            {countdownValue > 0 ? countdownValue : ""}
-          </p>
-        </div>
-      );
-    case "question":
-      return (
-        <>
-          {errorBanner}
-          <QuestionPage
-            question={currentQuestion}
-            timeRemaining={timeRemaining}
-            answerCount={answerCount}
-            totalParticipants={participants.length}
-            onCloseQuestion={handleCloseQuestion}
-          />
-        </>
-      );
-    case "results":
-      return (
-        <>
-          {errorBanner}
-          <ResultsPage
-            result={questionResult}
-            question={currentQuestion}
-            onShowRanking={handleShowRanking}
-            onNextQuestion={handleNextQuestion}
-          />
-        </>
-      );
-    case "ranking":
-      return (
-        <>
-          {errorBanner}
-          <RankingPage
-            data={rankingData}
-            onNextQuestion={handleNextQuestion}
-            onEndGame={handleEndGame}
-          />
-        </>
-      );
-    case "final":
-      return (
-        <>
-          {errorBanner}
-          <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={sounds.playFanfare} />
-        </>
-      );
-    case "closed":
-      return (
-        <ThankYouScreen
-          participants={closedParticipants}
-          onBackToSetup={handleBackToSetup}
-        />
-      );
-    case "recovering":
-      return (
-        <>
-          {errorBanner}
-          <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
-            <p className="text-2xl font-bold">ゲームを再開</p>
-            <p className="text-gray-500">ゲームは進行中です。操作を続けてください。</p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={handleNextQuestion}
-                className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
-              >
-                次の問題を配信
-              </button>
-              <button
-                type="button"
-                onClick={handleShowRanking}
-                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                ランキング表示
-              </button>
-            </div>
+  const content = (() => {
+    switch (phase) {
+      case "lobby":
+        return (
+          <>
+            {errorBanner}
+            <LobbyPage
+              roomCode={roomCode}
+              participants={participants}
+              onStartGame={handleStartGame}
+            />
+          </>
+        );
+      case "countdown":
+        return (
+          <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
+            <p className="text-2xl font-bold mb-4">ゲーム開始</p>
+            <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-pulse">
+              {countdownValue > 0 ? countdownValue : ""}
+            </p>
           </div>
-        </>
-      );
-  }
+        );
+      case "question":
+        return (
+          <>
+            {errorBanner}
+            <QuestionPage
+              question={currentQuestion}
+              timeRemaining={timeRemaining}
+              answerCount={answerCount}
+              totalParticipants={participants.length}
+              onCloseQuestion={handleCloseQuestion}
+            />
+          </>
+        );
+      case "results":
+        return (
+          <>
+            {errorBanner}
+            <ResultsPage
+              result={questionResult}
+              question={currentQuestion}
+              onShowRanking={handleShowRanking}
+              onNextQuestion={handleNextQuestion}
+            />
+          </>
+        );
+      case "ranking":
+        return (
+          <>
+            {errorBanner}
+            <RankingPage
+              data={rankingData}
+              onNextQuestion={handleNextQuestion}
+              onEndGame={handleEndGame}
+            />
+          </>
+        );
+      case "final":
+        return (
+          <>
+            {errorBanner}
+            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={sounds.playFanfare} />
+          </>
+        );
+      case "closed":
+        return (
+          <ThankYouScreen
+            participants={closedParticipants}
+            onBackToSetup={handleBackToSetup}
+          />
+        );
+      case "recovering":
+        return (
+          <>
+            {errorBanner}
+            <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
+              <p className="text-2xl font-bold">ゲームを再開</p>
+              <p className="text-gray-500">ゲームは進行中です。操作を続けてください。</p>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={handleNextQuestion}
+                  className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+                >
+                  次の問題を配信
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShowRanking}
+                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                >
+                  ランキング表示
+                </button>
+              </div>
+            </div>
+          </>
+        );
+    }
+  })();
+
+  return <Suspense fallback={null}>{content}</Suspense>;
 }
