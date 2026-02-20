@@ -129,9 +129,9 @@ export function DisplayPage() {
 
   if (connectionError) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text gap-4">
-        <p className="text-xl text-red-500">{connectionError}</p>
-        <p className="text-sm text-rose-text/50">ページを再読み込みしてください</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-4">
+        <p className="text-xl text-red-600">{connectionError}</p>
+        <p className="text-sm text-gray-500">ページを再読み込みしてください</p>
       </div>
     );
   }
@@ -162,9 +162,9 @@ export function DisplayPage() {
       );
     case "countdown":
       return (
-        <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-rose-text">
+        <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
           <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-          <p className="text-[10rem] font-bold leading-none text-accent animate-pulse">
+          <p className="text-[10rem] font-bold leading-none text-amber-800 animate-pulse">
             {countdownValue > 0 ? countdownValue : ""}
           </p>
         </div>

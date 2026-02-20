@@ -28,7 +28,7 @@ describe("ChoiceButton", () => {
   it("applies selected styles when isSelected is true", () => {
     render(<ChoiceButton choice="A" color="red" isSelected choiceIndex={1} onClick={NOOP} />);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("scale-95", "ring-4", "ring-rose-text");
+    expect(button).toHaveClass("scale-95", "ring-4", "ring-gray-900");
     expect(button).toHaveAttribute("aria-pressed", "true");
   });
 
@@ -71,6 +71,6 @@ describe("ChoiceButton", () => {
 
   it("uses dark text color for readability", () => {
     render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} />);
-    expect(screen.getByRole("button")).toHaveClass("text-rose-text");
+    expect(screen.getByRole("button")).toHaveClass("text-gray-900");
   });
 });

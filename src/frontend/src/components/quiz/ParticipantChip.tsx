@@ -17,7 +17,7 @@ export function ParticipantChip({ nickname, selfieUrl, variant = "dark", classNa
         "flex items-center gap-2 rounded-full px-4 py-1.5",
         "transition-colors",
         isLight
-          ? "bg-rose-text/10 hover:bg-rose-text/20"
+          ? "bg-gray-900/10 hover:bg-gray-900/15"
           : "bg-white/20 hover:bg-white/30",
         className
       )}
@@ -28,7 +28,7 @@ export function ParticipantChip({ nickname, selfieUrl, variant = "dark", classNa
         fallback={nickname}
         size="sm"
       />
-      <span className={cn("text-sm font-medium", isLight ? "text-rose-text" : "text-white")}>
+      <span className={cn("text-sm font-medium", isLight ? "text-gray-900" : "text-white")}>
         {nickname}
       </span>
     </div>

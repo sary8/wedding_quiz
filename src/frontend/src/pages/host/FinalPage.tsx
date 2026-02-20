@@ -158,7 +158,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
 
   // Top3 スポットライト表示（メダル背景はそのまま維持）
   if ((phase === "top3" || phase === "done") && spotlightEntry) {
-    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-gradient-to-b from-blush to-white text-rose-text";
+    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-gradient-to-b from-blush to-white text-gray-900";
     const accuracyPercent = spotlightEntry.totalQuestions > 0
       ? Math.round((spotlightEntry.correctCount / spotlightEntry.totalQuestions) * 100)
       : 0;
@@ -237,9 +237,9 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
   return (
     <div
       ref={containerRef}
-      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-rose-text flex flex-col items-center justify-end p-6"
+      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col items-center justify-end p-6"
     >
-      <h2 className="font-script text-4xl text-accent absolute top-6">最終結果発表</h2>
+      <h2 className="font-script text-4xl text-amber-800 absolute top-6">最終結果発表</h2>
       <AnimatePresence>
         {reversed.slice(0, visibleIndex + 1).map((entry) => (
           <motion.div
@@ -295,7 +295,7 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
         initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="font-script text-4xl md:text-5xl text-accent mb-8 text-center z-10"
+        className="font-script text-4xl md:text-5xl text-amber-800 mb-8 text-center z-10"
       >
         みんなで記念撮影！
       </motion.h2>
@@ -321,15 +321,15 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
                   alt={`${entry.nickname}のアバター`}
                   width={80}
                   height={80}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-rose-text/30 shadow-lg"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-[3px] border-gray-300 shadow-lg"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-rose-text/30 shadow-lg">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-primary/60 text-white border-[3px] border-gray-300 shadow-lg">
                   {entry.nickname?.[0] || "?"}
                 </div>
               )}
-              <span className="text-rose-text/80 text-xs mt-1 max-w-[80px] truncate text-center">
+              <span className="text-gray-700 text-xs mt-1 max-w-[80px] truncate text-center">
                 {entry.nickname}
               </span>
             </motion.div>

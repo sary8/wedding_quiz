@@ -25,12 +25,12 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush to-white">
       {/* ヘッダー */}
-      <div className="flex justify-between items-center px-6 py-4 text-rose-text">
+      <div className="flex justify-between items-center px-6 py-4 text-gray-900">
         <span className="text-base">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <span
-          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-500" : "text-rose-text"}`}
+          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -64,7 +64,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
           />
         ) : null}
-        <h2 className="text-4xl text-rose-text text-center">{question.text}</h2>
+        <h2 className="text-4xl text-gray-900 text-center">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
@@ -72,7 +72,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
         {question.choices.map((choice, i) => (
           <div
             key={i}
-            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-rose-text text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
+            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-gray-900 text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
           >
             {choice}
           </div>
@@ -85,7 +85,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-6 py-3 rounded-lg bg-rose-text/10 text-rose-text text-sm min-h-[44px] hover:bg-rose-text/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-text/30"
+            className="px-6 py-3 rounded-lg bg-gray-900/10 text-gray-900 text-sm min-h-[44px] hover:bg-gray-900/15 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
           >
             回答を締め切る
           </button>
