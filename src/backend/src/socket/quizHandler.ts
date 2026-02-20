@@ -70,7 +70,7 @@ export function setupQuizSocket(io: QuizIO) {
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
-        if (!data.roomCode || typeof data.roomCode !== "string" || data.roomCode.length !== 6) {
+        if (!data.roomCode || typeof data.roomCode !== "string" || data.roomCode.length !== 4) {
           logger.warn("joinRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
           return;
