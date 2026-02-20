@@ -14,6 +14,7 @@ function fireConfetti(options: {
 type Props = {
   data: FinalResultData | null;
   onReplay?: () => void;
+  onCloseGame?: () => void;
   isDisplay?: boolean;
   onSpotlight?: (rank: number) => void;
 };
@@ -52,7 +53,7 @@ function seededRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
+export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight }: Props) {
   const [phase, setPhase] = useState<RevealPhase>("scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
@@ -167,7 +168,7 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
 
   // 集合写真フェーズ
   if (phase === "group") {
-    return <GroupPhotoView rankings={rankings} onReplay={onReplay} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
+    return <GroupPhotoView rankings={rankings} onReplay={onReplay} onCloseGame={onCloseGame} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
   }
 
   // Top3 スポットライト表示（メダル背景はそのまま維持）
@@ -198,14 +199,27 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
             </button>
           )}
 
-          {phase === "done" && onReplay && !isDisplay && (
-            <button
-              type="button"
-              onClick={onReplay}
-              className="absolute bottom-8 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
-            >
-              もう一度プレイ
-            </button>
+          {phase === "done" && !isDisplay && (
+            <div className="absolute bottom-8 flex gap-4">
+              {onReplay && (
+                <button
+                  type="button"
+                  onClick={onReplay}
+                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
+                >
+                  もう一度プレイ
+                </button>
+              )}
+              {onCloseGame && (
+                <button
+                  type="button"
+                  onClick={onCloseGame}
+                  className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer"
+                >
+                  ゲーム終了
+                </button>
+              )}
+            </div>
           )}
 
           <motion.div
@@ -294,11 +308,12 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
 type GroupPhotoProps = {
   rankings: FinalRankingEntry[];
   onReplay?: () => void;
+  onCloseGame?: () => void;
   isDisplay?: boolean;
   prefersReducedMotion: boolean | null;
 };
 
-function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }: GroupPhotoProps) {
+function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersReducedMotion }: GroupPhotoProps) {
   useEffect(() => {
     if (prefersReducedMotion) return;
     fireConfetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
@@ -353,18 +368,33 @@ function GroupPhotoView({ rankings, onReplay, isDisplay, prefersReducedMotion }:
         })}
       </div>
 
-      {/* もう一度プレイ */}
-      {onReplay && !isDisplay && (
-        <motion.button
-          type="button"
-          onClick={onReplay}
+      {/* ボタン群 */}
+      {!isDisplay && (onReplay || onCloseGame) && (
+        <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: Math.min(rankings.length * 0.05 + 0.5, 3) }}
-          className="mt-10 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 z-10 cursor-pointer"
+          className="mt-10 flex gap-4 z-10"
         >
-          もう一度プレイ
-        </motion.button>
+          {onReplay && (
+            <button
+              type="button"
+              onClick={onReplay}
+              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer"
+            >
+              もう一度プレイ
+            </button>
+          )}
+          {onCloseGame && (
+            <button
+              type="button"
+              onClick={onCloseGame}
+              className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer"
+            >
+              ゲーム終了
+            </button>
+          )}
+        </motion.div>
       )}
     </div>
   );

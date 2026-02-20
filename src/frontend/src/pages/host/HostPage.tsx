@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
   ParticipantInfo,
@@ -14,18 +14,21 @@ import { QuestionPage } from "./QuestionPage";
 import { ResultsPage } from "./ResultsPage";
 import { RankingPage } from "./RankingPage";
 import { FinalPage } from "./FinalPage";
+import { ThankYouScreen } from "./ThankYouScreen";
 
-type HostPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "recovering";
+type HostPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "closed" | "recovering";
 
 export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const [searchParams] = useSearchParams();
   const hostSecret = searchParams.get("key") || "";
   const quizId = Number(searchParams.get("quizId")) || 0;
+  const navigate = useNavigate();
   const { emit, on, isConnected, connectionError } = useSocket();
   const sounds = useGameSounds();
 
   const [phase, setPhase] = useState<HostPhase>("lobby");
+  const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -105,6 +108,10 @@ export function HostPage() {
         if (data.quizStatus === "in_progress") {
           setPhase("recovering");
         }
+      }),
+      on("gameClosed", (data) => {
+        setClosedParticipants(data.participants);
+        setPhase("closed");
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -193,6 +200,19 @@ export function HostPage() {
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
 
+  const handleCloseGame = useCallback(() => {
+    if (!roomCode || isProcessing) return;
+    setIsProcessing(true);
+    emit("closeGame", { roomCode, hostSecret }, (res) => {
+      setIsProcessing(false);
+      if (!res.success) setError(res.error || "ゲームの終了に失敗しました");
+    });
+  }, [roomCode, hostSecret, emit, isProcessing]);
+
+  const handleBackToSetup = useCallback(() => {
+    navigate(`/host/setup?view=edit&quizId=${quizId}`);
+  }, [navigate, quizId]);
+
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
   // 接続エラー表示
@@ -278,8 +298,15 @@ export function HostPage() {
       return (
         <>
           {errorBanner}
-          <FinalPage data={finalData} onReplay={handleReplay} onSpotlight={sounds.playFanfare} />
+          <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={sounds.playFanfare} />
         </>
+      );
+    case "closed":
+      return (
+        <ThankYouScreen
+          participants={closedParticipants}
+          onBackToSetup={handleBackToSetup}
+        />
       );
     case "recovering":
       return (

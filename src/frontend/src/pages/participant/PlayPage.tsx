@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
-import type { QuestionData, QuestionResultData, FinalResultData } from "../../types";
+import type { QuestionData, QuestionResultData, FinalResultData, ParticipantInfo } from "../../types";
 import { uploadSelfie } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
 import { ResultPage } from "./ResultPage";
 import { ParticipantFinalPage } from "./FinalPage";
+import { ThankYouScreen } from "../host/ThankYouScreen";
 
-type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final";
+type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" | "closed";
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -24,6 +25,7 @@ export function PlayPage() {
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [answerError, setAnswerError] = useState<string | null>(null);
+  const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
   const hasAnsweredRef = useRef(hasAnswered);
@@ -85,7 +87,6 @@ export function PlayPage() {
         setParticipantId(data.participantId);
         setIsJoining(false);
         if (data.quizStatus === "in_progress" && data.currentQuestionData) {
-          // 出題中の問題がある場合は回答画面に復帰
           setCurrentQuestion(data.currentQuestionData);
           setHasAnswered(false);
           setPhase("answer");
@@ -94,6 +95,10 @@ export function PlayPage() {
         } else if (data.quizStatus === "finished") {
           setPhase("final");
         }
+      }),
+      on("gameClosed", (data) => {
+        setClosedParticipants(data.participants);
+        setPhase("closed");
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -204,5 +209,7 @@ export function PlayPage() {
       return <WaitingPage message="ランキング発表中…" />;
     case "final":
       return <ParticipantFinalPage data={finalData} participantId={participantId} />;
+    case "closed":
+      return <ThankYouScreen participants={closedParticipants} />;
   }
 }

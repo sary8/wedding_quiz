@@ -14,8 +14,9 @@ import { QuestionPage } from "./QuestionPage";
 import { ResultsPage } from "./ResultsPage";
 import { RankingPage } from "./RankingPage";
 import { FinalPage } from "./FinalPage";
+import { ThankYouScreen } from "./ThankYouScreen";
 
-type DisplayPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final";
+type DisplayPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "final" | "closed";
 
 const NOOP = () => {}; // stable reference for display-only props
 
@@ -34,6 +35,7 @@ export function DisplayPage() {
   const [finalData, setFinalData] = useState<FinalResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [countdownValue, setCountdownValue] = useState(5);
+  const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -104,6 +106,10 @@ export function DisplayPage() {
         setRankingData(null);
         setFinalData(null);
         setError(null);
+      }),
+      on("gameClosed", (data) => {
+        setClosedParticipants(data.participants);
+        setPhase("closed");
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -214,6 +220,13 @@ export function DisplayPage() {
           {errorBanner}
           <FinalPage data={finalData} isDisplay={true} onSpotlight={sounds.playFanfare} />
         </>
+      );
+    case "closed":
+      return (
+        <ThankYouScreen
+          participants={closedParticipants}
+          isDisplay={true}
+        />
       );
   }
 }

@@ -485,6 +485,29 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ホスト: ゲームクローズ ===
+    socket.on("closeGame", async (data, callback) => {
+      try {
+        const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
+        if (!quiz) {
+          logger.warn("closeGame auth failed", { roomCode: data.roomCode });
+          callback({ success: false, error: "認証エラー" });
+          return;
+        }
+
+        const participants = await quizService.getLobbyParticipants(data.roomCode);
+        io.to(data.roomCode).emit("gameClosed", { participants });
+
+        logger.info("game closed", { roomCode: data.roomCode });
+
+        callback({ success: true });
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("closeGame error", { error: err, roomCode: data.roomCode });
+        callback({ success: false, error: "ゲームの終了に失敗しました" });
+      }
+    });
+
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {

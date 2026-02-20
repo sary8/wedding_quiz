@@ -28,6 +28,7 @@ type ServerToClientEvents = {
     currentQuestionIndex: number;
     participants: ParticipantInfo[];
   }) => void;
+  gameClosed: (data: { participants: ParticipantInfo[] }) => void;
 };
 
 type ClientToServerEvents = {
@@ -68,6 +69,10 @@ type ClientToServerEvents = {
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
   replayQuiz: (
+    data: { roomCode: string; hostSecret: string },
+    cb: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  closeGame: (
     data: { roomCode: string; hostSecret: string },
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
