@@ -1,4 +1,5 @@
 import type { QuestionResultData, QuestionData } from "../../types";
+import { cn } from "../../utils/cn";
 
 type Props = {
   result: QuestionResultData | null;
@@ -33,7 +34,7 @@ export function ResultPage({ result, question }: Props) {
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush p-6">
       {/* 正解 / 不正解 アイコン */}
-      <div className={["mb-4", isCorrect ? "text-primary" : "text-gray-500"].join(" ")} aria-hidden="true">
+      <div className={cn("mb-4", isCorrect ? "text-primary" : "text-gray-500")} aria-hidden="true">
         {isCorrect ? (
           <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>

@@ -24,7 +24,7 @@ const PASTEL_BG_CLASSES = [
 ];
 
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
-  const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data?.rankings]);
+  const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
   const prefersReducedMotion = useReducedMotion();
 
