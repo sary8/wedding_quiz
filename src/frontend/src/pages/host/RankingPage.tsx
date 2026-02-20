@@ -96,14 +96,14 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-gray-900/10 text-gray-900 text-lg font-bold hover:bg-gray-900/15 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+            className="px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:brightness-110 transition-[filter] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             次の問題
           </button>
           <button
             type="button"
             onClick={onEndGame}
-            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             最終結果発表
           </button>

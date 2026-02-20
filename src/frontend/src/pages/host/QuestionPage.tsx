@@ -10,10 +10,10 @@ type Props = {
 };
 
 const CHOICE_PASTEL_CLASSES = [
-  "bg-choice-pastel-rose",
-  "bg-choice-pastel-sky",
-  "bg-choice-pastel-mint",
-  "bg-choice-pastel-amber",
+  "bg-choice-pastel-rose text-outline-rose",
+  "bg-choice-pastel-sky text-outline-sky",
+  "bg-choice-pastel-mint text-outline-mint",
+  "bg-choice-pastel-amber text-outline-amber",
 ];
 
 export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
@@ -72,7 +72,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
         {question.choices.map((choice, i) => (
           <div
             key={i}
-            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-gray-900 text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
+            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
           >
             {choice}
           </div>
@@ -85,7 +85,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-6 py-3 rounded-lg bg-gray-900/10 text-gray-900 text-sm min-h-[44px] hover:bg-gray-900/15 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+            className="px-6 py-3 rounded-lg bg-primary text-white text-sm min-h-[44px] hover:brightness-110 transition-[filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             回答を締め切る
           </button>

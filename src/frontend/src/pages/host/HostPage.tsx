@@ -299,7 +299,7 @@ export function HostPage() {
               <button
                 type="button"
                 onClick={handleShowRanking}
-                className="px-8 py-4 rounded-xl bg-gray-900/10 text-gray-900 text-lg font-bold min-h-[44px]"
+                className="px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200"
               >
                 ランキング表示
               </button>

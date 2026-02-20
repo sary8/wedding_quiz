@@ -37,14 +37,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
             <button
               type="button"
               onClick={onShowRanking}
-              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+              className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               ランキング表示
             </button>
             <button
               type="button"
               onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-gray-900/10 text-gray-900 text-lg font-bold min-h-[44px] hover:bg-gray-900/15 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+              className="px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold min-h-[44px] hover:brightness-110 transition-[filter] duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               次の問題
             </button>
@@ -97,14 +97,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           <button
             type="button"
             onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+            className="px-8 py-4 rounded-xl bg-accent text-dark text-lg font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             ランキング表示
           </button>
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-gray-900/10 text-gray-900 text-lg font-bold hover:bg-gray-900/15 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+            className="px-8 py-4 rounded-xl bg-gray-900/10 text-gray-900 text-lg font-bold hover:bg-gray-900/15 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             次の問題
           </button>

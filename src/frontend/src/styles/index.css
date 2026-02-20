@@ -107,4 +107,34 @@
   .font-serif-wedding {
     font-family: var(--font-serif);
   }
+
+  /* 選択肢テキスト縁取り（白文字 + 背景色の少し濃い版でアウトライン） */
+  .text-outline-rose {
+    text-shadow:
+      -1px -1px 0 #E8899A,
+       1px -1px 0 #E8899A,
+      -1px  1px 0 #E8899A,
+       1px  1px 0 #E8899A;
+  }
+  .text-outline-sky {
+    text-shadow:
+      -1px -1px 0 #5BB8E0,
+       1px -1px 0 #5BB8E0,
+      -1px  1px 0 #5BB8E0,
+       1px  1px 0 #5BB8E0;
+  }
+  .text-outline-mint {
+    text-shadow:
+      -1px -1px 0 #4CC99E,
+       1px -1px 0 #4CC99E,
+      -1px  1px 0 #4CC99E,
+       1px  1px 0 #4CC99E;
+  }
+  .text-outline-amber {
+    text-shadow:
+      -1px -1px 0 #D4A520,
+       1px -1px 0 #D4A520,
+      -1px  1px 0 #D4A520,
+       1px  1px 0 #D4A520;
+  }
 }
