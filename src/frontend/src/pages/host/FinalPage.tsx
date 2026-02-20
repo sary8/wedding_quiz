@@ -173,14 +173,16 @@ export function FinalPage({ data, onReplay, isDisplay, onSpotlight }: Props) {
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, type: "spring" }}
           className={`h-[100dvh] flex flex-col items-center justify-center relative ${medalClass}`}
         >
-          {/* 一時停止ボタン */}
-          <button
-            type="button"
-            onClick={togglePause}
-            className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer"
-          >
-            {isPaused ? "再開" : "一時停止"}
-          </button>
+          {/* 一時停止ボタン（スクリーンには表示しない） */}
+          {!isDisplay && (
+            <button
+              type="button"
+              onClick={togglePause}
+              className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer"
+            >
+              {isPaused ? "再開" : "一時停止"}
+            </button>
+          )}
 
           {phase === "done" && onReplay && !isDisplay && (
             <button

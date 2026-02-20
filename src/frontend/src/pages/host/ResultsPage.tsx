@@ -21,6 +21,12 @@ const CHOICE_BAR_DIM_CLASSES = [
   "bg-choice-pastel-mint/50",
   "bg-choice-pastel-amber/50",
 ];
+const CHOICE_BAR_TRACK_CLASSES = [
+  "bg-choice-pastel-rose/25",
+  "bg-choice-pastel-sky/25",
+  "bg-choice-pastel-mint/25",
+  "bg-choice-pastel-amber/25",
+];
 
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
   const { totalAnswers, maxCount } = useMemo(() => ({
@@ -81,7 +87,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                 </span>
                 <span className="text-base">{count}人 ({percentage}%)</span>
               </div>
-              <div className="h-10 bg-gray-900/10 rounded-lg overflow-hidden">
+              <div className={`h-10 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
                 <div
                   className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}
