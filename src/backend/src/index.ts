@@ -8,6 +8,7 @@ import { questionRoutes } from "./routes/question.js";
 import { mediaRoutes } from "./routes/media.js";
 import { questionBankRoutes } from "./routes/questionBank.js";
 import { setupQuizSocket } from "./socket/quizHandler.js";
+import { logger } from "./utils/logger.js";
 
 const app = new Hono();
 
@@ -24,9 +25,17 @@ app.use(
   })
 );
 
+// リクエストログ
+app.use("/api/*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+  logger.info(`${c.req.method} ${c.req.path} ${c.res.status}`, { ms });
+});
+
 // グローバルエラーハンドラ
 app.onError((err, c) => {
-  console.error("Unhandled error:", err);
+  logger.error("unhandled error", { error: err.message, path: c.req.path });
   return c.json({ error: "サーバー内部エラーが発生しました" }, 500);
 });
 
@@ -43,7 +52,7 @@ app.get("/api/health", (c) => c.json({ status: "ok" }));
 // Start HTTP server
 const PORT = Number(process.env.PORT) || 3001;
 const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
-  console.log(`Backend running on http://localhost:${info.port}`);
+  logger.info(`backend running on http://localhost:${info.port}`);
 });
 
 // Attach Socket.io
@@ -56,4 +65,4 @@ const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(server
 
 setupQuizSocket(io);
 
-console.log("Socket.io attached");
+logger.info("socket.io attached");

@@ -2,6 +2,7 @@ import type { Server, Socket } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents, QuizStatus } from "../types/index.js";
 import * as quizService from "../services/quizService.js";
 import { startTimer, stopTimer, getElapsedMs } from "../services/timerService.js";
+import { logger } from "../utils/logger.js";
 
 type QuizIO = Server<ClientToServerEvents, ServerToClientEvents>;
 type QuizSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -64,20 +65,23 @@ async function distributeQuestionResult(
 
 export function setupQuizSocket(io: QuizIO) {
   io.on("connection", (socket: QuizSocket) => {
-    console.log(`Connected: ${socket.id}`);
+    logger.info("socket connected", { socketId: socket.id });
 
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
         if (!data.roomCode || typeof data.roomCode !== "string" || data.roomCode.length !== 6) {
+          logger.warn("joinRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
           return;
         }
         if (!data.nickname || typeof data.nickname !== "string" || !data.nickname.trim()) {
+          logger.warn("joinRoom validation failed: missing nickname", { roomCode: data.roomCode });
           callback({ success: false, error: "ニックネームを入力してください" });
           return;
         }
         if (data.nickname.length > 30) {
+          logger.warn("joinRoom validation failed: nickname too long", { roomCode: data.roomCode });
           callback({ success: false, error: "ニックネームが長すぎます" });
           return;
         }
@@ -91,6 +95,7 @@ export function setupQuizSocket(io: QuizIO) {
         );
 
         if ("error" in result) {
+          logger.warn("joinRoom rejected", { roomCode: data.roomCode, error: result.error });
           callback({ success: false, error: result.error });
           return;
         }
@@ -100,6 +105,12 @@ export function setupQuizSocket(io: QuizIO) {
         socketMeta.set(socket.id, {
           participantId: participant.id,
           roomCode: data.roomCode,
+        });
+
+        logger.info("participant joined", {
+          roomCode: data.roomCode,
+          participantId: participant.id,
+          reconnect,
         });
 
         callback({
@@ -144,7 +155,8 @@ export function setupQuizSocket(io: QuizIO) {
           io.to(data.roomCode).emit("lobbyUpdate", { participants });
         }
       } catch (e) {
-        console.error("joinRoom error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("joinRoom error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "参加に失敗しました" });
       }
     });
@@ -154,22 +166,36 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const meta = socketMeta.get(socket.id);
         if (!meta) {
+          logger.warn("submitAnswer rejected: no session", { socketId: socket.id });
           callback({ success: false, error: "セッションが見つかりません" });
           return;
         }
 
         const questionId = activeQuestions.get(meta.roomCode);
         if (questionId !== data.questionId) {
+          logger.warn("submitAnswer rejected: question not active", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+            questionId: data.questionId,
+          });
           callback({ success: false, error: "この問題の回答期間は終了しました" });
           return;
         }
 
         // バリデーション
         if (!Number.isInteger(data.questionId) || data.questionId <= 0) {
+          logger.warn("submitAnswer validation failed: invalid questionId", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+          });
           callback({ success: false, error: "不正な問題IDです" });
           return;
         }
         if (!Number.isInteger(data.choiceIndex) || data.choiceIndex < 1 || data.choiceIndex > 4) {
+          logger.warn("submitAnswer validation failed: invalid choiceIndex", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+          });
           callback({ success: false, error: "不正な選択肢です" });
           return;
         }
@@ -194,13 +220,21 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
+        logger.info("answer submitted", {
+          roomCode: meta.roomCode,
+          participantId: meta.participantId,
+          questionId: data.questionId,
+        });
+
         callback({ success: true });
 
         // 回答数を更新通知（ホスト向け）
         const count = await quizService.getAnswerCount(data.questionId);
         io.to(meta.roomCode).emit("answerCountUpdate", { count });
       } catch (e) {
-        console.error("submitAnswer error:", e);
+        const meta = socketMeta.get(socket.id);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("submitAnswer error", { error: err, roomCode: meta?.roomCode });
         callback({ success: false, error: "回答の送信に失敗しました" });
       }
     });
@@ -210,6 +244,7 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const roomCode = await quizService.openRoom(data.quizId, data.hostSecret);
         if (!roomCode) {
+          logger.warn("openRoom failed", { quizId: data.quizId });
           callback({ success: false, error: "ルームの開設に失敗しました" });
           return;
         }
@@ -229,6 +264,9 @@ export function setupQuizSocket(io: QuizIO) {
 
         socket.join(roomCode);
         socketMeta.set(socket.id, { participantId: -1, roomCode });
+
+        logger.info("room opened", { roomCode, quizId: data.quizId });
+
         callback({ success: true, roomCode });
 
         // ホスト復旧: lobby/in_progress状態を復元通知
@@ -242,7 +280,8 @@ export function setupQuizSocket(io: QuizIO) {
           });
         }
       } catch (e) {
-        console.error("openRoom error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("openRoom error", { error: err, quizId: data.quizId });
         callback({ success: false, error: "ルームの開設に失敗しました" });
       }
     });
@@ -252,6 +291,7 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("startGame auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
@@ -262,10 +302,13 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
+        logger.info("game started", { roomCode: data.roomCode });
+
         io.to(data.roomCode).emit("gameStarted");
         callback({ success: true });
       } catch (e) {
-        console.error("startGame error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("startGame error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "ゲームの開始に失敗しました" });
       }
     });
@@ -275,6 +318,7 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("nextQuestion auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
@@ -287,6 +331,8 @@ export function setupQuizSocket(io: QuizIO) {
 
         activeQuestions.set(data.roomCode, question.questionId);
         io.to(data.roomCode).emit("questionStarted", question);
+
+        logger.info("question started", { roomCode: data.roomCode, questionId: question.questionId });
 
         // サーバーサイドタイマー開始
         const roomCode = data.roomCode;
@@ -304,7 +350,8 @@ export function setupQuizSocket(io: QuizIO) {
             try {
               await distributeQuestionResult(io, roomCode, questionId);
             } catch (e) {
-              console.error("Timer auto-close result distribution error:", e);
+              const err = e instanceof Error ? e.message : String(e);
+              logger.error("timer auto-close result distribution error", { error: err, roomCode, questionId });
               io.to(roomCode).emit("questionResult", {
                 questionId,
                 correctChoice: 0,
@@ -316,7 +363,8 @@ export function setupQuizSocket(io: QuizIO) {
 
         callback({ success: true });
       } catch (e) {
-        console.error("nextQuestion error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("nextQuestion error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "問題の配信に失敗しました" });
       }
     });
@@ -326,6 +374,7 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("closeQuestion auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
@@ -337,11 +386,13 @@ export function setupQuizSocket(io: QuizIO) {
         if (questionId) {
           io.to(data.roomCode).emit("questionClosed");
           await distributeQuestionResult(io, data.roomCode, questionId, socket.id);
+          logger.info("question closed", { roomCode: data.roomCode, questionId });
         }
 
         callback({ success: true });
       } catch (e) {
-        console.error("closeQuestion error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("closeQuestion error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "問題の締め切りに失敗しました" });
       }
     });
@@ -351,15 +402,20 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("showRanking auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
 
         const rankings = await quizService.calculateRanking(data.roomCode);
         io.to(data.roomCode).emit("rankingUpdate", { rankings });
+
+        logger.info("ranking shown", { roomCode: data.roomCode });
+
         callback({ success: true });
       } catch (e) {
-        console.error("showRanking error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("showRanking error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "ランキングの表示に失敗しました" });
       }
     });
@@ -369,15 +425,20 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("endGame auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
 
         const finalResult = await quizService.getFinalResult(data.roomCode);
         io.to(data.roomCode).emit("gameEnded", finalResult);
+
+        logger.info("game ended", { roomCode: data.roomCode });
+
         callback({ success: true });
       } catch (e) {
-        console.error("endGame error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("endGame error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "ゲーム終了に失敗しました" });
       }
     });
@@ -387,6 +448,7 @@ export function setupQuizSocket(io: QuizIO) {
       try {
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          logger.warn("replayQuiz auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
         }
@@ -405,9 +467,12 @@ export function setupQuizSocket(io: QuizIO) {
         const participants = await quizService.getLobbyParticipants(data.roomCode);
         io.to(data.roomCode).emit("lobbyUpdate", { participants });
 
+        logger.info("quiz replayed", { roomCode: data.roomCode });
+
         callback({ success: true });
       } catch (e) {
-        console.error("replayQuiz error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("replayQuiz error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "リプレイに失敗しました" });
       }
     });
@@ -416,6 +481,7 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("watchRoom", async (data, callback) => {
       try {
         if (!data.roomCode || typeof data.roomCode !== "string") {
+          logger.warn("watchRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
           return;
         }
@@ -425,17 +491,21 @@ export function setupQuizSocket(io: QuizIO) {
         const participants = await quizService.getLobbyParticipants(data.roomCode);
         socket.emit("lobbyUpdate", { participants });
 
+        logger.info("viewer joined", { roomCode: data.roomCode });
+
         callback({ success: true });
       } catch (e) {
-        console.error("watchRoom error:", e);
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("watchRoom error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "ルームの監視に失敗しました" });
       }
     });
 
     // === 切断処理 ===
     socket.on("disconnect", async () => {
-      console.log(`Disconnected: ${socket.id}`);
       const meta = socketMeta.get(socket.id);
+      const role = meta ? (meta.participantId === -1 ? "host" : meta.participantId === -2 ? "viewer" : "participant") : "unknown";
+      logger.info("socket disconnected", { socketId: socket.id, roomCode: meta?.roomCode, role });
       if (meta) {
         if (meta.participantId > 0) {
           await quizService.handleDisconnect(socket.id);
