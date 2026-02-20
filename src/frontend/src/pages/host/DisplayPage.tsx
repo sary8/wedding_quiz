@@ -113,7 +113,7 @@ export function DisplayPage() {
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [on]);
+  }, [on, sounds]);
 
   // カウントダウン表示（表示のみ、nextQuestionは呼ばない）
   useEffect(() => {

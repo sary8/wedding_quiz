@@ -59,6 +59,8 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const onSpotlightRef = useRef(onSpotlight);
+  onSpotlightRef.current = onSpotlight;
   const prefersReducedMotion = useReducedMotion();
 
   const { rankings, reversed, top3 } = useMemo(() => {
@@ -130,8 +132,8 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
       const entry = top3[i];
       setSpotlightEntry(entry);
 
-      if (onSpotlight && entry.rank >= 1 && entry.rank <= 3) {
-        onSpotlight(entry.rank);
+      if (onSpotlightRef.current && entry.rank >= 1 && entry.rank <= 3) {
+        onSpotlightRef.current(entry.rank);
       }
 
       if (!prefersReducedMotion) {

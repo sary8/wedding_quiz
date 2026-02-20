@@ -116,7 +116,7 @@ export function HostPage() {
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [on]);
+  }, [on, sounds]);
 
   // ルーム開設（初回接続 + 再接続時に再実行してルームに再join）
   useEffect(() => {
@@ -163,7 +163,8 @@ export function HostPage() {
     if (countdownValue <= 0) {
       if (!countdownFiredRef.current) {
         countdownFiredRef.current = true;
-        handleNextQuestion();
+        const t = setTimeout(handleNextQuestion, 0);
+        return () => clearTimeout(t);
       }
       return;
     }

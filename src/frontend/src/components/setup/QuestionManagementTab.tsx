@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Quiz } from "../../types";
 import { reorderQuestions, importBankToQuiz } from "../../services/api";
@@ -17,7 +17,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  const questions = quiz.questions ?? [];
+  const questions = useMemo(() => quiz.questions ?? [], [quiz.questions]);
 
   function handleAddNew() {
     setExpandedQuestionId("new");

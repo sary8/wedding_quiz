@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { QuizSummary, Quiz, QuestionBankItem } from "../../types";
 import { QuizStatus } from "../../types";
 import { getQuiz, listBankQuestions } from "../../services/api";
@@ -20,12 +20,7 @@ export function QuestionLibraryView({ quizList }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [expandedBankId, setExpandedBankId] = useState<number | "new" | null>(null);
 
-  useEffect(() => {
-    loadBank();
-    loadPastQuizzes();
-  }, []);
-
-  async function loadBank() {
+  const loadBank = useCallback(async () => {
     setIsLoadingBank(true);
     try {
       const data = await listBankQuestions();
@@ -35,9 +30,9 @@ export function QuestionLibraryView({ quizList }: Props) {
     } finally {
       setIsLoadingBank(false);
     }
-  }
+  }, []);
 
-  async function loadPastQuizzes() {
+  const loadPastQuizzes = useCallback(async () => {
     setIsLoadingPast(true);
     const finished = quizList.filter((q) => q.status === QuizStatus.Finished && q.question_count > 0);
 
@@ -48,7 +43,12 @@ export function QuestionLibraryView({ quizList }: Props) {
 
     setPastQuizzes(results);
     setIsLoadingPast(false);
-  }
+  }, [quizList]);
+
+  useEffect(() => {
+    loadBank();
+    loadPastQuizzes();
+  }, [loadBank, loadPastQuizzes]);
 
   function handleBankSaved() {
     setExpandedBankId(null);

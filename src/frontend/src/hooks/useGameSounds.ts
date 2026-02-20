@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 
 function getAudioContext(): AudioContext | null {
   try {
@@ -134,7 +134,7 @@ export function useGameSounds() {
     }
   }, [ensureCtx]);
 
-  return {
+  return useMemo(() => ({
     playJoinChime,
     playQuestionStart,
     playTick,
@@ -143,5 +143,5 @@ export function useGameSounds() {
     playRankingFanfare,
     playDrumRoll,
     playFanfare,
-  };
+  }), [playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll, playFanfare]);
 }
