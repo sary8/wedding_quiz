@@ -12,6 +12,9 @@ export function ResultPage({ result, question }: Props) {
     result && question && result.correctChoice >= 1 && result.correctChoice <= question.choices.length
       ? question.choices[result.correctChoice - 1]
       : null;
+  const safeCorrectImageUrl = result
+    ? sanitizeMediaUrl(question?.choiceImageUrls?.[result.correctChoice - 1])
+    : null;
 
   if (!result?.yourAnswer) {
     return (
@@ -22,9 +25,9 @@ export function ResultPage({ result, question }: Props) {
         {correctAnswerText !== null ? (
           <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-6">
             <p className="text-sm text-rose-text/60 mb-1">正解</p>
-            {result && sanitizeMediaUrl(question?.choiceImageUrls?.[result.correctChoice - 1]) && (
+            {safeCorrectImageUrl && (
               <img
-                src={sanitizeMediaUrl(question?.choiceImageUrls?.[result.correctChoice - 1])!}
+                src={safeCorrectImageUrl}
                 alt={correctAnswerText || "正解の画像"}
                 className="h-16 w-16 object-cover rounded-lg mx-auto mb-2"
               />
@@ -81,9 +84,9 @@ export function ResultPage({ result, question }: Props) {
       {correctAnswerText !== null ? (
         <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-4">
           <p className="text-sm text-rose-text/60 mb-1">正解</p>
-          {question?.choiceImageUrls?.[result.correctChoice - 1] && (
+          {safeCorrectImageUrl && (
             <img
-              src={question.choiceImageUrls[result.correctChoice - 1]!}
+              src={safeCorrectImageUrl}
               alt={correctAnswerText || "正解の画像"}
               className="h-16 w-16 object-cover rounded-lg mx-auto mb-2"
             />

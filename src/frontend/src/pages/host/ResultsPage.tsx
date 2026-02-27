@@ -83,15 +83,16 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           const barWidth = (count / maxCount) * 100;
           const choiceText = question?.choices[i] || `選択肢${i + 1}`;
           const barClass = isCorrect ? CHOICE_BAR_CLASSES[i] : CHOICE_BAR_DIM_CLASSES[i];
+          const safeChoiceImageUrl = sanitizeMediaUrl(question?.choiceImageUrls?.[i]);
 
           return (
             <div key={i} className="mb-5">
               <div className="flex justify-between mb-1.5">
                 <span className={cn("flex items-center gap-3", isCorrect ? "font-bold text-2xl lg:text-4xl" : "font-normal text-2xl lg:text-4xl")}>
-                  {sanitizeMediaUrl(question?.choiceImageUrls?.[i]) && (
+                  {safeChoiceImageUrl && (
                     <div className="w-14 h-14 lg:w-20 lg:h-20 shrink-0 overflow-hidden rounded">
                       <img
-                        src={sanitizeMediaUrl(question?.choiceImageUrls?.[i])!}
+                        src={safeChoiceImageUrl}
                         alt={choiceText}
                         className="w-full h-full object-cover"
                       />

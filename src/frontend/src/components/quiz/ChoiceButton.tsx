@@ -25,6 +25,8 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
     onClick(choiceIndex);
   }, [onClick, choiceIndex]);
 
+  const safeImageUrl = sanitizeMediaUrl(choiceImageUrl);
+
   return (
     <button
       className={cn(
@@ -41,11 +43,11 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
       onClick={handleClick}
       {...props}
     >
-      {sanitizeMediaUrl(choiceImageUrl) ? (
+      {safeImageUrl ? (
         <div className="flex flex-col items-center gap-1.5 w-full h-full">
           <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden rounded-lg">
             <img
-              src={sanitizeMediaUrl(choiceImageUrl)!}
+              src={safeImageUrl}
               alt={choice || `選択肢${choiceIndex}`}
               className="max-w-full max-h-full object-cover rounded-lg"
             />

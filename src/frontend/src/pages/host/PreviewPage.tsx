@@ -78,6 +78,7 @@ export function PreviewPage() {
   }
 
   const question = questionToPreviewData(questions[currentIndex], currentIndex, questions.length);
+  const safeMediaUrl = sanitizeMediaUrl(question.mediaUrl);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === questions.length - 1;
 
@@ -100,9 +101,9 @@ export function PreviewPage() {
 
       {/* 問題文 */}
       <div className="px-4 py-2 text-gray-900 text-center">
-        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
+        {safeMediaUrl && question.mediaType === "image" ? (
           <img
-            src={sanitizeMediaUrl(question.mediaUrl)!}
+            src={safeMediaUrl}
             alt="問題の画像"
             className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-cover mx-auto"
           />

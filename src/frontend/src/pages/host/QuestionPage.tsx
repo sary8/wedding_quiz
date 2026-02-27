@@ -23,6 +23,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
   const timeRemaining = Math.max(0, rawTimeRemaining);
   const isUrgent = timeRemaining <= 5;
   const hasChoiceImages = question.choiceImageUrls?.some(Boolean);
+  const safeMediaUrl = sanitizeMediaUrl(question.mediaUrl);
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
@@ -48,18 +49,18 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
 
       {/* 問題文 */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 min-h-0">
-        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
+        {safeMediaUrl && question.mediaType === "image" ? (
           <div className="max-w-[55%] max-h-[35vh] mb-4 overflow-hidden rounded-xl">
             <img
-              src={sanitizeMediaUrl(question.mediaUrl)!}
+              src={safeMediaUrl}
               alt={question.mediaAltText || "問題の画像"}
               className="w-full h-full object-cover"
             />
           </div>
         ) : null}
-        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "video" ? (
+        {safeMediaUrl && question.mediaType === "video" ? (
           <video
-            src={sanitizeMediaUrl(question.mediaUrl)!}
+            src={safeMediaUrl}
             autoPlay
             muted
             aria-label="問題の動画"

@@ -38,6 +38,8 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   if (!question) return null;
 
+  const safeMediaUrl = sanitizeMediaUrl(question.mediaUrl);
+
   if (hasAnswered) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900" role="status" aria-live="polite">
@@ -75,9 +77,9 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
       {/* 問題文 */}
       <div className="px-4 py-2 text-gray-900 text-center">
-        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
+        {safeMediaUrl && question.mediaType === "image" ? (
           <img
-            src={sanitizeMediaUrl(question.mediaUrl)!}
+            src={safeMediaUrl}
             alt={question.mediaAltText || "問題の画像"}
             width={600}
             height={400}
