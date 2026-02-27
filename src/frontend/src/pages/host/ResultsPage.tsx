@@ -37,8 +37,8 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   if (!result) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
-        <p className="text-xl text-gray-500">結果データを取得中…</p>
+      <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
+        <p className="text-2xl text-gray-500">結果データを取得中…</p>
         {!isDisplay && (
           <div className="flex gap-4">
             <button
@@ -62,11 +62,11 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 p-6">
-      <h2 className="font-script text-4xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
+    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 p-8">
+      <h2 className="font-script text-5xl lg:text-6xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
 
       {/* 回答分布グラフ */}
-      <div className="w-full max-w-xl mb-12">
+      <div className="w-full max-w-3xl mb-12">
         {result.distribution.map((count, i) => {
           const isCorrect = i + 1 === result.correctChoice;
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
@@ -75,29 +75,31 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           const barClass = isCorrect ? CHOICE_BAR_CLASSES[i] : CHOICE_BAR_DIM_CLASSES[i];
 
           return (
-            <div key={i} className="mb-4">
-              <div className="flex justify-between mb-1">
-                <span className={cn("flex items-center gap-2", isCorrect ? "font-bold text-base" : "font-normal text-base")}>
+            <div key={i} className="mb-5">
+              <div className="flex justify-between mb-1.5">
+                <span className={cn("flex items-center gap-3", isCorrect ? "font-bold text-xl lg:text-2xl" : "font-normal text-xl lg:text-2xl")}>
                   {question?.choiceImageUrls?.[i] && (
-                    <img
-                      src={question.choiceImageUrls[i]!}
-                      alt={choiceText}
-                      className="h-8 w-8 object-cover rounded inline-block"
-                    />
+                    <div className="w-12 h-12 shrink-0 overflow-hidden rounded">
+                      <img
+                        src={question.choiceImageUrls[i]!}
+                        alt={choiceText}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   )}
                   {choiceText}
                   {isCorrect && (
                     <>
-                      <svg className="inline w-4 h-4 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <svg className="inline w-5 h-5 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M2 6l3 3 5-5" />
                       </svg>
                       <span> 正解</span>
                     </>
                   )}
                 </span>
-                <span className="text-base [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
+                <span className="text-xl lg:text-2xl [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
               </div>
-              <div className={`h-10 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
+              <div className={`h-12 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
                 <div
                   className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}
@@ -113,14 +115,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           <button
             type="button"
             onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-xl font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             ランキング表示
           </button>
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-xl font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             次の問題
           </button>

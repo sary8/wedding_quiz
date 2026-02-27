@@ -81,10 +81,10 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
             width={600}
             height={400}
             loading="lazy"
-            className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-contain mx-auto"
+            className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-cover mx-auto"
           />
         ) : null}
-        <p className="text-lg font-bold">{question.text}</p>
+        <p className="text-xl font-bold">{question.text}</p>
       </div>
 
       {/* 4色回答ボタン */}

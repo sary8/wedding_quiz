@@ -41,16 +41,18 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
       {...props}
     >
       {choiceImageUrl ? (
-        <div className="flex flex-col items-center gap-1 w-full h-full">
-          <img
-            src={choiceImageUrl}
-            alt={choice || `選択肢${choiceIndex}`}
-            className="flex-1 min-h-0 max-w-full object-contain rounded-lg"
-          />
-          {choice && <span className="text-xs truncate max-w-full">{choice}</span>}
+        <div className="flex flex-col items-center gap-1.5 w-full h-full">
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden rounded-lg">
+            <img
+              src={choiceImageUrl}
+              alt={choice || `選択肢${choiceIndex}`}
+              className="max-w-full max-h-full object-cover rounded-lg"
+            />
+          </div>
+          {choice && <span className="text-sm font-bold truncate max-w-full">{choice}</span>}
         </div>
       ) : (
-        <span className="text-base">{choice}</span>
+        <span className="text-lg">{choice}</span>
       )}
     </button>
   );

@@ -21,16 +21,17 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
 
   const timeRemaining = Math.max(0, rawTimeRemaining);
   const isUrgent = timeRemaining <= 5;
+  const hasChoiceImages = question.choiceImageUrls?.some(Boolean);
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush to-white">
+    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col bg-gradient-to-b from-blush to-white">
       {/* ヘッダー */}
-      <div className="flex justify-between items-center px-6 py-4 text-gray-900">
-        <span className="text-base">
+      <div className="flex justify-between items-center px-8 py-4 text-gray-900">
+        <span className="text-xl lg:text-2xl font-semibold">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <span
-          className={`text-5xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
+          className={`text-6xl lg:text-7xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -38,50 +39,49 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           {timeRemaining}
           <span className="sr-only">秒</span>
         </span>
-        <span className="text-base">
+        <span className="text-xl lg:text-2xl font-semibold">
           回答: {answerCount} / {totalParticipants}
         </span>
       </div>
 
       {/* 問題文 */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 min-h-0">
         {question.mediaUrl !== null && question.mediaType === "image" ? (
-          <img
-            src={question.mediaUrl}
-            alt={question.mediaAltText || "問題の画像"}
-            width={600}
-            height={400}
-            loading="lazy"
-            className="max-w-[60%] max-h-[40vh] rounded-xl mb-6 object-contain"
-          />
+          <div className="max-w-[55%] max-h-[35vh] mb-4 overflow-hidden rounded-xl">
+            <img
+              src={question.mediaUrl}
+              alt={question.mediaAltText || "問題の画像"}
+              className="w-full h-full object-cover"
+            />
+          </div>
         ) : null}
         {question.mediaUrl !== null && question.mediaType === "video" ? (
           <video
             src={question.mediaUrl}
-            width={600}
-            height={400}
             autoPlay
             muted
             aria-label="問題の動画"
-            className="max-w-[60%] max-h-[40vh] rounded-xl mb-6"
+            className="max-w-[55%] max-h-[35vh] rounded-xl mb-4"
           />
         ) : null}
-        <h2 className="text-4xl text-gray-900 text-center [text-wrap:balance]">{question.text}</h2>
+        <h2 className="text-5xl lg:text-6xl text-gray-900 text-center [text-wrap:balance] leading-tight">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
-      <div className="grid grid-cols-2 gap-2 px-6 pb-4">
+      <div className="grid grid-cols-2 gap-3 px-8 pb-4">
         {question.choices.map((choice, i) => {
           const imageUrl = question.choiceImageUrls?.[i];
           return (
             <div
               key={i}
-              className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
+              className={`flex items-center gap-4 px-8 py-6 rounded-xl text-white font-bold ${hasChoiceImages ? "text-2xl lg:text-3xl" : "text-3xl lg:text-4xl"} ${CHOICE_PASTEL_CLASSES[i]}`}
             >
               {imageUrl ? (
-                <div className="flex items-center gap-3 w-full">
-                  <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="h-24 md:h-32 object-contain rounded-lg" />
-                  {choice && <span>{choice}</span>}
+                <div className="flex items-center gap-4 w-full">
+                  <div className="w-28 h-28 lg:w-36 lg:h-36 shrink-0 overflow-hidden rounded-lg">
+                    <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                  {choice && <span className="truncate">{choice}</span>}
                 </div>
               ) : (
                 choice
@@ -93,11 +93,11 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
 
       {/* 手動締め切りボタン */}
       {!isDisplay && (
-        <div className="px-6 pb-6 text-center">
+        <div className="px-8 pb-5 text-center">
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-6 py-3 rounded-lg bg-pink-200/80 text-pink-900 text-sm font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-3 rounded-lg bg-pink-200/80 text-pink-900 text-base font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             回答を締め切る
           </button>
