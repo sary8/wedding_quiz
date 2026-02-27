@@ -61,7 +61,7 @@ describe("ProfilePage", () => {
     await user.type(screen.getByLabelText(/ニックネーム/), "太郎");
     await user.click(screen.getByRole("button", { name: "参加する" }));
 
-    expect(handleJoin).toHaveBeenCalledWith("太郎", "data:image/png;base64,selfie");
+    expect(handleJoin).toHaveBeenCalledWith("太郎", "data:image/png;base64,selfie", undefined);
   });
 
   it("Enterキーでもフォーム送信される", async () => {
@@ -74,7 +74,7 @@ describe("ProfilePage", () => {
     await user.type(input, "花子");
     await user.keyboard("{Enter}");
 
-    expect(handleJoin).toHaveBeenCalledWith("花子", "data:image/png;base64,selfie");
+    expect(handleJoin).toHaveBeenCalledWith("花子", "data:image/png;base64,selfie", undefined);
   });
 
   it("isJoining=trueで参加ボタンが無効になり「参加中…」と表示される", async () => {
