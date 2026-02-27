@@ -109,6 +109,44 @@ describe("questionBank routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("画像選択肢で作成 → 201", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "画像問題",
+        choiceType: "image",
+        choice1: "", choice2: "", choice3: "", choice4: "",
+        choice1ImageUrl: "/api/media/1.jpg",
+        choice2ImageUrl: "/api/media/2.jpg",
+        choice3ImageUrl: "/api/media/3.jpg",
+        choice4ImageUrl: "/api/media/4.jpg",
+        correctChoice: 1,
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.choice_type).toBe("image");
+      expect(data.choice1_image_url).toBe("/api/media/1.jpg");
+    });
+
+    it("画像選択肢でURL不足 → 400", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "画像問題",
+        choiceType: "image",
+        choice1: "", choice2: "", choice3: "", choice4: "",
+        choice1ImageUrl: "/api/media/1.jpg",
+        correctChoice: 1,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("不正なchoiceType → 400", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "問題",
+        choiceType: "video",
+        choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+        correctChoice: 1,
+      });
+      expect(res.status).toBe(400);
+    });
+
     it("制限時間範囲外 → 400", async () => {
       const res = await jsonRequest("/", "POST", {
         text: "問題",
@@ -199,6 +237,35 @@ describe("questionBank routes", () => {
         bankQuestionIds: [],
       });
       expect(res.status).toBe(400);
+    });
+
+    it("画像選択肢のバンク問題をインポート → choice_type/image_url コピー", async () => {
+      const quiz = await createTestQuiz();
+      const bq = await createTestBankQuestion({
+        text: "画像バンク問題",
+        choiceType: "image",
+        choice1ImageUrl: "/api/media/1.jpg",
+        choice2ImageUrl: "/api/media/2.jpg",
+        choice3ImageUrl: "/api/media/3.jpg",
+        choice4ImageUrl: "/api/media/4.jpg",
+      });
+
+      const res = await jsonRequest("/import-to-quiz", "POST", {
+        quizId: quiz.id,
+        bankQuestionIds: [bq.id],
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.count).toBe(1);
+
+      // インポートされた問題を直接確認
+      const { db, testSchema: schema } = await import("../helpers/testDb.js");
+      const { eq } = await import("drizzle-orm");
+      const imported = await db.query.questions.findFirst({
+        where: eq(schema.questions.id, data.imported[0]),
+      });
+      expect(imported!.choice_type).toBe("image");
+      expect(imported!.choice1_image_url).toBe("/api/media/1.jpg");
     });
 
     it("存在しないバンク問題IDはスキップ", async () => {

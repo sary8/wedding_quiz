@@ -14,7 +14,9 @@ function questionToPreviewData(question: Question, index: number, total: number)
     text: question.text,
     mediaType: question.media_type,
     mediaUrl: question.media_url,
+    choiceType: question.choice_type,
     choices: [question.choice1, question.choice2, question.choice3, question.choice4],
+    choiceImageUrls: [question.choice1_image_url, question.choice2_image_url, question.choice3_image_url, question.choice4_image_url],
     timeLimitSeconds: question.time_limit_seconds,
     points: question.points,
   };
@@ -120,8 +122,9 @@ export function PreviewPage() {
               isSelected={isCorrect}
               disabled={true}
               choiceIndex={choiceIndex}
+              choiceImageUrl={question.choiceImageUrls?.[i]}
               onClick={() => {}}
-              aria-label={`選択肢${choiceIndex}: ${choice}${isCorrect ? "（正解）" : ""}`}
+              aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${isCorrect ? "（正解）" : ""}`}
             />
           );
         })}

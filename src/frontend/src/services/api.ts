@@ -74,10 +74,15 @@ export function deleteParticipantsBulk(quizId: number, ids?: number[]) {
 export function addQuestion(data: {
   quizId: number;
   text: string;
+  choiceType?: string;
   choice1: string;
   choice2: string;
   choice3: string;
   choice4: string;
+  choice1ImageUrl?: string;
+  choice2ImageUrl?: string;
+  choice3ImageUrl?: string;
+  choice4ImageUrl?: string;
   correctChoice: number;
   mediaType?: string;
   mediaUrl?: string;
@@ -91,10 +96,15 @@ export function addQuestion(data: {
 
 export function updateQuestion(id: number, data: {
   text?: string;
+  choiceType?: string;
   choice1?: string;
   choice2?: string;
   choice3?: string;
   choice4?: string;
+  choice1ImageUrl?: string | null;
+  choice2ImageUrl?: string | null;
+  choice3ImageUrl?: string | null;
+  choice4ImageUrl?: string | null;
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;
@@ -125,10 +135,15 @@ export function listBankQuestions() {
 
 export function addBankQuestion(data: {
   text: string;
+  choiceType?: string;
   choice1: string;
   choice2: string;
   choice3: string;
   choice4: string;
+  choice1ImageUrl?: string;
+  choice2ImageUrl?: string;
+  choice3ImageUrl?: string;
+  choice4ImageUrl?: string;
   correctChoice: number;
   timeLimitSeconds?: number;
   points?: number;
@@ -143,10 +158,15 @@ export function addBankQuestion(data: {
 
 export function updateBankQuestion(id: number, data: {
   text?: string;
+  choiceType?: string;
   choice1?: string;
   choice2?: string;
   choice3?: string;
   choice4?: string;
+  choice1ImageUrl?: string | null;
+  choice2ImageUrl?: string | null;
+  choice3ImageUrl?: string | null;
+  choice4ImageUrl?: string | null;
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;

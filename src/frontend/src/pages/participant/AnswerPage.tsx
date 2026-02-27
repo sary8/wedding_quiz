@@ -101,8 +101,9 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
               isSelected={isSelected}
               disabled={selectedChoice !== null}
               choiceIndex={choiceIndex}
+              choiceImageUrl={question.choiceImageUrls?.[i]}
               onClick={handleChoiceClick}
-              aria-label={`選択肢${choiceIndex}: ${choice}`}
+              aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}`}
             />
           );
         })}

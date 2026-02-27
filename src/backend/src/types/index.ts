@@ -7,6 +7,13 @@ export const QuizStatus = {
 } as const;
 export type QuizStatus = (typeof QuizStatus)[keyof typeof QuizStatus];
 
+// Choice type
+export const ChoiceType = {
+  Text: "text",
+  Image: "image",
+} as const;
+export type ChoiceType = (typeof ChoiceType)[keyof typeof ChoiceType];
+
 // Media type
 export const MediaType = {
   None: "none",
@@ -105,7 +112,9 @@ export type QuestionData = {
   text: string;
   mediaType: MediaType;
   mediaUrl: string | null;
+  choiceType: ChoiceType;
   choices: string[];
+  choiceImageUrls: (string | null)[];
   timeLimitSeconds: number;
   points: number;
 };

@@ -8,6 +8,7 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
   color: ChoiceColor;
   isSelected?: boolean;
   choiceIndex: number;
+  choiceImageUrl?: string | null;
   onClick: (choiceIndex: number) => void;
 };
 
@@ -18,7 +19,7 @@ const colorStyles: Record<ChoiceColor, string> = {
   yellow: "bg-choice-pastel-amber",
 };
 
-export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelected = false, disabled, choiceIndex, onClick, ...props }: Props) {
+export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelected = false, disabled, choiceIndex, choiceImageUrl, onClick, ...props }: Props) {
   const handleClick = useCallback(() => {
     onClick(choiceIndex);
   }, [onClick, choiceIndex]);
@@ -39,7 +40,18 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
       onClick={handleClick}
       {...props}
     >
-      <span className="text-base">{choice}</span>
+      {choiceImageUrl ? (
+        <div className="flex flex-col items-center gap-1 w-full h-full">
+          <img
+            src={choiceImageUrl}
+            alt={choice || `選択肢${choiceIndex}`}
+            className="flex-1 min-h-0 max-w-full object-contain rounded-lg"
+          />
+          {choice && <span className="text-xs truncate max-w-full">{choice}</span>}
+        </div>
+      ) : (
+        <span className="text-base">{choice}</span>
+      )}
     </button>
   );
 });

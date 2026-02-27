@@ -26,10 +26,17 @@ export const questions = sqliteTable("questions", {
     .notNull()
     .default("none"),
   media_url: text("media_url"),
+  choice_type: text("choice_type", { enum: ["text", "image"] })
+    .notNull()
+    .default("text"),
   choice1: text("choice1", { length: 200 }).notNull(),
   choice2: text("choice2", { length: 200 }).notNull(),
   choice3: text("choice3", { length: 200 }).notNull(),
   choice4: text("choice4", { length: 200 }).notNull(),
+  choice1_image_url: text("choice1_image_url"),
+  choice2_image_url: text("choice2_image_url"),
+  choice3_image_url: text("choice3_image_url"),
+  choice4_image_url: text("choice4_image_url"),
   correct_choice: integer("correct_choice").notNull(), // 1-4
   time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
   points: integer("points").notNull().default(1000),
@@ -85,10 +92,17 @@ export const questionBank = sqliteTable("question_bank", {
     .notNull()
     .default("none"),
   media_url: text("media_url"),
+  choice_type: text("choice_type", { enum: ["text", "image"] })
+    .notNull()
+    .default("text"),
   choice1: text("choice1", { length: 200 }).notNull(),
   choice2: text("choice2", { length: 200 }).notNull(),
   choice3: text("choice3", { length: 200 }).notNull(),
   choice4: text("choice4", { length: 200 }).notNull(),
+  choice1_image_url: text("choice1_image_url"),
+  choice2_image_url: text("choice2_image_url"),
+  choice3_image_url: text("choice3_image_url"),
+  choice4_image_url: text("choice4_image_url"),
   correct_choice: integer("correct_choice").notNull(), // 1-4
   time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
   points: integer("points").notNull().default(1000),

@@ -26,10 +26,15 @@ export async function createTestQuestion(
   overrides: Partial<{
     orderIndex: number;
     text: string;
+    choiceType: string;
     choice1: string;
     choice2: string;
     choice3: string;
     choice4: string;
+    choice1ImageUrl: string | null;
+    choice2ImageUrl: string | null;
+    choice3ImageUrl: string | null;
+    choice4ImageUrl: string | null;
     correctChoice: number;
     timeLimitSeconds: number;
     points: number;
@@ -45,10 +50,15 @@ export async function createTestQuestion(
       text: overrides.text ?? "テスト問題",
       media_type: (overrides.mediaType as "none" | "image" | "video") ?? "none",
       media_url: overrides.mediaUrl ?? null,
+      choice_type: (overrides.choiceType as "text" | "image") ?? "text",
       choice1: overrides.choice1 ?? "選択肢1",
       choice2: overrides.choice2 ?? "選択肢2",
       choice3: overrides.choice3 ?? "選択肢3",
       choice4: overrides.choice4 ?? "選択肢4",
+      choice1_image_url: overrides.choice1ImageUrl ?? null,
+      choice2_image_url: overrides.choice2ImageUrl ?? null,
+      choice3_image_url: overrides.choice3ImageUrl ?? null,
+      choice4_image_url: overrides.choice4ImageUrl ?? null,
       correct_choice: overrides.correctChoice ?? 1,
       time_limit_seconds: overrides.timeLimitSeconds ?? 20,
       points: overrides.points ?? 1000,
@@ -88,10 +98,15 @@ export async function createTestParticipant(
 
 export async function createTestBankQuestion(overrides: Partial<{
   text: string;
+  choiceType: string;
   choice1: string;
   choice2: string;
   choice3: string;
   choice4: string;
+  choice1ImageUrl: string | null;
+  choice2ImageUrl: string | null;
+  choice3ImageUrl: string | null;
+  choice4ImageUrl: string | null;
   correctChoice: number;
   timeLimitSeconds: number;
   points: number;
@@ -104,10 +119,15 @@ export async function createTestBankQuestion(overrides: Partial<{
       text: overrides.text ?? "バンク問題",
       media_type: (overrides.mediaType as "none" | "image" | "video") ?? "none",
       media_url: overrides.mediaUrl ?? null,
+      choice_type: (overrides.choiceType as "text" | "image") ?? "text",
       choice1: overrides.choice1 ?? "バンク選択肢1",
       choice2: overrides.choice2 ?? "バンク選択肢2",
       choice3: overrides.choice3 ?? "バンク選択肢3",
       choice4: overrides.choice4 ?? "バンク選択肢4",
+      choice1_image_url: overrides.choice1ImageUrl ?? null,
+      choice2_image_url: overrides.choice2ImageUrl ?? null,
+      choice3_image_url: overrides.choice3ImageUrl ?? null,
+      choice4_image_url: overrides.choice4ImageUrl ?? null,
       correct_choice: overrides.correctChoice ?? 1,
       time_limit_seconds: overrides.timeLimitSeconds ?? 20,
       points: overrides.points ?? 1000,

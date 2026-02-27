@@ -5,25 +5,47 @@ import { eq, sql } from "drizzle-orm";
 const VALID_MEDIA_TYPES = ["none", "image", "video"] as const;
 type ValidMediaType = typeof VALID_MEDIA_TYPES[number];
 
+const VALID_CHOICE_TYPES = ["text", "image"] as const;
+type ValidChoiceType = typeof VALID_CHOICE_TYPES[number];
+
 function isValidMediaType(v: unknown): v is ValidMediaType {
   return typeof v === "string" && (VALID_MEDIA_TYPES as readonly string[]).includes(v);
 }
 
+function isValidChoiceType(v: unknown): v is ValidChoiceType {
+  return typeof v === "string" && (VALID_CHOICE_TYPES as readonly string[]).includes(v);
+}
+
 function validateQuestionFields(body: {
   text?: string;
+  choiceType?: string;
   choice1?: string;
   choice2?: string;
   choice3?: string;
   choice4?: string;
+  choice1ImageUrl?: string | null;
+  choice2ImageUrl?: string | null;
+  choice3ImageUrl?: string | null;
+  choice4ImageUrl?: string | null;
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;
   mediaType?: string;
 }, requireAll: boolean): string | null {
+  if (body.choiceType !== undefined && !isValidChoiceType(body.choiceType)) {
+    return "選択肢タイプはtext/imageのいずれかです";
+  }
   if (requireAll) {
     if (!body.text?.trim()) return "問題文は必須です";
-    if (!body.choice1?.trim() || !body.choice2?.trim() || !body.choice3?.trim() || !body.choice4?.trim()) {
-      return "すべての選択肢を入力してください";
+    const choiceType = body.choiceType ?? "text";
+    if (choiceType === "text") {
+      if (!body.choice1?.trim() || !body.choice2?.trim() || !body.choice3?.trim() || !body.choice4?.trim()) {
+        return "すべての選択肢を入力してください";
+      }
+    } else {
+      if (!body.choice1ImageUrl || !body.choice2ImageUrl || !body.choice3ImageUrl || !body.choice4ImageUrl) {
+        return "画像選択肢では4つの画像URLが必須です";
+      }
     }
     if (!Number.isInteger(body.correctChoice) || body.correctChoice! < 1 || body.correctChoice! > 4) {
       return "正解は1〜4の整数で指定してください";
@@ -62,10 +84,15 @@ questionBankRoutes.get("/", async (c) => {
 questionBankRoutes.post("/", async (c) => {
   const body = await c.req.json<{
     text: string;
+    choiceType?: string;
     choice1: string;
     choice2: string;
     choice3: string;
     choice4: string;
+    choice1ImageUrl?: string;
+    choice2ImageUrl?: string;
+    choice3ImageUrl?: string;
+    choice4ImageUrl?: string;
     correctChoice: number;
     timeLimitSeconds?: number;
     points?: number;
@@ -82,10 +109,15 @@ questionBankRoutes.post("/", async (c) => {
       text: body.text.trim(),
       media_type: (body.mediaType ?? "none") as "none" | "image" | "video",
       media_url: body.mediaUrl || null,
-      choice1: body.choice1.trim(),
-      choice2: body.choice2.trim(),
-      choice3: body.choice3.trim(),
-      choice4: body.choice4.trim(),
+      choice_type: (body.choiceType ?? "text") as "text" | "image",
+      choice1: body.choice1?.trim() || "",
+      choice2: body.choice2?.trim() || "",
+      choice3: body.choice3?.trim() || "",
+      choice4: body.choice4?.trim() || "",
+      choice1_image_url: body.choice1ImageUrl || null,
+      choice2_image_url: body.choice2ImageUrl || null,
+      choice3_image_url: body.choice3ImageUrl || null,
+      choice4_image_url: body.choice4ImageUrl || null,
       correct_choice: body.correctChoice,
       time_limit_seconds: body.timeLimitSeconds ?? 20,
       points: body.points ?? 1000,
@@ -101,10 +133,15 @@ questionBankRoutes.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   const body = await c.req.json<{
     text?: string;
+    choiceType?: string;
     choice1?: string;
     choice2?: string;
     choice3?: string;
     choice4?: string;
+    choice1ImageUrl?: string | null;
+    choice2ImageUrl?: string | null;
+    choice3ImageUrl?: string | null;
+    choice4ImageUrl?: string | null;
     correctChoice?: number;
     timeLimitSeconds?: number;
     points?: number;
@@ -126,10 +163,15 @@ questionBankRoutes.put("/:id", async (c) => {
       text: body.text?.trim() ?? existing.text,
       media_type: (body.mediaType as "none" | "image" | "video" | undefined) ?? existing.media_type,
       media_url: body.mediaUrl !== undefined ? (body.mediaUrl || null) : existing.media_url,
+      choice_type: (body.choiceType as "text" | "image" | undefined) ?? existing.choice_type,
       choice1: body.choice1?.trim() ?? existing.choice1,
       choice2: body.choice2?.trim() ?? existing.choice2,
       choice3: body.choice3?.trim() ?? existing.choice3,
       choice4: body.choice4?.trim() ?? existing.choice4,
+      choice1_image_url: body.choice1ImageUrl !== undefined ? (body.choice1ImageUrl || null) : existing.choice1_image_url,
+      choice2_image_url: body.choice2ImageUrl !== undefined ? (body.choice2ImageUrl || null) : existing.choice2_image_url,
+      choice3_image_url: body.choice3ImageUrl !== undefined ? (body.choice3ImageUrl || null) : existing.choice3_image_url,
+      choice4_image_url: body.choice4ImageUrl !== undefined ? (body.choice4ImageUrl || null) : existing.choice4_image_url,
       correct_choice: body.correctChoice ?? existing.correct_choice,
       time_limit_seconds: body.timeLimitSeconds ?? existing.time_limit_seconds,
       points: body.points ?? existing.points,
@@ -192,10 +234,15 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
         text: bankQ.text,
         media_type: bankQ.media_type,
         media_url: bankQ.media_url,
+        choice_type: bankQ.choice_type,
         choice1: bankQ.choice1,
         choice2: bankQ.choice2,
         choice3: bankQ.choice3,
         choice4: bankQ.choice4,
+        choice1_image_url: bankQ.choice1_image_url,
+        choice2_image_url: bankQ.choice2_image_url,
+        choice3_image_url: bankQ.choice3_image_url,
+        choice4_image_url: bankQ.choice4_image_url,
         correct_choice: bankQ.correct_choice,
         time_limit_seconds: bankQ.time_limit_seconds,
         points: bankQ.points,

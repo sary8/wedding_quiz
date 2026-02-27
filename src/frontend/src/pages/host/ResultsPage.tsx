@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { QuestionResultData, QuestionData } from "../../types";
+import { cn } from "../../utils/cn";
 
 type Props = {
   result: QuestionResultData | null;
@@ -76,7 +77,14 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           return (
             <div key={i} className="mb-4">
               <div className="flex justify-between mb-1">
-                <span className={isCorrect ? "font-bold text-base" : "font-normal text-base"}>
+                <span className={cn("flex items-center gap-2", isCorrect ? "font-bold text-base" : "font-normal text-base")}>
+                  {question?.choiceImageUrls?.[i] && (
+                    <img
+                      src={question.choiceImageUrls[i]!}
+                      alt={choiceText}
+                      className="h-8 w-8 object-cover rounded inline-block"
+                    />
+                  )}
                   {choiceText}
                   {isCorrect && (
                     <>

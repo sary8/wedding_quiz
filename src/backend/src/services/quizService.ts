@@ -183,7 +183,9 @@ export async function getNextQuestion(roomCode: string): Promise<QuestionData | 
     text: q.text,
     mediaType: q.media_type as "none" | "image" | "video",
     mediaUrl: q.media_url,
+    choiceType: q.choice_type as "text" | "image",
     choices: [q.choice1, q.choice2, q.choice3, q.choice4],
+    choiceImageUrls: [q.choice1_image_url, q.choice2_image_url, q.choice3_image_url, q.choice4_image_url],
     timeLimitSeconds: q.time_limit_seconds,
     points: q.points,
   };
@@ -511,7 +513,9 @@ export async function getReconnectQuestionData(
     text: q.text,
     mediaType: q.media_type as "none" | "image" | "video",
     mediaUrl: q.media_url,
+    choiceType: q.choice_type as "text" | "image",
     choices: [q.choice1, q.choice2, q.choice3, q.choice4],
+    choiceImageUrls: [q.choice1_image_url, q.choice2_image_url, q.choice3_image_url, q.choice4_image_url],
     timeLimitSeconds: q.time_limit_seconds,
     points: q.points,
   };

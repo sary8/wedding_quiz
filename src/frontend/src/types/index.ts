@@ -6,6 +6,12 @@ export const QuizStatus = {
 } as const;
 export type QuizStatus = (typeof QuizStatus)[keyof typeof QuizStatus];
 
+export const ChoiceType = {
+  Text: "text",
+  Image: "image",
+} as const;
+export type ChoiceType = (typeof ChoiceType)[keyof typeof ChoiceType];
+
 export const MediaType = {
   None: "none",
   Image: "image",
@@ -27,7 +33,9 @@ export type QuestionData = {
   mediaType: MediaType;
   mediaUrl: string | null;
   mediaAltText?: string;
+  choiceType: ChoiceType;
   choices: string[];
+  choiceImageUrls: (string | null)[];
   timeLimitSeconds: number;
   points: number;
 };
@@ -111,10 +119,15 @@ export type QuestionBankItem = {
   text: string;
   media_type: MediaType;
   media_url: string | null;
+  choice_type: ChoiceType;
   choice1: string;
   choice2: string;
   choice3: string;
   choice4: string;
+  choice1_image_url: string | null;
+  choice2_image_url: string | null;
+  choice3_image_url: string | null;
+  choice4_image_url: string | null;
   correct_choice: number;
   time_limit_seconds: number;
   points: number;
@@ -129,10 +142,15 @@ export type Question = {
   media_type: MediaType;
   media_url: string | null;
   media_alt_text?: string;
+  choice_type: ChoiceType;
   choice1: string;
   choice2: string;
   choice3: string;
   choice4: string;
+  choice1_image_url: string | null;
+  choice2_image_url: string | null;
+  choice3_image_url: string | null;
+  choice4_image_url: string | null;
   correct_choice: number;
   time_limit_seconds: number;
   points: number;

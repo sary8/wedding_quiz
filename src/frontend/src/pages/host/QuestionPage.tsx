@@ -71,14 +71,24 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
 
       {/* 選択肢 */}
       <div className="grid grid-cols-2 gap-2 px-6 pb-4">
-        {question.choices.map((choice, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
-          >
-            {choice}
-          </div>
-        ))}
+        {question.choices.map((choice, i) => {
+          const imageUrl = question.choiceImageUrls?.[i];
+          return (
+            <div
+              key={i}
+              className={`flex items-center gap-3 px-6 py-5 rounded-xl text-white text-2xl font-bold ${CHOICE_PASTEL_CLASSES[i]}`}
+            >
+              {imageUrl ? (
+                <div className="flex items-center gap-3 w-full">
+                  <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="h-24 md:h-32 object-contain rounded-lg" />
+                  {choice && <span>{choice}</span>}
+                </div>
+              ) : (
+                choice
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* 手動締め切りボタン */}

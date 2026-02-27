@@ -214,6 +214,100 @@ describe("question routes", () => {
       });
       expect(res.status).toBe(404);
     });
+
+    it("画像選択肢で問題作成 → 201", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "この写真は誰？",
+          choiceType: "image",
+          choice1: "新郎",
+          choice2: "新婦",
+          choice3: "友人A",
+          choice4: "友人B",
+          choice1ImageUrl: "/api/media/img1.jpg",
+          choice2ImageUrl: "/api/media/img2.jpg",
+          choice3ImageUrl: "/api/media/img3.jpg",
+          choice4ImageUrl: "/api/media/img4.jpg",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.choice_type).toBe("image");
+      expect(data.choice1_image_url).toBe("/api/media/img1.jpg");
+      expect(data.choice4_image_url).toBe("/api/media/img4.jpg");
+    });
+
+    it("画像選択肢でテキスト空 → 成功（テキストは任意）", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "どの写真？",
+          choiceType: "image",
+          choice1: "",
+          choice2: "",
+          choice3: "",
+          choice4: "",
+          choice1ImageUrl: "/api/media/img1.jpg",
+          choice2ImageUrl: "/api/media/img2.jpg",
+          choice3ImageUrl: "/api/media/img3.jpg",
+          choice4ImageUrl: "/api/media/img4.jpg",
+          correctChoice: 2,
+        }),
+      });
+      expect(res.status).toBe(201);
+    });
+
+    it("画像選択肢でURL不足 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "写真問題",
+          choiceType: "image",
+          choice1: "",
+          choice2: "",
+          choice3: "",
+          choice4: "",
+          choice1ImageUrl: "/api/media/img1.jpg",
+          choice2ImageUrl: "/api/media/img2.jpg",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("画像URL");
+    });
+
+    it("不正なchoiceType → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "質問",
+          choiceType: "audio",
+          choice1: "A",
+          choice2: "B",
+          choice3: "C",
+          choice4: "D",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("選択肢タイプ");
+    });
   });
 
   describe("PUT /:id", () => {
@@ -351,6 +445,39 @@ describe("question routes", () => {
           key: "test-secret-123",
           correctChoice: 0,
         }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("text→image への更新", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id);
+
+      const res = await questionRoutes.request(`/${question.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          choiceType: "image",
+          choice1ImageUrl: "/api/media/a.jpg",
+          choice2ImageUrl: "/api/media/b.jpg",
+          choice3ImageUrl: "/api/media/c.jpg",
+          choice4ImageUrl: "/api/media/d.jpg",
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.choice_type).toBe("image");
+      expect(data.choice1_image_url).toBe("/api/media/a.jpg");
+    });
+
+    it("不正なchoiceTypeで更新 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id);
+
+      const res = await questionRoutes.request(`/${question.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ choiceType: "video" }),
       });
       expect(res.status).toBe(400);
     });
