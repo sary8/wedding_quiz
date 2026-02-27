@@ -7,6 +7,13 @@ export const QuizStatus = {
 } as const;
 export type QuizStatus = (typeof QuizStatus)[keyof typeof QuizStatus];
 
+// Question type
+export const QuestionType = {
+  FourChoice: "four_choice",
+  TrueFalse: "true_false",
+} as const;
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType];
+
 // Choice type
 export const ChoiceType = {
   Text: "text",
@@ -127,6 +134,7 @@ export type QuestionData = {
   questionIndex: number;
   totalQuestions: number;
   text: string;
+  questionType: QuestionType;
   mediaType: MediaType;
   mediaUrl: string | null;
   choiceType: ChoiceType;

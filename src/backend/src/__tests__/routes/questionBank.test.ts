@@ -281,5 +281,69 @@ describe("questionBank routes", () => {
       const data = await res.json();
       expect(data.count).toBe(1);
     });
+
+    it("○×問題のインポート → question_type保持", async () => {
+      const quiz = await createTestQuiz();
+      const bq = await createTestBankQuestion({
+        questionType: "true_false",
+        choice1: "○", choice2: "×", choice3: null, choice4: null,
+        correctChoice: 2,
+      });
+
+      const res = await jsonRequest("/import-to-quiz", "POST", {
+        quizId: quiz.id,
+        bankQuestionIds: [bq.id],
+      });
+      expect(res.status).toBe(201);
+
+      const { db, testSchema: schema } = await import("../helpers/testDb.js");
+      const { eq } = await import("drizzle-orm");
+      const imported = await db.query.questions.findFirst({
+        where: eq(schema.questions.id, (await res.json()).imported[0]),
+      });
+      expect(imported!.question_type).toBe("true_false");
+      expect(imported!.choice1).toBe("○");
+      expect(imported!.choice3).toBeNull();
+    });
+  });
+
+  describe("○×問題 (true_false)", () => {
+    it("POST: ○×問題を追加 → choice1=○, choice2=×固定", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "○×バンク問題",
+        questionType: "true_false",
+        correctChoice: 1,
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.question_type).toBe("true_false");
+      expect(data.choice1).toBe("○");
+      expect(data.choice2).toBe("×");
+      expect(data.choice3).toBeNull();
+      expect(data.choice4).toBeNull();
+    });
+
+    it("POST: ○×問題でcorrectChoice=3 → 400", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "テスト",
+        questionType: "true_false",
+        correctChoice: 3,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("PUT: ○×に変更", async () => {
+      const bq = await createTestBankQuestion();
+      const res = await jsonRequest(`/${bq.id}`, "PUT", {
+        questionType: "true_false",
+        correctChoice: 2,
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.question_type).toBe("true_false");
+      expect(data.choice1).toBe("○");
+      expect(data.choice2).toBe("×");
+      expect(data.choice3).toBeNull();
+    });
   });
 });

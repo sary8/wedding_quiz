@@ -9,16 +9,22 @@ const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
 const NOOP = () => {};
 
 function questionToPreviewData(question: Question, index: number, total: number): QuestionData {
+  const isTrueFalse = question.question_type === "true_false";
   return {
     questionId: question.id,
     questionIndex: index,
     totalQuestions: total,
     text: question.text,
+    questionType: question.question_type,
     mediaType: question.media_type,
     mediaUrl: question.media_url,
     choiceType: question.choice_type,
-    choices: [question.choice1, question.choice2, question.choice3, question.choice4],
-    choiceImageUrls: [question.choice1_image_url, question.choice2_image_url, question.choice3_image_url, question.choice4_image_url],
+    choices: isTrueFalse
+      ? [question.choice1, question.choice2]
+      : [question.choice1, question.choice2, question.choice3 ?? "", question.choice4 ?? ""],
+    choiceImageUrls: isTrueFalse
+      ? [question.choice1_image_url, question.choice2_image_url]
+      : [question.choice1_image_url, question.choice2_image_url, question.choice3_image_url, question.choice4_image_url],
     timeLimitSeconds: question.time_limit_seconds,
     points: question.points,
   };
@@ -111,27 +117,47 @@ export function PreviewPage() {
         <p className="text-xl font-bold">{question.text}</p>
       </div>
 
-      {/* 4色回答ボタン（プレビュー：正解をハイライト） */}
-      <div className="flex-1 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢プレビュー">
-        {question.choices.map((choice, i) => {
-          const choiceIndex = i + 1;
-          const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
+      {/* 回答ボタン（プレビュー：正解をハイライト） */}
+      {question.questionType === "true_false" ? (
+        <div className="flex-1 grid grid-cols-2 gap-3 p-3" role="group" aria-label="回答選択肢プレビュー">
+          {question.choices.map((choice, i) => {
+            const choiceIndex = i + 1;
+            const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
+            const bgClass = i === 0 ? "bg-green-500" : "bg-rose-500";
+            return (
+              <div
+                key={`preview-${currentIndex}-${i}`}
+                className={`flex flex-col items-center justify-center rounded-2xl text-white font-bold ${bgClass} ${isCorrect ? "ring-4 ring-yellow-400" : "opacity-50"}`}
+                aria-label={`${choice}${isCorrect ? "（正解）" : ""}`}
+              >
+                <span className="text-7xl">{choice}</span>
+                {isCorrect && <span className="text-sm mt-1">正解</span>}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex-1 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢プレビュー">
+          {question.choices.map((choice, i) => {
+            const choiceIndex = i + 1;
+            const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
 
-          return (
-            <ChoiceButton
-              key={`preview-${currentIndex}-${i}`}
-              choice={choice}
-              color={CHOICE_COLORS[i]}
-              isSelected={isCorrect}
-              disabled={true}
-              choiceIndex={choiceIndex}
-              choiceImageUrl={question.choiceImageUrls?.[i]}
-              onClick={NOOP}
-              aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${isCorrect ? "（正解）" : ""}`}
-            />
-          );
-        })}
-      </div>
+            return (
+              <ChoiceButton
+                key={`preview-${currentIndex}-${i}`}
+                choice={choice}
+                color={CHOICE_COLORS[i]}
+                isSelected={isCorrect}
+                disabled={true}
+                choiceIndex={choiceIndex}
+                choiceImageUrl={question.choiceImageUrls?.[i]}
+                onClick={NOOP}
+                aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${isCorrect ? "（正解）" : ""}`}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* ナビゲーション */}
       <nav className="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-white/80">

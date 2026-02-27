@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import type { Question, QuestionBankItem, ChoiceType } from "../../types";
+import type { Question, QuestionBankItem, ChoiceType, QuestionType } from "../../types";
 import { uploadMedia, addQuestion, updateQuestion, deleteQuestion, addBankQuestion, updateBankQuestion, deleteBankQuestion } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_BG_CLASSES, CHOICE_BORDER_CLASSES, CHOICE_TEXT_CLASSES, CHOICE_BG_LIGHT_CLASSES, CHOICE_LABELS } from "./constants";
@@ -28,10 +28,12 @@ export function QuestionInlineForm(props: Props) {
   const mode = props.mode ?? "quiz";
   const quizId = mode === "quiz" ? (props as QuizModeProps).quizId : 0;
   const [text, setText] = useState(question?.text ?? "");
+  const [questionType, setQuestionType] = useState<QuestionType>(question?.question_type ?? "four_choice");
   const [choiceType, setChoiceType] = useState<ChoiceType>(question?.choice_type ?? "text");
+  const isTrueFalse = questionType === "true_false";
   const [choices, setChoices] = useState(() =>
     question
-      ? [question.choice1, question.choice2, question.choice3, question.choice4]
+      ? [question.choice1, question.choice2, question.choice3 ?? "", question.choice4 ?? ""]
       : ["", "", "", ""],
   );
   const [choiceImageUrls, setChoiceImageUrls] = useState<(string | null)[]>(() =>
@@ -144,15 +146,16 @@ export function QuestionInlineForm(props: Props) {
     setError(null);
     const payload = {
       text: text.trim(),
-      choiceType,
-      choice1: choices[0].trim(),
-      choice2: choices[1].trim(),
-      choice3: choices[2].trim(),
-      choice4: choices[3].trim(),
-      choice1ImageUrl: choiceImageUrls[0] ?? undefined,
-      choice2ImageUrl: choiceImageUrls[1] ?? undefined,
-      choice3ImageUrl: choiceImageUrls[2] ?? undefined,
-      choice4ImageUrl: choiceImageUrls[3] ?? undefined,
+      questionType,
+      choiceType: isTrueFalse ? "text" as const : choiceType,
+      choice1: isTrueFalse ? "○" : choices[0].trim(),
+      choice2: isTrueFalse ? "×" : choices[1].trim(),
+      choice3: isTrueFalse ? "" : choices[2].trim(),
+      choice4: isTrueFalse ? "" : choices[3].trim(),
+      choice1ImageUrl: isTrueFalse ? undefined : (choiceImageUrls[0] ?? undefined),
+      choice2ImageUrl: isTrueFalse ? undefined : (choiceImageUrls[1] ?? undefined),
+      choice3ImageUrl: isTrueFalse ? undefined : (choiceImageUrls[2] ?? undefined),
+      choice4ImageUrl: isTrueFalse ? undefined : (choiceImageUrls[3] ?? undefined),
       correctChoice,
       timeLimitSeconds: timeLimit,
       mediaType: mediaUrl ? "image" : ("none" as const),
@@ -203,11 +206,12 @@ export function QuestionInlineForm(props: Props) {
     try {
       await addBankQuestion({
         text: question.text,
+        questionType: question.question_type,
         choiceType: question.choice_type,
         choice1: question.choice1,
         choice2: question.choice2,
-        choice3: question.choice3,
-        choice4: question.choice4,
+        choice3: question.choice3 ?? "",
+        choice4: question.choice4 ?? "",
         choice1ImageUrl: question.choice1_image_url ?? undefined,
         choice2ImageUrl: question.choice2_image_url ?? undefined,
         choice3ImageUrl: question.choice3_image_url ?? undefined,
@@ -227,9 +231,11 @@ export function QuestionInlineForm(props: Props) {
 
   const canSave =
     text.trim() &&
-    (choiceType === "text"
-      ? choices.every((c) => c.trim())
-      : choiceImageUrls.every((url) => url !== null)) &&
+    (isTrueFalse
+      ? true
+      : choiceType === "text"
+        ? choices.every((c) => c.trim())
+        : choiceImageUrls.every((url) => url !== null)) &&
     !isSaving &&
     !isUploading &&
     !isAnyChoiceImageUploading;
@@ -331,143 +337,218 @@ export function QuestionInlineForm(props: Props) {
         )}
       </div>
 
-      {/* 選択肢タイプ切替 */}
+      {/* 問題形式選択 */}
       <fieldset className="mb-4">
         <legend className="block text-sm text-gray-600 mb-2 font-semibold">
-          選択肢タイプ
+          問題形式
         </legend>
-        <div className="flex gap-2" role="radiogroup" aria-label="選択肢タイプ">
+        <div className="flex gap-2" role="radiogroup" aria-label="問題形式">
           <button
             type="button"
             role="radio"
-            aria-checked={choiceType === "text"}
-            onClick={() => setChoiceType("text")}
+            aria-checked={questionType === "four_choice"}
+            onClick={() => {
+              setQuestionType("four_choice");
+              if (correctChoice > 4) setCorrectChoice(1);
+            }}
             className={cn(
               "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
               btnFocus,
-              choiceType === "text"
+              questionType === "four_choice"
                 ? "bg-accent text-white border-accent"
                 : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
             )}
           >
-            テキスト
+            4択問題
           </button>
           <button
             type="button"
             role="radio"
-            aria-checked={choiceType === "image"}
-            onClick={() => setChoiceType("image")}
+            aria-checked={questionType === "true_false"}
+            onClick={() => {
+              setQuestionType("true_false");
+              if (correctChoice > 2) setCorrectChoice(1);
+            }}
             className={cn(
               "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
               btnFocus,
-              choiceType === "image"
+              questionType === "true_false"
                 ? "bg-accent text-white border-accent"
                 : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
             )}
           >
-            画像
+            ○×問題
           </button>
         </div>
       </fieldset>
 
+      {/* 選択肢タイプ切替（4択問題のみ） */}
+      {!isTrueFalse && (
+        <fieldset className="mb-4">
+          <legend className="block text-sm text-gray-600 mb-2 font-semibold">
+            選択肢タイプ
+          </legend>
+          <div className="flex gap-2" role="radiogroup" aria-label="選択肢タイプ">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={choiceType === "text"}
+              onClick={() => setChoiceType("text")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
+                btnFocus,
+                choiceType === "text"
+                  ? "bg-accent text-white border-accent"
+                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
+              )}
+            >
+              テキスト
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={choiceType === "image"}
+              onClick={() => setChoiceType("image")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
+                btnFocus,
+                choiceType === "image"
+                  ? "bg-accent text-white border-accent"
+                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
+              )}
+            >
+              画像
+            </button>
+          </div>
+        </fieldset>
+      )}
+
       {/* 選択肢 */}
       <fieldset className="mb-4">
         <legend className="block text-sm text-gray-600 mb-2 font-semibold">
-          選択肢（正解をクリックして選択）
+          {isTrueFalse ? "正解を選択" : "選択肢（正解をクリックして選択）"}
         </legend>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {choices.map((c, i) => {
-            const isSelected = correctChoice === i + 1;
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "flex flex-col gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150",
-                  isSelected
-                    ? `${CHOICE_BORDER_CLASSES[i]} ${CHOICE_BG_LIGHT_CLASSES[i]}`
-                    : "border-gray-300 bg-white hover:border-gray-400",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCorrectChoice(i + 1)}
-                    aria-label={`選択肢${CHOICE_LABELS[i]}を正解に設定`}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 cursor-pointer",
-                      btnFocus,
-                      isSelected ? CHOICE_BG_CLASSES[i] : "bg-gray-300 hover:bg-gray-400",
-                    )}
-                  >
-                    {CHOICE_LABELS[i]}
-                  </button>
-                  <input
-                    type="text"
-                    name={`choice-${CHOICE_LABELS[i]}-${formId}`}
-                    autoComplete="off"
-                    value={c}
-                    onChange={(e) => {
-                      const next = [...choices];
-                      next[i] = e.target.value;
-                      setChoices(next);
-                    }}
-                    placeholder={choiceType === "text" ? `選択肢${CHOICE_LABELS[i]}…` : `ラベル（任意）…`}
-                    aria-label={`選択肢${CHOICE_LABELS[i]}のテキスト`}
-                    className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded min-w-0"
-                  />
-                  {isSelected && (
-                    <span aria-hidden="true" className={`text-xs font-bold shrink-0 ${CHOICE_TEXT_CLASSES[i]}`}>
-                      正解
-                    </span>
+        {isTrueFalse ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "○", index: 1, color: "bg-green-100 border-green-400 text-green-700", activeColor: "bg-green-500 text-white border-green-500" },
+              { label: "×", index: 2, color: "bg-rose-100 border-rose-400 text-rose-700", activeColor: "bg-rose-500 text-white border-rose-500" },
+            ].map(({ label, index, color, activeColor }) => {
+              const isSelected = correctChoice === index;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCorrectChoice(index)}
+                  aria-pressed={isSelected}
+                  aria-label={`${label}を正解に設定`}
+                  className={cn(
+                    "flex flex-col items-center justify-center py-6 rounded-xl border-2 text-4xl font-bold transition-all duration-150 min-h-[80px] cursor-pointer",
+                    btnFocus,
+                    isSelected ? activeColor : `${color} hover:opacity-80`,
                   )}
-                </div>
-                {/* 画像モード: アップロード領域 */}
-                {choiceType === "image" && (
-                  <div className="flex items-center gap-2 ml-10">
-                    {choiceImageUrls[i] ? (
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={choiceImageUrls[i]}
-                          alt={`選択肢${CHOICE_LABELS[i]}の画像`}
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => clearChoiceImage(i)}
-                          className={cn("px-2 py-1 rounded text-xs text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[32px] cursor-pointer", btnFocus)}
-                        >
-                          削除
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <input
-                          type="file"
-                          accept=".jpg,.jpeg,.png,.gif,.webp"
-                          className="sr-only"
-                          id={`choice-image-${CHOICE_LABELS[i]}-${formId}`}
-                          onChange={(e) => handleChoiceImageSelect(i, e)}
-                        />
-                        <label
-                          htmlFor={`choice-image-${CHOICE_LABELS[i]}-${formId}`}
-                          className={cn(
-                            "inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 border-dashed text-xs cursor-pointer transition-colors duration-150 min-h-[32px]",
-                            choiceImageUploading[i]
-                              ? "border-gray-400 text-gray-400"
-                              : "border-gray-300 text-gray-500 hover:border-accent hover:text-accent",
-                          )}
-                        >
-                          {choiceImageUploading[i] ? "アップロード中…" : "画像を選択"}
-                        </label>
-                      </>
+                >
+                  {label}
+                  {isSelected && <span className="text-xs font-semibold mt-1">正解</span>}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {choices.map((c, i) => {
+              const isSelected = correctChoice === i + 1;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex flex-col gap-2 px-3 py-2 rounded-lg border-2 transition-[border-color,background-color] duration-150",
+                    isSelected
+                      ? `${CHOICE_BORDER_CLASSES[i]} ${CHOICE_BG_LIGHT_CLASSES[i]}`
+                      : "border-gray-300 bg-white hover:border-gray-400",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCorrectChoice(i + 1)}
+                      aria-label={`選択肢${CHOICE_LABELS[i]}を正解に設定`}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 cursor-pointer",
+                        btnFocus,
+                        isSelected ? CHOICE_BG_CLASSES[i] : "bg-gray-300 hover:bg-gray-400",
+                      )}
+                    >
+                      {CHOICE_LABELS[i]}
+                    </button>
+                    <input
+                      type="text"
+                      name={`choice-${CHOICE_LABELS[i]}-${formId}`}
+                      autoComplete="off"
+                      value={c}
+                      onChange={(e) => {
+                        const next = [...choices];
+                        next[i] = e.target.value;
+                        setChoices(next);
+                      }}
+                      placeholder={choiceType === "text" ? `選択肢${CHOICE_LABELS[i]}…` : `ラベル（任意）…`}
+                      aria-label={`選択肢${CHOICE_LABELS[i]}のテキスト`}
+                      className="flex-1 bg-transparent border-none text-sm py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 rounded min-w-0"
+                    />
+                    {isSelected && (
+                      <span aria-hidden="true" className={`text-xs font-bold shrink-0 ${CHOICE_TEXT_CLASSES[i]}`}>
+                        正解
+                      </span>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {/* 画像モード: アップロード領域 */}
+                  {choiceType === "image" && (
+                    <div className="flex items-center gap-2 ml-10">
+                      {choiceImageUrls[i] ? (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={choiceImageUrls[i]}
+                            alt={`選択肢${CHOICE_LABELS[i]}の画像`}
+                            className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => clearChoiceImage(i)}
+                            className={cn("px-2 py-1 rounded text-xs text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[32px] cursor-pointer", btnFocus)}
+                          >
+                            削除
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.gif,.webp"
+                            className="sr-only"
+                            id={`choice-image-${CHOICE_LABELS[i]}-${formId}`}
+                            onChange={(e) => handleChoiceImageSelect(i, e)}
+                          />
+                          <label
+                            htmlFor={`choice-image-${CHOICE_LABELS[i]}-${formId}`}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 border-dashed text-xs cursor-pointer transition-colors duration-150 min-h-[32px]",
+                              choiceImageUploading[i]
+                                ? "border-gray-400 text-gray-400"
+                                : "border-gray-300 text-gray-500 hover:border-accent hover:text-accent",
+                            )}
+                          >
+                            {choiceImageUploading[i] ? "アップロード中…" : "画像を選択"}
+                          </label>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </fieldset>
 
       {/* 制限時間 */}

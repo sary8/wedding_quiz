@@ -522,6 +522,102 @@ describe("question routes", () => {
 
   });
 
+  describe("○×問題 (true_false)", () => {
+    it("POST: ○×問題を正常追加 → choice1=○, choice2=×, choice3/4=null", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "新郎は東京出身である",
+          questionType: "true_false",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.question_type).toBe("true_false");
+      expect(data.choice1).toBe("○");
+      expect(data.choice2).toBe("×");
+      expect(data.choice3).toBeNull();
+      expect(data.choice4).toBeNull();
+      expect(data.choice_type).toBe("text");
+      expect(data.correct_choice).toBe(1);
+    });
+
+    it("POST: ○×問題でcorrectChoice=3 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "テスト",
+          questionType: "true_false",
+          correctChoice: 3,
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("○×問題");
+    });
+
+    it("POST: 不正なquestionType → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "テスト",
+          questionType: "multiple",
+          choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("問題形式");
+    });
+
+    it("PUT: 4択→○×に変更 → choice1=○, choice2=×, choice3/4=null", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id);
+
+      const res = await questionRoutes.request(`/${question.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionType: "true_false",
+          correctChoice: 2,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.question_type).toBe("true_false");
+      expect(data.choice1).toBe("○");
+      expect(data.choice2).toBe("×");
+      expect(data.choice3).toBeNull();
+      expect(data.choice4).toBeNull();
+      expect(data.correct_choice).toBe(2);
+    });
+
+    it("PUT: ○×問題でcorrectChoice=4 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const question = await createTestQuestion(quiz.id, {
+        questionType: "true_false", choice1: "○", choice2: "×", choice3: null, choice4: null, correctChoice: 1,
+      });
+
+      const res = await questionRoutes.request(`/${question.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correctChoice: 4 }),
+      });
+      expect(res.status).toBe(400);
+    });
+  });
+
   describe("PUT /reorder", () => {
     it("並べ替え成功、order_index更新確認", async () => {
       const quiz = await createTestQuiz();

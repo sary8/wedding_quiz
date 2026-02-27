@@ -203,19 +203,7 @@ export async function getNextQuestion(roomCode: string): Promise<QuestionData | 
     .set({ current_question_index: nextIndex })
     .where(eq(schema.quizzes.id, quiz.id));
 
-  return {
-    questionId: q.id,
-    questionIndex: nextIndex,
-    totalQuestions: questions.length,
-    text: q.text,
-    mediaType: q.media_type as "none" | "image" | "video",
-    mediaUrl: q.media_url,
-    choiceType: q.choice_type as "text" | "image",
-    choices: [q.choice1, q.choice2, q.choice3, q.choice4],
-    choiceImageUrls: [q.choice1_image_url, q.choice2_image_url, q.choice3_image_url, q.choice4_image_url],
-    timeLimitSeconds: q.time_limit_seconds,
-    points: q.points,
-  };
+  return buildQuestionData(q, nextIndex, questions.length);
 }
 
 // 回答登録（トランザクションで重複チェック→INSERT→スコア更新を一括実行）
@@ -556,6 +544,53 @@ export async function replayQuiz(quizId: number, hostSecret: string) {
   return { success: true };
 }
 
+// ヘルパー: DB行からQuestionDataを構築
+function buildQuestionData(
+  q: {
+    id: number;
+    text: string;
+    question_type: string;
+    media_type: string;
+    media_url: string | null;
+    choice_type: string;
+    choice1: string;
+    choice2: string;
+    choice3: string | null;
+    choice4: string | null;
+    choice1_image_url: string | null;
+    choice2_image_url: string | null;
+    choice3_image_url: string | null;
+    choice4_image_url: string | null;
+    time_limit_seconds: number;
+    points: number;
+  },
+  questionIndex: number,
+  totalQuestions: number
+): QuestionData {
+  const isTrueFalse = q.question_type === "true_false";
+  const choices = isTrueFalse
+    ? [q.choice1, q.choice2]
+    : [q.choice1, q.choice2, q.choice3 ?? "", q.choice4 ?? ""];
+  const choiceImageUrls = isTrueFalse
+    ? [q.choice1_image_url, q.choice2_image_url]
+    : [q.choice1_image_url, q.choice2_image_url, q.choice3_image_url, q.choice4_image_url];
+
+  return {
+    questionId: q.id,
+    questionIndex,
+    totalQuestions,
+    text: q.text,
+    questionType: q.question_type as "four_choice" | "true_false",
+    mediaType: q.media_type as "none" | "image" | "video",
+    mediaUrl: q.media_url,
+    choiceType: q.choice_type as "text" | "image",
+    choices,
+    choiceImageUrls,
+    timeLimitSeconds: q.time_limit_seconds,
+    points: q.points,
+  };
+}
+
 // ヘルパー: 現在の問題ID取得
 async function getCurrentQuestionId(
   quizId: number,
@@ -586,19 +621,7 @@ export async function getReconnectQuestionData(
   if (currentQuestionIndex >= questions.length) return null;
   const q = questions[currentQuestionIndex];
 
-  return {
-    questionId: q.id,
-    questionIndex: currentQuestionIndex,
-    totalQuestions: questions.length,
-    text: q.text,
-    mediaType: q.media_type as "none" | "image" | "video",
-    mediaUrl: q.media_url,
-    choiceType: q.choice_type as "text" | "image",
-    choices: [q.choice1, q.choice2, q.choice3, q.choice4],
-    choiceImageUrls: [q.choice1_image_url, q.choice2_image_url, q.choice3_image_url, q.choice4_image_url],
-    timeLimitSeconds: q.time_limit_seconds,
-    points: q.points,
-  };
+  return buildQuestionData(q, currentQuestionIndex, questions.length);
 }
 
 // quizIdからroomCode取得

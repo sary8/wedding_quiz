@@ -26,11 +26,12 @@ export async function createTestQuestion(
   overrides: Partial<{
     orderIndex: number;
     text: string;
+    questionType: string;
     choiceType: string;
     choice1: string;
     choice2: string;
-    choice3: string;
-    choice4: string;
+    choice3: string | null;
+    choice4: string | null;
     choice1ImageUrl: string | null;
     choice2ImageUrl: string | null;
     choice3ImageUrl: string | null;
@@ -48,13 +49,14 @@ export async function createTestQuestion(
       quiz_id: quizId,
       order_index: overrides.orderIndex ?? 0,
       text: overrides.text ?? "テスト問題",
+      question_type: (overrides.questionType as "four_choice" | "true_false") ?? "four_choice",
       media_type: (overrides.mediaType as "none" | "image" | "video") ?? "none",
       media_url: overrides.mediaUrl ?? null,
       choice_type: (overrides.choiceType as "text" | "image") ?? "text",
       choice1: overrides.choice1 ?? "選択肢1",
       choice2: overrides.choice2 ?? "選択肢2",
-      choice3: overrides.choice3 ?? "選択肢3",
-      choice4: overrides.choice4 ?? "選択肢4",
+      choice3: overrides.choice3 !== undefined ? overrides.choice3 : "選択肢3",
+      choice4: overrides.choice4 !== undefined ? overrides.choice4 : "選択肢4",
       choice1_image_url: overrides.choice1ImageUrl ?? null,
       choice2_image_url: overrides.choice2ImageUrl ?? null,
       choice3_image_url: overrides.choice3ImageUrl ?? null,
@@ -118,11 +120,12 @@ export async function createTestParticipant(
 
 export async function createTestBankQuestion(overrides: Partial<{
   text: string;
+  questionType: string;
   choiceType: string;
   choice1: string;
   choice2: string;
-  choice3: string;
-  choice4: string;
+  choice3: string | null;
+  choice4: string | null;
   choice1ImageUrl: string | null;
   choice2ImageUrl: string | null;
   choice3ImageUrl: string | null;
@@ -137,13 +140,14 @@ export async function createTestBankQuestion(overrides: Partial<{
     .insert(schema.questionBank)
     .values({
       text: overrides.text ?? "バンク問題",
+      question_type: (overrides.questionType as "four_choice" | "true_false") ?? "four_choice",
       media_type: (overrides.mediaType as "none" | "image" | "video") ?? "none",
       media_url: overrides.mediaUrl ?? null,
       choice_type: (overrides.choiceType as "text" | "image") ?? "text",
       choice1: overrides.choice1 ?? "バンク選択肢1",
       choice2: overrides.choice2 ?? "バンク選択肢2",
-      choice3: overrides.choice3 ?? "バンク選択肢3",
-      choice4: overrides.choice4 ?? "バンク選択肢4",
+      choice3: overrides.choice3 !== undefined ? overrides.choice3 : "バンク選択肢3",
+      choice4: overrides.choice4 !== undefined ? overrides.choice4 : "バンク選択肢4",
       choice1_image_url: overrides.choice1ImageUrl ?? null,
       choice2_image_url: overrides.choice2ImageUrl ?? null,
       choice3_image_url: overrides.choice3ImageUrl ?? null,

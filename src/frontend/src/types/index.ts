@@ -6,6 +6,12 @@ export const QuizStatus = {
 } as const;
 export type QuizStatus = (typeof QuizStatus)[keyof typeof QuizStatus];
 
+export const QuestionType = {
+  FourChoice: "four_choice",
+  TrueFalse: "true_false",
+} as const;
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType];
+
 export const ChoiceType = {
   Text: "text",
   Image: "image",
@@ -46,6 +52,7 @@ export type QuestionData = {
   questionIndex: number;
   totalQuestions: number;
   text: string;
+  questionType: QuestionType;
   mediaType: MediaType;
   mediaUrl: string | null;
   mediaAltText?: string;
@@ -139,6 +146,7 @@ export type QuestionBankItem = {
   text: string;
   media_type: MediaType;
   media_url: string | null;
+  question_type: QuestionType;
   choice_type: ChoiceType;
   choice1: string;
   choice2: string;
@@ -162,6 +170,7 @@ export type Question = {
   media_type: MediaType;
   media_url: string | null;
   media_alt_text?: string;
+  question_type: QuestionType;
   choice_type: ChoiceType;
   choice1: string;
   choice2: string;

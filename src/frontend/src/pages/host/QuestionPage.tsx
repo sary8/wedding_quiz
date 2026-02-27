@@ -17,6 +17,11 @@ const CHOICE_PASTEL_CLASSES = [
   "bg-choice-pastel-amber text-outline-amber",
 ];
 
+const TF_HOST_CLASSES = [
+  "bg-green-400 text-white",
+  "bg-rose-400 text-white",
+];
+
 export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answerCount, totalParticipants, onCloseQuestion, isDisplay = false }: Props) {
   if (!question) return null;
 
@@ -71,28 +76,41 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
       </div>
 
       {/* 選択肢 */}
-      <div className="grid grid-cols-2 gap-3 px-8 pb-4">
-        {question.choices.map((choice, i) => {
-          const imageUrl = sanitizeMediaUrl(question.choiceImageUrls?.[i]);
-          return (
+      {question.questionType === "true_false" ? (
+        <div className="grid grid-cols-2 gap-6 px-8 pb-4">
+          {question.choices.map((choice, i) => (
             <div
               key={i}
-              className={`flex items-center gap-4 px-8 py-6 rounded-xl text-white font-bold ${hasChoiceImages ? "text-3xl lg:text-4xl" : "text-4xl lg:text-6xl"} ${CHOICE_PASTEL_CLASSES[i]}`}
+              className={`flex items-center justify-center px-8 py-10 rounded-xl font-bold text-8xl lg:text-[10rem] ${TF_HOST_CLASSES[i]}`}
             >
-              {imageUrl ? (
-                <div className="flex items-center gap-4 w-full">
-                  <div className="w-28 h-28 lg:w-36 lg:h-36 shrink-0 overflow-hidden rounded-lg">
-                    <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                  {choice && <span className="truncate">{choice}</span>}
-                </div>
-              ) : (
-                choice
-              )}
+              {choice}
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 px-8 pb-4">
+          {question.choices.map((choice, i) => {
+            const imageUrl = sanitizeMediaUrl(question.choiceImageUrls?.[i]);
+            return (
+              <div
+                key={i}
+                className={`flex items-center gap-4 px-8 py-6 rounded-xl text-white font-bold ${hasChoiceImages ? "text-3xl lg:text-4xl" : "text-4xl lg:text-6xl"} ${CHOICE_PASTEL_CLASSES[i]}`}
+              >
+                {imageUrl ? (
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="w-28 h-28 lg:w-36 lg:h-36 shrink-0 overflow-hidden rounded-lg">
+                      <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                    {choice && <span className="truncate">{choice}</span>}
+                  </div>
+                ) : (
+                  choice
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 手動締め切りボタン */}
       {!isDisplay && (

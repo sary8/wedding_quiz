@@ -13,6 +13,10 @@ type Props = {
 };
 
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
+const TF_STYLES = [
+  "bg-green-500 hover:bg-green-600 active:bg-green-700",
+  "bg-rose-500 hover:bg-rose-600 active:bg-rose-700",
+] as const;
 
 export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswered, onAnswer, answerCount }: Props) {
   const timeRemaining = Math.max(0, rawTimeRemaining);
@@ -90,27 +94,49 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
         <p className="text-xl font-bold">{question.text}</p>
       </div>
 
-      {/* 4色回答ボタン */}
-      <div className="flex-1 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢">
-        {question.choices.map((choice, i) => {
-          const choiceIndex = i + 1;
-          const isSelected = selectedChoice === choiceIndex;
+      {/* 回答ボタン */}
+      {question.questionType === "true_false" ? (
+        <div className="flex-1 grid grid-cols-2 gap-3 p-3" role="group" aria-label="回答選択肢">
+          {question.choices.map((choice, i) => {
+            const choiceIndex = i + 1;
+            const isSelected = selectedChoice === choiceIndex;
+            return (
+              <button
+                key={`${question.questionIndex}-${i}`}
+                type="button"
+                disabled={selectedChoice !== null}
+                onClick={() => handleChoiceClick(choiceIndex)}
+                aria-label={`${choice}`}
+                aria-pressed={isSelected}
+                className={`flex items-center justify-center rounded-2xl text-white font-bold transition-all duration-150 min-h-[44px] ${TF_STYLES[i]} ${isSelected ? "ring-4 ring-white scale-95" : ""} ${selectedChoice !== null && !isSelected ? "opacity-50" : ""} ${selectedChoice !== null ? "cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <span className="text-7xl">{choice}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex-1 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢">
+          {question.choices.map((choice, i) => {
+            const choiceIndex = i + 1;
+            const isSelected = selectedChoice === choiceIndex;
 
-          return (
-            <ChoiceButton
-              key={`${question.questionIndex}-${i}`}
-              choice={choice}
-              color={CHOICE_COLORS[i]}
-              isSelected={isSelected}
-              disabled={selectedChoice !== null}
-              choiceIndex={choiceIndex}
-              choiceImageUrl={question.choiceImageUrls?.[i]}
-              onClick={handleChoiceClick}
-              aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}`}
-            />
-          );
-        })}
-      </div>
+            return (
+              <ChoiceButton
+                key={`${question.questionIndex}-${i}`}
+                choice={choice}
+                color={CHOICE_COLORS[i]}
+                isSelected={isSelected}
+                disabled={selectedChoice !== null}
+                choiceIndex={choiceIndex}
+                choiceImageUrl={question.choiceImageUrls?.[i]}
+                onClick={handleChoiceClick}
+                aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}`}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

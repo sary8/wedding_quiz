@@ -30,6 +30,10 @@ const CHOICE_BAR_TRACK_CLASSES = [
   "bg-choice-pastel-amber/25",
 ];
 
+const TF_BAR_CLASSES = ["bg-green-500", "bg-rose-500"];
+const TF_BAR_DIM_CLASSES = ["bg-green-500/50", "bg-rose-500/50"];
+const TF_BAR_TRACK_CLASSES = ["bg-green-500/25", "bg-rose-500/25"];
+
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
   const { totalAnswers, maxCount } = useMemo(() => {
     if (!result?.distribution) return { totalAnswers: 0, maxCount: 1 };
@@ -82,7 +86,11 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
           const barWidth = (count / maxCount) * 100;
           const choiceText = question?.choices[i] || `選択肢${i + 1}`;
-          const barClass = isCorrect ? CHOICE_BAR_CLASSES[i] : CHOICE_BAR_DIM_CLASSES[i];
+          const isTF = question?.questionType === "true_false";
+          const barClass = isTF
+            ? (isCorrect ? TF_BAR_CLASSES[i] : TF_BAR_DIM_CLASSES[i])
+            : (isCorrect ? CHOICE_BAR_CLASSES[i] : CHOICE_BAR_DIM_CLASSES[i]);
+          const trackClass = isTF ? TF_BAR_TRACK_CLASSES[i] : CHOICE_BAR_TRACK_CLASSES[i];
           const safeChoiceImageUrl = sanitizeMediaUrl(question?.choiceImageUrls?.[i]);
 
           return (
@@ -98,7 +106,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                       />
                     </div>
                   )}
-                  {choiceText}
+                  {isTF ? <span className="text-4xl lg:text-6xl">{choiceText}</span> : choiceText}
                   {isCorrect && (
                     <>
                       <svg className="inline w-6 h-6 lg:w-8 lg:h-8 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -110,7 +118,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                 </span>
                 <span className="text-2xl lg:text-4xl [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
               </div>
-              <div className={`h-14 lg:h-16 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
+              <div className={`h-14 lg:h-16 ${trackClass} rounded-lg overflow-hidden`}>
                 <div
                   className={`h-full rounded-lg motion-safe:transition-[width] motion-safe:duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}

@@ -74,6 +74,7 @@ export function deleteParticipantsBulk(quizId: number, ids?: number[]) {
 export function addQuestion(data: {
   quizId: number;
   text: string;
+  questionType?: string;
   choiceType?: string;
   choice1: string;
   choice2: string;
@@ -96,6 +97,7 @@ export function addQuestion(data: {
 
 export function updateQuestion(id: number, data: {
   text?: string;
+  questionType?: string;
   choiceType?: string;
   choice1?: string;
   choice2?: string;
@@ -135,6 +137,7 @@ export function listBankQuestions() {
 
 export function addBankQuestion(data: {
   text: string;
+  questionType?: string;
   choiceType?: string;
   choice1: string;
   choice2: string;
@@ -158,6 +161,7 @@ export function addBankQuestion(data: {
 
 export function updateBankQuestion(id: number, data: {
   text?: string;
+  questionType?: string;
   choiceType?: string;
   choice1?: string;
   choice2?: string;
