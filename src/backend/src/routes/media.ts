@@ -148,9 +148,9 @@ mediaRoutes.get("/:filename", async (c) => {
   const rawFilename = c.req.param("filename");
   const decoded = decodeURIComponent(rawFilename);
 
-  // パストラバーサル防止: basename で安全なファイル名のみ抽出し、元と一致するか検証
+  // パストラバーサル防止: basename + バックスラッシュ明示チェック（Linuxのbasenameは\を無視するため）
   const safe = basename(decoded);
-  if (!safe || safe !== decoded || safe.includes("..")) {
+  if (!safe || safe !== decoded || safe.includes("..") || decoded.includes("\\")) {
     return c.json({ error: "不正なファイル名です" }, 400);
   }
 
