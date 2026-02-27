@@ -63,10 +63,10 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   return (
     <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 p-8">
-      <h2 className="font-script text-5xl lg:text-6xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
+      <h2 className="font-script text-6xl lg:text-8xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
 
       {/* 回答分布グラフ */}
-      <div className="w-full max-w-3xl mb-12">
+      <div className="w-full max-w-5xl mb-12">
         {result.distribution.map((count, i) => {
           const isCorrect = i + 1 === result.correctChoice;
           const percentage = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
@@ -77,9 +77,9 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           return (
             <div key={i} className="mb-5">
               <div className="flex justify-between mb-1.5">
-                <span className={cn("flex items-center gap-3", isCorrect ? "font-bold text-xl lg:text-2xl" : "font-normal text-xl lg:text-2xl")}>
+                <span className={cn("flex items-center gap-3", isCorrect ? "font-bold text-2xl lg:text-4xl" : "font-normal text-2xl lg:text-4xl")}>
                   {question?.choiceImageUrls?.[i] && (
-                    <div className="w-12 h-12 shrink-0 overflow-hidden rounded">
+                    <div className="w-14 h-14 lg:w-20 lg:h-20 shrink-0 overflow-hidden rounded">
                       <img
                         src={question.choiceImageUrls[i]!}
                         alt={choiceText}
@@ -90,16 +90,16 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                   {choiceText}
                   {isCorrect && (
                     <>
-                      <svg className="inline w-5 h-5 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <svg className="inline w-6 h-6 lg:w-8 lg:h-8 ml-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M2 6l3 3 5-5" />
                       </svg>
                       <span> 正解</span>
                     </>
                   )}
                 </span>
-                <span className="text-xl lg:text-2xl [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
+                <span className="text-2xl lg:text-4xl [font-variant-numeric:tabular-nums]">{count}人 ({percentage}%)</span>
               </div>
-              <div className={`h-12 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
+              <div className={`h-14 lg:h-16 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
                 <div
                   className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}

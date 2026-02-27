@@ -27,11 +27,11 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
     <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col bg-gradient-to-b from-blush to-white">
       {/* ヘッダー */}
       <div className="flex justify-between items-center px-8 py-4 text-gray-900">
-        <span className="text-xl lg:text-2xl font-semibold">
+        <span className="text-2xl lg:text-4xl font-semibold">
           Q{question.questionIndex + 1} / {question.totalQuestions}
         </span>
         <span
-          className={`text-6xl lg:text-7xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
+          className={`text-7xl lg:text-9xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -39,7 +39,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           {timeRemaining}
           <span className="sr-only">秒</span>
         </span>
-        <span className="text-xl lg:text-2xl font-semibold">
+        <span className="text-2xl lg:text-4xl font-semibold">
           回答: {answerCount} / {totalParticipants}
         </span>
       </div>
@@ -64,7 +64,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             className="max-w-[55%] max-h-[35vh] rounded-xl mb-4"
           />
         ) : null}
-        <h2 className="text-5xl lg:text-6xl text-gray-900 text-center [text-wrap:balance] leading-tight">{question.text}</h2>
+        <h2 className="text-6xl lg:text-8xl text-gray-900 text-center [text-wrap:balance] leading-tight">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
@@ -74,7 +74,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           return (
             <div
               key={i}
-              className={`flex items-center gap-4 px-8 py-6 rounded-xl text-white font-bold ${hasChoiceImages ? "text-2xl lg:text-3xl" : "text-3xl lg:text-4xl"} ${CHOICE_PASTEL_CLASSES[i]}`}
+              className={`flex items-center gap-4 px-8 py-6 rounded-xl text-white font-bold ${hasChoiceImages ? "text-3xl lg:text-4xl" : "text-4xl lg:text-6xl"} ${CHOICE_PASTEL_CLASSES[i]}`}
             >
               {imageUrl ? (
                 <div className="flex items-center gap-4 w-full">

@@ -188,7 +188,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
           animate={{ opacity: 1, scale: 1 }}
           exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, type: "spring" }}
-          className={`h-[100dvh] flex flex-col items-center justify-center relative ${medalClass}`}
+          className={`h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center relative ${medalClass}`}
         >
           {/* 一時停止ボタン（スクリーンには表示しない） */}
           {!isDisplay && (
@@ -269,7 +269,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
   return (
     <div
       ref={containerRef}
-      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col items-center justify-end p-6"
+      className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col items-center justify-end p-6"
     >
       <h2 className="font-script text-4xl text-amber-800 absolute top-6 [text-wrap:balance]">最終結果発表</h2>
       <AnimatePresence>
@@ -349,7 +349,7 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
   }, [prefersReducedMotion]);
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
       {/* タイトル */}
       <motion.h2
         initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}

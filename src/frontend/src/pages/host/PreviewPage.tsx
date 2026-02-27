@@ -146,10 +146,10 @@ export function PreviewPage() {
         </button>
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/host/setup?view=edit&quizId=${quizId}`)}
           className="px-6 py-3 rounded-xl bg-amber-200 text-amber-900 font-bold min-h-[44px] hover:bg-amber-300 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer"
         >
-          閉じる
+          ホスト画面に戻る
         </button>
         <button
           type="button"

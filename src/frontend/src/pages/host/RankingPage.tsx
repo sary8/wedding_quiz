@@ -31,8 +31,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   if (!data) return null;
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush to-white text-gray-900 p-6">
-      <h2 className="font-script text-4xl text-amber-800 text-center mb-6 [text-wrap:balance]">Ranking</h2>
+    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col bg-gradient-to-b from-blush to-white text-gray-900 p-6">
+      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-6 [text-wrap:balance]">Ranking</h2>
 
       <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" aria-live="polite" aria-label="ランキング">
         <AnimatePresence>
@@ -50,7 +50,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 className="flex items-center gap-2 md:gap-3"
               >
                 {/* 順位 */}
-                <span className="w-10 text-2xl font-bold text-center [font-variant-numeric:tabular-nums]">{entry.rank}</span>
+                <span className="w-12 text-3xl lg:text-4xl font-bold text-center [font-variant-numeric:tabular-nums]">{entry.rank}</span>
 
                 {/* アイコン */}
                 {entry.selfieUrl ? (
@@ -59,29 +59,29 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     alt={`${entry.nickname}のアバター`}
                     width={48}
                     height={48}
-                    className={`w-12 h-12 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+                    className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
                     loading="lazy"
                   />
                 ) : (
-                  <div className={`w-12 h-12 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-xl font-bold text-gray-900 shrink-0`}>
+                  <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-xl lg:text-2xl font-bold text-gray-900 shrink-0`}>
                     {entry.nickname?.[0] || "?"}
                   </div>
                 )}
 
                 {/* ニックネーム */}
-                <span className="w-20 md:w-28 text-sm md:text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap">
+                <span className="w-24 md:w-36 text-lg md:text-2xl lg:text-3xl font-bold overflow-hidden text-ellipsis whitespace-nowrap">
                   {entry.nickname}
                 </span>
 
                 {/* スコアバー */}
-                <div className="flex-1 h-9 bg-pink-100 rounded-lg overflow-hidden relative">
+                <div className="flex-1 h-12 lg:h-14 bg-pink-100 rounded-lg overflow-hidden relative">
                   <motion.div
                     initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${barWidth}%` }}
                     transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 60, damping: 15 }}
                     className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold drop-shadow [font-variant-numeric:tabular-nums]">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-2xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">
                     {entry.totalScore.toLocaleString()}点
                   </span>
                 </div>
