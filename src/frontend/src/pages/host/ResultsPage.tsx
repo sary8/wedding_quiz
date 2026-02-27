@@ -30,10 +30,16 @@ const CHOICE_BAR_TRACK_CLASSES = [
 ];
 
 export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
-  const { totalAnswers, maxCount } = useMemo(() => ({
-    totalAnswers: result?.distribution.reduce((s, n) => s + n, 0) ?? 0,
-    maxCount: result?.distribution.reduce((max, n) => Math.max(max, n), 1) ?? 1,
-  }), [result?.distribution]);
+  const { totalAnswers, maxCount } = useMemo(() => {
+    if (!result?.distribution) return { totalAnswers: 0, maxCount: 1 };
+    let total = 0;
+    let max = 1;
+    for (const n of result.distribution) {
+      total += n;
+      if (n > max) max = n;
+    }
+    return { totalAnswers: total, maxCount: max };
+  }, [result?.distribution]);
 
   if (!result) {
     return (

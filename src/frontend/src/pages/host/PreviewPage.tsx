@@ -5,6 +5,7 @@ import type { Quiz, Question, QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
 
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
+const NOOP = () => {};
 
 function questionToPreviewData(question: Question, index: number, total: number): QuestionData {
   return {
@@ -123,7 +124,7 @@ export function PreviewPage() {
               disabled={true}
               choiceIndex={choiceIndex}
               choiceImageUrl={question.choiceImageUrls?.[i]}
-              onClick={() => {}}
+              onClick={NOOP}
               aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${isCorrect ? "（正解）" : ""}`}
             />
           );

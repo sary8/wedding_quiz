@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 
 const BgmTrack = {
   Lobby: "lobby",
@@ -128,5 +128,5 @@ export function useBgm() {
     });
   }, []);
 
-  return { play, stop, fadeOut, volume, setVolume, isMuted, toggleMute };
+  return useMemo(() => ({ play, stop, fadeOut, volume, setVolume, isMuted, toggleMute }), [play, stop, fadeOut, volume, setVolume, isMuted, toggleMute]);
 }
