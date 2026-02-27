@@ -58,6 +58,13 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   return (
     <div className="h-[100dvh] flex flex-col bg-blush">
+      {/* ボーナスバナー */}
+      {question.pointMultiplier > 1 && (
+        <div className="bg-gradient-to-r from-amber-300 to-amber-200 text-amber-900 text-center py-2 text-sm font-bold">
+          ボーナス問題！ ポイント{question.pointMultiplier}倍！
+        </div>
+      )}
+
       {/* ヘッダー: 問題番号 + 回答数 + タイマー */}
       <header className="flex justify-between items-center px-4 py-3 text-gray-900">
         <div className="flex flex-col">

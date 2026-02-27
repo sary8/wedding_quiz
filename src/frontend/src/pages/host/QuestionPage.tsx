@@ -35,9 +35,16 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
     <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col">
       {/* ヘッダー */}
       <div className="flex justify-between items-center px-8 py-4 text-gray-900">
-        <span className="text-2xl lg:text-4xl font-semibold">
-          Q{question.questionIndex + 1} / {question.totalQuestions}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl lg:text-4xl font-semibold">
+            Q{question.questionIndex + 1} / {question.totalQuestions}
+          </span>
+          {question.pointMultiplier > 1 && (
+            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-lg lg:text-2xl font-bold animate-pulse">
+              {question.pointMultiplier}倍
+            </span>
+          )}
+        </div>
         <span
           className={`text-7xl lg:text-9xl font-bold transition-colors duration-300 ${isUrgent ? "text-red-600" : "text-gray-900"}`}
           aria-live="polite"

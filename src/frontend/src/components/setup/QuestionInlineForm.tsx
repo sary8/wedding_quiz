@@ -44,6 +44,7 @@ export function QuestionInlineForm(props: Props) {
   const [choiceImageUploading, setChoiceImageUploading] = useState([false, false, false, false]);
   const [correctChoice, setCorrectChoice] = useState(question?.correct_choice ?? 1);
   const [timeLimit, setTimeLimit] = useState(question?.time_limit_seconds ?? 20);
+  const [pointMultiplier, setPointMultiplier] = useState(question?.point_multiplier ?? 1);
   const [mediaUrl, setMediaUrl] = useState<string | null>(question?.media_url ?? null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(question?.media_url ?? null);
   const [isUploading, setIsUploading] = useState(false);
@@ -158,6 +159,7 @@ export function QuestionInlineForm(props: Props) {
       choice4ImageUrl: isTrueFalse ? undefined : (choiceImageUrls[3] ?? undefined),
       correctChoice,
       timeLimitSeconds: timeLimit,
+      pointMultiplier,
       mediaType: mediaUrl ? "image" : ("none" as const),
       mediaUrl: mediaUrl ?? undefined,
     };
@@ -219,6 +221,7 @@ export function QuestionInlineForm(props: Props) {
         correctChoice: question.correct_choice,
         timeLimitSeconds: question.time_limit_seconds,
         points: question.points,
+        pointMultiplier: question.point_multiplier,
         mediaType: question.media_type,
         mediaUrl: question.media_url ?? undefined,
       });
@@ -571,6 +574,33 @@ export function QuestionInlineForm(props: Props) {
               )}
             >
               {t}秒
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      {/* ポイント倍率 */}
+      <fieldset className="flex flex-wrap gap-3 items-center mb-4">
+        <legend className="text-sm text-gray-600 font-semibold">ポイント倍率:</legend>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="ポイント倍率">
+          {[1, 2, 3].map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={pointMultiplier === m}
+              onClick={() => setPointMultiplier(m)}
+              className={cn(
+                "px-3.5 py-2 rounded-full text-sm border transition-colors duration-150 min-h-[44px] cursor-pointer",
+                btnFocus,
+                pointMultiplier === m
+                  ? m === 1
+                    ? "bg-accent text-white border-accent"
+                    : "bg-amber-500 text-white border-amber-500"
+                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-400",
+              )}
+            >
+              {m === 1 ? "通常" : `${m}倍`}
             </button>
           ))}
         </div>

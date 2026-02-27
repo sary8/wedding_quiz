@@ -219,7 +219,7 @@ export async function submitAnswer(
   if (!question) return { error: "問題が見つかりません" };
 
   const isCorrect = choiceIndex === question.correct_choice;
-  const scoreAwarded = calculateScore(isCorrect, responseTimeMs, question.time_limit_seconds);
+  const scoreAwarded = calculateScore(isCorrect, responseTimeMs, question.time_limit_seconds, question.point_multiplier);
 
   try {
     await db.batch([
@@ -563,6 +563,7 @@ function buildQuestionData(
     choice4_image_url: string | null;
     time_limit_seconds: number;
     points: number;
+    point_multiplier: number;
   },
   questionIndex: number,
   totalQuestions: number
@@ -588,6 +589,7 @@ function buildQuestionData(
     choiceImageUrls,
     timeLimitSeconds: q.time_limit_seconds,
     points: q.points,
+    pointMultiplier: q.point_multiplier,
   };
 }
 

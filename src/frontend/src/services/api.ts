@@ -88,6 +88,7 @@ export function addQuestion(data: {
   mediaType?: string;
   mediaUrl?: string;
   timeLimitSeconds?: number;
+  pointMultiplier?: number;
 }) {
   return request<Question>("/questions", {
     method: "POST",
@@ -110,6 +111,7 @@ export function updateQuestion(id: number, data: {
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;
+  pointMultiplier?: number;
   mediaType?: string;
   mediaUrl?: string | null;
 }) {
@@ -150,6 +152,7 @@ export function addBankQuestion(data: {
   correctChoice: number;
   timeLimitSeconds?: number;
   points?: number;
+  pointMultiplier?: number;
   mediaType?: string;
   mediaUrl?: string;
 }) {
@@ -174,6 +177,7 @@ export function updateBankQuestion(id: number, data: {
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;
+  pointMultiplier?: number;
   mediaType?: string;
   mediaUrl?: string | null;
 }) {

@@ -61,6 +61,7 @@ export type QuestionData = {
   choiceImageUrls: (string | null)[];
   timeLimitSeconds: number;
   points: number;
+  pointMultiplier: number;
 };
 
 export type QuestionResultData = {
@@ -159,6 +160,7 @@ export type QuestionBankItem = {
   correct_choice: number;
   time_limit_seconds: number;
   points: number;
+  point_multiplier: number;
   created_at: string;
 };
 
@@ -183,4 +185,5 @@ export type Question = {
   correct_choice: number;
   time_limit_seconds: number;
   points: number;
+  point_multiplier: number;
 };

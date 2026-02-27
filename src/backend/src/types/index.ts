@@ -142,6 +142,7 @@ export type QuestionData = {
   choiceImageUrls: (string | null)[];
   timeLimitSeconds: number;
   points: number;
+  pointMultiplier: number;
 };
 
 export type QuestionResultData = {

@@ -32,7 +32,8 @@ const CREATE_TABLES_SQL = [
     choice4_image_url TEXT,
     correct_choice INTEGER NOT NULL,
     time_limit_seconds INTEGER NOT NULL DEFAULT 20,
-    points INTEGER NOT NULL DEFAULT 1000
+    points INTEGER NOT NULL DEFAULT 1000,
+    point_multiplier INTEGER NOT NULL DEFAULT 1
   )`,
   `CREATE TABLE IF NOT EXISTS teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +83,7 @@ const CREATE_TABLES_SQL = [
     correct_choice INTEGER NOT NULL,
     time_limit_seconds INTEGER NOT NULL DEFAULT 20,
     points INTEGER NOT NULL DEFAULT 1000,
+    point_multiplier INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT ''
   )`,
 ];

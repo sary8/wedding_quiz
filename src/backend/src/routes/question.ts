@@ -82,6 +82,7 @@ questionRoutes.post("/", async (c) => {
     correctChoice: number;
     timeLimitSeconds?: number;
     points?: number;
+    pointMultiplier?: number;
   }>();
 
   const check = await verifyQuizExists(body.quizId);
@@ -136,6 +137,9 @@ questionRoutes.post("/", async (c) => {
   if (body.mediaType !== undefined && !isValidMediaType(body.mediaType)) {
     return c.json({ error: "メディアタイプはnone/image/videoのいずれかです" }, 400);
   }
+  if (body.pointMultiplier !== undefined && (!Number.isInteger(body.pointMultiplier) || body.pointMultiplier < 1 || body.pointMultiplier > 3)) {
+    return c.json({ error: "ポイント倍率は1〜3の整数で指定してください" }, 400);
+  }
 
   // 末尾に追加するためにorder_indexの最大値を取得（トランザクションで保護）
   const maxOrder = await db
@@ -166,6 +170,7 @@ questionRoutes.post("/", async (c) => {
       correct_choice: body.correctChoice,
       time_limit_seconds: body.timeLimitSeconds ?? 20,
       points: body.points ?? 1000,
+      point_multiplier: body.pointMultiplier ?? 1,
     })
     .returning();
 
@@ -192,6 +197,7 @@ questionRoutes.put("/:id", async (c) => {
     correctChoice?: number;
     timeLimitSeconds?: number;
     points?: number;
+    pointMultiplier?: number;
   }>();
 
   const question = await db.query.questions.findFirst({
@@ -231,6 +237,9 @@ questionRoutes.put("/:id", async (c) => {
   if (body.mediaType !== undefined && !isValidMediaType(body.mediaType)) {
     return c.json({ error: "メディアタイプはnone/image/videoのいずれかです" }, 400);
   }
+  if (body.pointMultiplier !== undefined && (!Number.isInteger(body.pointMultiplier) || body.pointMultiplier < 1 || body.pointMultiplier > 3)) {
+    return c.json({ error: "ポイント倍率は1〜3の整数で指定してください" }, 400);
+  }
 
   const updated = await db
     .update(schema.questions)
@@ -251,6 +260,7 @@ questionRoutes.put("/:id", async (c) => {
       correct_choice: body.correctChoice ?? question.correct_choice,
       time_limit_seconds: body.timeLimitSeconds ?? question.time_limit_seconds,
       points: body.points ?? question.points,
+      point_multiplier: body.pointMultiplier ?? question.point_multiplier,
     })
     .where(eq(schema.questions.id, id))
     .returning();

@@ -346,4 +346,65 @@ describe("questionBank routes", () => {
       expect(data.choice3).toBeNull();
     });
   });
+
+  describe("ポイント倍率 (point_multiplier)", () => {
+    it("POST: 倍率2で作成", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "倍率テスト",
+        choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+        correctChoice: 1,
+        pointMultiplier: 2,
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(2);
+    });
+
+    it("POST: 倍率省略 → デフォルト1", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "デフォルト",
+        choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+        correctChoice: 1,
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(1);
+    });
+
+    it("POST: 倍率4 → 400", async () => {
+      const res = await jsonRequest("/", "POST", {
+        text: "不正",
+        choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+        correctChoice: 1,
+        pointMultiplier: 4,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("PUT: 倍率を3に変更", async () => {
+      const q = await createTestBankQuestion();
+      const res = await jsonRequest(`/${q.id}`, "PUT", { pointMultiplier: 3 });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(3);
+    });
+
+    it("import: 倍率保持", async () => {
+      const quiz = await createTestQuiz();
+      const bq = await createTestBankQuestion({ pointMultiplier: 2 });
+
+      const res = await jsonRequest("/import-to-quiz", "POST", {
+        quizId: quiz.id,
+        bankQuestionIds: [bq.id],
+      });
+      expect(res.status).toBe(201);
+
+      const { db, testSchema: schema } = await import("../helpers/testDb.js");
+      const { eq } = await import("drizzle-orm");
+      const imported = await db.query.questions.findFirst({
+        where: eq(schema.questions.id, (await res.json()).imported[0]),
+      });
+      expect(imported!.point_multiplier).toBe(2);
+    });
+  });
 });

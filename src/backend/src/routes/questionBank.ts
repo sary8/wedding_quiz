@@ -38,6 +38,7 @@ function validateQuestionFields(body: {
   correctChoice?: number;
   timeLimitSeconds?: number;
   points?: number;
+  pointMultiplier?: number;
   mediaType?: string;
 }, requireAll: boolean): string | null {
   if (body.questionType !== undefined && !isValidQuestionType(body.questionType)) {
@@ -88,6 +89,9 @@ function validateQuestionFields(body: {
   if (body.mediaType !== undefined && !isValidMediaType(body.mediaType)) {
     return "メディアタイプはnone/image/videoのいずれかです";
   }
+  if (body.pointMultiplier !== undefined && (!Number.isInteger(body.pointMultiplier) || body.pointMultiplier < 1 || body.pointMultiplier > 3)) {
+    return "ポイント倍率は1〜3の整数で指定してください";
+  }
   return null;
 }
 
@@ -119,6 +123,7 @@ questionBankRoutes.post("/", async (c) => {
     correctChoice: number;
     timeLimitSeconds?: number;
     points?: number;
+    pointMultiplier?: number;
     mediaType?: string;
     mediaUrl?: string;
   }>();
@@ -147,6 +152,7 @@ questionBankRoutes.post("/", async (c) => {
       correct_choice: body.correctChoice,
       time_limit_seconds: body.timeLimitSeconds ?? 20,
       points: body.points ?? 1000,
+      point_multiplier: body.pointMultiplier ?? 1,
       created_at: new Date().toISOString(),
     })
     .returning();
@@ -172,6 +178,7 @@ questionBankRoutes.put("/:id", async (c) => {
     correctChoice?: number;
     timeLimitSeconds?: number;
     points?: number;
+    pointMultiplier?: number;
     mediaType?: string;
     mediaUrl?: string;
   }>();
@@ -206,6 +213,7 @@ questionBankRoutes.put("/:id", async (c) => {
       correct_choice: body.correctChoice ?? existing.correct_choice,
       time_limit_seconds: body.timeLimitSeconds ?? existing.time_limit_seconds,
       points: body.points ?? existing.points,
+      point_multiplier: body.pointMultiplier ?? existing.point_multiplier,
     })
     .where(eq(schema.questionBank.id, id))
     .returning();
@@ -278,6 +286,7 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
         correct_choice: bankQ.correct_choice,
         time_limit_seconds: bankQ.time_limit_seconds,
         points: bankQ.points,
+        point_multiplier: bankQ.point_multiplier,
       })
       .returning();
 

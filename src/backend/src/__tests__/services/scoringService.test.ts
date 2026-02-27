@@ -43,4 +43,31 @@ describe("calculateScore", () => {
     // score = 1000 * (1 - Infinity) = -Infinity → clamped to 500
     expect(calculateScore(true, 5000, 0)).toBe(500);
   });
+
+  // ポイント倍率テスト
+  it("2倍: 即答 → 2000点", () => {
+    expect(calculateScore(true, 0, 20, 2)).toBe(2000);
+  });
+
+  it("3倍: 即答 → 3000点", () => {
+    expect(calculateScore(true, 0, 20, 3)).toBe(3000);
+  });
+
+  it("2倍: 制限時間ちょうど → 1000点", () => {
+    // baseScore = 500, 500 * 2 = 1000
+    expect(calculateScore(true, 20000, 20, 2)).toBe(1000);
+  });
+
+  it("3倍: 制限時間の半分 → 2250点", () => {
+    // baseScore = 750, 750 * 3 = 2250
+    expect(calculateScore(true, 10000, 20, 3)).toBe(2250);
+  });
+
+  it("不正解時: 倍率があっても0点", () => {
+    expect(calculateScore(false, 0, 20, 3)).toBe(0);
+  });
+
+  it("倍率省略 → デフォルト1倍", () => {
+    expect(calculateScore(true, 0, 20)).toBe(1000);
+  });
 });

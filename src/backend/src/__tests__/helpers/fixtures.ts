@@ -39,6 +39,7 @@ export async function createTestQuestion(
     correctChoice: number;
     timeLimitSeconds: number;
     points: number;
+    pointMultiplier: number;
     mediaType: string;
     mediaUrl: string | null;
   }> = {}
@@ -64,6 +65,7 @@ export async function createTestQuestion(
       correct_choice: overrides.correctChoice ?? 1,
       time_limit_seconds: overrides.timeLimitSeconds ?? 20,
       points: overrides.points ?? 1000,
+      point_multiplier: overrides.pointMultiplier ?? 1,
     })
     .returning();
   return result[0];
@@ -133,6 +135,7 @@ export async function createTestBankQuestion(overrides: Partial<{
   correctChoice: number;
   timeLimitSeconds: number;
   points: number;
+  pointMultiplier: number;
   mediaType: string;
   mediaUrl: string | null;
 }> = {}) {
@@ -155,6 +158,7 @@ export async function createTestBankQuestion(overrides: Partial<{
       correct_choice: overrides.correctChoice ?? 1,
       time_limit_seconds: overrides.timeLimitSeconds ?? 20,
       points: overrides.points ?? 1000,
+      point_multiplier: overrides.pointMultiplier ?? 1,
       created_at: new Date().toISOString(),
     })
     .returning();

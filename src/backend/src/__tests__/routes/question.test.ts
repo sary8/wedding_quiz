@@ -665,4 +665,97 @@ describe("question routes", () => {
     });
 
   });
+
+  describe("ポイント倍率 (point_multiplier)", () => {
+    it("POST: 倍率2で作成 → point_multiplier=2", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "倍率テスト",
+          choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+          correctChoice: 1,
+          pointMultiplier: 2,
+        }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(2);
+    });
+
+    it("POST: 倍率省略 → デフォルト1", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "デフォルト倍率",
+          choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+          correctChoice: 1,
+        }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(1);
+    });
+
+    it("POST: 倍率0 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "不正倍率",
+          choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+          correctChoice: 1,
+          pointMultiplier: 0,
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("POST: 倍率4 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await questionRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          text: "不正倍率",
+          choice1: "A", choice2: "B", choice3: "C", choice4: "D",
+          correctChoice: 1,
+          pointMultiplier: 4,
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("PUT: 倍率を3に変更", async () => {
+      const quiz = await createTestQuiz();
+      const q = await createTestQuestion(quiz.id);
+      const res = await questionRoutes.request(`/${q.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pointMultiplier: 3 }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.point_multiplier).toBe(3);
+    });
+
+    it("PUT: 不正な倍率 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const q = await createTestQuestion(quiz.id);
+      const res = await questionRoutes.request(`/${q.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pointMultiplier: 5 }),
+      });
+      expect(res.status).toBe(400);
+    });
+  });
 });

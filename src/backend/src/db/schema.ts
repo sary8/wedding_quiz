@@ -44,6 +44,7 @@ export const questions = sqliteTable("questions", {
   correct_choice: integer("correct_choice").notNull(), // 1-4 (true_false: 1-2)
   time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
   points: integer("points").notNull().default(1000),
+  point_multiplier: integer("point_multiplier").notNull().default(1),
 });
 
 export const teams = sqliteTable("teams", {
@@ -123,6 +124,7 @@ export const questionBank = sqliteTable("question_bank", {
   correct_choice: integer("correct_choice").notNull(), // 1-4 (true_false: 1-2)
   time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
   points: integer("points").notNull().default(1000),
+  point_multiplier: integer("point_multiplier").notNull().default(1),
   created_at: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

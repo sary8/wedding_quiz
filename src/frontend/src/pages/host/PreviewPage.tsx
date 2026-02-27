@@ -27,6 +27,7 @@ function questionToPreviewData(question: Question, index: number, total: number)
       : [question.choice1_image_url, question.choice2_image_url, question.choice3_image_url, question.choice4_image_url],
     timeLimitSeconds: question.time_limit_seconds,
     points: question.points,
+    pointMultiplier: question.point_multiplier,
   };
 }
 
@@ -94,6 +95,13 @@ export function PreviewPage() {
       <div className="bg-amber-100 text-amber-800 text-center py-2 text-sm font-bold">
         プレビューモード（参加者視点）
       </div>
+
+      {/* ボーナスバナー */}
+      {question.pointMultiplier > 1 && (
+        <div className="bg-gradient-to-r from-amber-300 to-amber-200 text-amber-900 text-center py-2 text-sm font-bold">
+          ボーナス問題！ ポイント{question.pointMultiplier}倍！
+        </div>
+      )}
 
       {/* ヘッダー: 問題番号 + 制限時間 */}
       <header className="flex justify-between items-center px-4 py-3 text-gray-900">
