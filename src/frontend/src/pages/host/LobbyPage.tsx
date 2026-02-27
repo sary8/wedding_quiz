@@ -14,7 +14,8 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
   const joinUrl = `${window.location.origin}/play/${roomCode}`;
 
   return (
-    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 px-6">
+    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 px-6">
       {/* タイトル */}
       <header className="text-center mb-8">
         <h1 className="font-script text-6xl text-amber-800 mb-2 [text-wrap:balance]">Wedding Quiz</h1>
@@ -74,6 +75,7 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
           </p>
         </>
       )}
+    </div>
     </div>
   );
 }

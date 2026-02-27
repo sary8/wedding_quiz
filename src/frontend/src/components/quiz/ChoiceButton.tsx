@@ -32,7 +32,7 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
         "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/30",
         "disabled:cursor-not-allowed",
         colorStyles[color],
-        isSelected && "scale-95 ring-4 ring-gray-900",
+        isSelected && "ring-4 ring-gray-900",
         disabled && !isSelected && "opacity-40"
       )}
       disabled={disabled}

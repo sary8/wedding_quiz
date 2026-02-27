@@ -37,7 +37,8 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   if (!result) {
     return (
-      <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
+      <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
+      <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 gap-6">
         <p className="text-2xl text-gray-500">結果データを取得中…</p>
         {!isDisplay && (
           <div className="flex gap-4">
@@ -58,11 +59,13 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           </div>
         )}
       </div>
+      </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 p-8">
+    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 p-8">
       <h2 className="font-script text-6xl lg:text-8xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
 
       {/* 回答分布グラフ */}
@@ -101,7 +104,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
               </div>
               <div className={`h-14 lg:h-16 ${CHOICE_BAR_TRACK_CLASSES[i]} rounded-lg overflow-hidden`}>
                 <div
-                  className={`h-full rounded-lg transition-[width] duration-700 ease-out ${barClass}`}
+                  className={`h-full rounded-lg motion-safe:transition-[width] motion-safe:duration-700 ease-out ${barClass}`}
                   style={{ width: `${barWidth}%` }}
                 />
               </div>
@@ -115,19 +118,20 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           <button
             type="button"
             onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-xl font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-xl font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             ランキング表示
           </button>
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-xl font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-xl font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             次の問題
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }

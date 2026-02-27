@@ -31,10 +31,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   if (!data) return null;
 
   return (
-    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col bg-gradient-to-b from-blush to-white text-gray-900 p-6">
+    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col text-gray-900 p-6">
       <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-6 [text-wrap:balance]">Ranking</h2>
 
-      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" aria-live="polite" aria-label="ランキング">
+      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="ランキング">
         <AnimatePresence>
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
@@ -57,8 +58,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                   <img
                     src={entry.selfieUrl}
                     alt={`${entry.nickname}のアバター`}
-                    width={48}
-                    height={48}
+                    width={64}
+                    height={64}
                     className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
                     loading="lazy"
                   />
@@ -87,7 +88,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </div>
 
                 {/* 順位変動 */}
-                <span className="w-10 text-sm font-bold flex items-center justify-center gap-0.5">
+                <span className="w-12 text-base lg:text-lg font-bold flex items-center justify-center gap-0.5">
                   {rankChange > 0 ? (
                     <span className="flex items-center gap-0.5 text-green-600">
                       <svg className="w-3 h-3 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
@@ -106,7 +107,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* 回答速度 */}
-                <span className="w-[70px] text-xs text-gray-500 text-right [font-variant-numeric:tabular-nums]">
+                <span className="w-[90px] text-sm lg:text-base text-gray-500 text-right [font-variant-numeric:tabular-nums]">
                   {entry.lastResponseTimeMs != null
                     ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
                     : "---"}
@@ -122,19 +123,20 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             次の問題
           </button>
           <button
             type="button"
             onClick={onEndGame}
-            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             最終結果発表
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }

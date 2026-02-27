@@ -24,7 +24,8 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
   const hasChoiceImages = question.choiceImageUrls?.some(Boolean);
 
   return (
-    <div className="h-[100dvh] max-h-[1080px] max-w-[1920px] mx-auto flex flex-col bg-gradient-to-b from-blush to-white">
+    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col">
       {/* ヘッダー */}
       <div className="flex justify-between items-center px-8 py-4 text-gray-900">
         <span className="text-2xl lg:text-4xl font-semibold">
@@ -64,7 +65,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             className="max-w-[55%] max-h-[35vh] rounded-xl mb-4"
           />
         ) : null}
-        <h2 className="text-6xl lg:text-8xl text-gray-900 text-center [text-wrap:balance] leading-tight">{question.text}</h2>
+        <h2 className="text-6xl lg:text-8xl text-gray-900 text-center [text-wrap:balance] leading-tight line-clamp-3">{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
@@ -97,12 +98,13 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-8 py-3 rounded-lg bg-pink-200/80 text-pink-900 text-base font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-3 rounded-lg bg-pink-200/80 text-pink-900 text-base font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
           >
             回答を締め切る
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }
