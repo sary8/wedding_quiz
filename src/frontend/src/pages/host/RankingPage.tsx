@@ -26,6 +26,11 @@ const PASTEL_BG_CLASSES = [
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
   const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
+  const teamRankings = data?.teamRankings;
+  const teamMaxScore = useMemo(
+    () => teamRankings?.reduce((max, t) => Math.max(max, t.totalScore), 1) ?? 1,
+    [teamRankings]
+  );
   const prefersReducedMotion = useReducedMotion();
 
   if (!data) return null;
@@ -33,7 +38,43 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
     <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col text-gray-900 p-6">
-      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-6 [text-wrap:balance]">Ranking</h2>
+      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-4 [text-wrap:balance]">Ranking</h2>
+
+      {/* チームランキング */}
+      {teamRankings && teamRankings.length > 0 && (
+        <div className="mb-4 max-w-4xl mx-auto w-full" role="region" aria-label="チームランキング">
+          <h3 className="text-lg font-bold text-amber-700 mb-2 text-center">チームランキング</h3>
+          <div className="flex flex-col gap-1.5">
+            {teamRankings.map((team) => {
+              const barWidth = (team.totalScore / teamMaxScore) * 100;
+              return (
+                <motion.div
+                  key={team.teamId}
+                  initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80, damping: 15 }}
+                  className="flex items-center gap-2"
+                >
+                  <span className="w-10 text-2xl lg:text-3xl font-bold text-center [font-variant-numeric:tabular-nums]">{team.rank}</span>
+                  <span className="w-28 md:w-36 text-lg md:text-xl font-bold truncate">{team.teamName}</span>
+                  <div className="flex-1 h-10 lg:h-12 bg-amber-100 rounded-lg overflow-hidden relative">
+                    <motion.div
+                      initial={prefersReducedMotion ? false : { width: 0 }}
+                      animate={{ width: `${barWidth}%` }}
+                      transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 60, damping: 15 }}
+                      className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">
+                      {team.totalScore.toLocaleString()}点
+                    </span>
+                  </div>
+                  <span className="w-16 text-sm text-gray-500 text-right">{team.memberCount}人</span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="ランキング">
         <AnimatePresence>

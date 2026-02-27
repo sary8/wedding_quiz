@@ -19,7 +19,7 @@ type Props = {
   onSpotlight?: (rank: number) => void;
 };
 
-type RevealPhase = "scroll" | "top3" | "winner" | "done" | "group";
+type RevealPhase = "teamReveal" | "scroll" | "top3" | "winner" | "done" | "group";
 
 function getScrollDelay(rank: number): number {
   if (rank > 20) return 200;
@@ -54,7 +54,8 @@ function seededRandom(seed: number): number {
 }
 
 export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight }: Props) {
-  const [phase, setPhase] = useState<RevealPhase>("scroll");
+  const hasTeamRankings = (data?.teamRankings?.length ?? 0) > 0;
+  const [phase, setPhase] = useState<RevealPhase>(hasTeamRankings ? "teamReveal" : "scroll");
   const [visibleIndex, setVisibleIndex] = useState(-1);
   const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -72,9 +73,40 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
     };
   }, [data]);
 
+  // チームランキング発表フェーズ
+  const [teamRevealIndex, setTeamRevealIndex] = useState(-1);
+  useEffect(() => {
+    if (phase !== "teamReveal" || !data?.teamRankings) return;
+    const teamRankings = [...data.teamRankings].sort((a, b) => b.rank - a.rank); // 下位から表示
+    let cancelled = false;
+    let i = 0;
+
+    function showNext() {
+      if (cancelled || i >= teamRankings.length) {
+        if (!cancelled) {
+          // 1位表示後の紙吹雪
+          if (!prefersReducedMotion) {
+            fireConfetti({ particleCount: 150, spread: 100, colors: ["#ffd700", "#ffec8b", "#f59e0b"] });
+          }
+          // scroll フェーズに遷移
+          setTimeout(() => {
+            if (!cancelled) setPhase("scroll");
+          }, 3000);
+        }
+        return;
+      }
+      setTeamRevealIndex(i);
+      i++;
+      setTimeout(showNext, 2500);
+    }
+
+    const initTimer = setTimeout(showNext, 500);
+    return () => { cancelled = true; clearTimeout(initTimer); };
+  }, [phase, data?.teamRankings, prefersReducedMotion]);
+
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
-    if (reversed.length === 0) return;
+    if (phase !== "scroll" || reversed.length === 0) return;
 
     let cancelled = false;
     let index = 0;
@@ -106,7 +138,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
       cancelled = true;
       clearTimeout(initTimer);
     };
-  }, [reversed]);
+  }, [phase, reversed]);
 
   // Top3演出（一時停止対応）
   const isPausedRef = useRef(isPaused);
@@ -167,6 +199,39 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
   if (!data || rankings.length === 0) return null;
+
+  // チームランキング発表フェーズ
+  if (phase === "teamReveal" && data.teamRankings) {
+    const sortedTeams = [...data.teamRankings].sort((a, b) => b.rank - a.rank);
+    return (
+      <div className="h-[100dvh] bg-gradient-to-b from-amber-50 to-amber-100 flex flex-col items-center justify-center text-gray-900 p-6">
+        <h2 className="font-script text-5xl lg:text-7xl text-amber-800 mb-8 [text-wrap:balance]">チーム結果発表</h2>
+        <div className="flex flex-col gap-4 max-w-2xl w-full">
+          <AnimatePresence>
+            {sortedTeams.slice(0, teamRevealIndex + 1).map((team) => (
+              <motion.div
+                key={team.teamId}
+                initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
+                className={[
+                  "flex items-center gap-4 px-8 py-5 rounded-2xl",
+                  team.rank === 1
+                    ? "bg-amber-200/80 ring-4 ring-amber-400 text-amber-900"
+                    : "bg-white/80 text-gray-800",
+                ].join(" ")}
+              >
+                <span className="text-4xl font-bold w-16 text-center">{team.rank}位</span>
+                <span className="flex-1 text-2xl font-bold">{team.teamName}</span>
+                <span className="text-2xl font-bold [font-variant-numeric:tabular-nums]">{team.totalScore.toLocaleString()}点</span>
+                <span className="text-sm text-gray-500">{team.memberCount}人</span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
 
   // 集合写真フェーズ
   if (phase === "group") {

@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { eq } from "drizzle-orm";
 import { initTestDb, resetTestDb, db, testSchema as schema } from "../helpers/testDb.js";
-import { createTestQuiz, createTestQuestion, createTestParticipant, createTestAnswer } from "../helpers/fixtures.js";
+import { createTestQuiz, createTestQuestion, createTestParticipant, createTestAnswer, createTestTeam } from "../helpers/fixtures.js";
 
 vi.mock("../../db/index.js", async () => {
   const testDb = await import("../helpers/testDb.js");
@@ -585,5 +586,249 @@ describe("app.route() 経由のルーティング", () => {
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
     expect(data).toHaveLength(1);
+  });
+});
+
+// ============================================================
+// チーム関連エンドポイント
+// ============================================================
+describe("team routes", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  describe("GET /room/:roomCode/info", () => {
+    it("team_mode OFF → teamMode=false, teams空配列", async () => {
+      await createTestQuiz({ roomCode: "1234" });
+
+      const res = await quizRoutes.request("/room/1234/info", { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.teamMode).toBe(false);
+      expect(data.teams).toEqual([]);
+    });
+
+    it("team_mode ON → teamMode=true, teams含む", async () => {
+      const quiz = await createTestQuiz({ roomCode: "1234" });
+      // team_modeをONにする
+      await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
+      await createTestTeam(quiz.id, { name: "チームA", orderIndex: 0 });
+      await createTestTeam(quiz.id, { name: "チームB", orderIndex: 1 });
+
+      const res = await quizRoutes.request("/room/1234/info", { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.teamMode).toBe(true);
+      expect(data.teams).toHaveLength(2);
+      expect(data.teams[0].name).toBe("チームA");
+      expect(data.teams[1].name).toBe("チームB");
+    });
+
+    it("存在しないroomCode → 404", async () => {
+      const res = await quizRoutes.request("/room/9999/info", { method: "GET" });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("PUT /:id/team-mode", () => {
+    it("team_mode ON → 成功", async () => {
+      const quiz = await createTestQuiz();
+
+      const res = await quizRoutes.request(`/${quiz.id}/team-mode`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: true }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.teamMode).toBe(true);
+
+      // DB確認
+      const updated = await db.query.quizzes.findFirst({ where: eq(schema.quizzes.id, quiz.id) });
+      expect(updated!.team_mode).toBe(true);
+    });
+
+    it("team_mode OFF → 成功", async () => {
+      const quiz = await createTestQuiz();
+      await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
+
+      const res = await quizRoutes.request(`/${quiz.id}/team-mode`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: false }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.teamMode).toBe(false);
+    });
+
+    it("存在しないid → 404", async () => {
+      const res = await quizRoutes.request("/9999/team-mode", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: true }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("GET /:id/teams", () => {
+    it("チーム一覧取得、order_index順", async () => {
+      const quiz = await createTestQuiz();
+      await createTestTeam(quiz.id, { name: "チームB", orderIndex: 1 });
+      await createTestTeam(quiz.id, { name: "チームA", orderIndex: 0 });
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveLength(2);
+      expect(data[0].name).toBe("チームA");
+      expect(data[1].name).toBe("チームB");
+      expect(data[0]).toHaveProperty("id");
+      expect(data[0]).toHaveProperty("orderIndex");
+    });
+
+    it("チームなし → 空配列", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toEqual([]);
+    });
+
+    it("存在しないid → 404", async () => {
+      const res = await quizRoutes.request("/9999/teams", { method: "GET" });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("PUT /:id/teams", () => {
+    it("チーム一括設定（2チーム）→ 成功", async () => {
+      const quiz = await createTestQuiz();
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "紅組" }, { name: "白組" }] }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveLength(2);
+      expect(data[0].name).toBe("紅組");
+      expect(data[0].orderIndex).toBe(0);
+      expect(data[1].name).toBe("白組");
+      expect(data[1].orderIndex).toBe(1);
+    });
+
+    it("既存チーム削除→再作成、参加者のteam_idがnullにリセット", async () => {
+      const quiz = await createTestQuiz();
+      const team = await createTestTeam(quiz.id, { name: "旧チーム" });
+      await createTestParticipant(quiz.id, { nickname: "太郎", teamId: team.id });
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "新チームA" }, { name: "新チームB" }] }),
+      });
+      expect(res.status).toBe(200);
+
+      // 参加者のteam_idがnullにリセットされている
+      const p = await db.query.participants.findFirst({ where: eq(schema.participants.quiz_id, quiz.id) });
+      expect(p!.team_id).toBeNull();
+    });
+
+    it("1チーム → 400（最低2チーム）", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "一つだけ" }] }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("11チーム → 400（最大10チーム）", async () => {
+      const quiz = await createTestQuiz();
+      const teams = Array.from({ length: 11 }, (_, i) => ({ name: `チーム${i + 1}` }));
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("空のチーム名 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "OK" }, { name: "" }] }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("存在しないid → 404", async () => {
+      const res = await quizRoutes.request("/9999/teams", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "A" }, { name: "B" }] }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("DELETE /:id/teams/:teamId", () => {
+    it("チーム個別削除 → 成功", async () => {
+      const quiz = await createTestQuiz();
+      const team = await createTestTeam(quiz.id, { name: "削除対象" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams/${team.id}`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+
+      // 削除確認
+      const check = await quizRoutes.request(`/${quiz.id}/teams`, { method: "GET" });
+      const remaining = await check.json();
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("存在しないチーム → 404", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}/teams/9999`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("別クイズのチーム → 404", async () => {
+      const quiz1 = await createTestQuiz();
+      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const team = await createTestTeam(quiz2.id, { name: "別クイズ" });
+
+      const res = await quizRoutes.request(`/${quiz1.id}/teams/${team.id}`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("GET /:id （チーム情報含む）", () => {
+    it("チームがある場合、teams配列が含まれる", async () => {
+      const quiz = await createTestQuiz();
+      await createTestTeam(quiz.id, { name: "チームA", orderIndex: 0 });
+      await createTestTeam(quiz.id, { name: "チームB", orderIndex: 1 });
+
+      const res = await quizRoutes.request(`/${quiz.id}?key=test-secret-123`, { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.teams).toHaveLength(2);
+      expect(data.teams[0].name).toBe("チームA");
+      expect(data.teams[1].name).toBe("チームB");
+    });
   });
 });

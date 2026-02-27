@@ -1,4 +1,4 @@
-import type { Quiz, QuizSummary, Question, QuestionBankItem, ParticipantSummary, ParticipantWithQuiz } from "../types";
+import type { Quiz, QuizSummary, Question, QuestionBankItem, ParticipantSummary, ParticipantWithQuiz, TeamInfo } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
@@ -188,6 +188,29 @@ export function importBankToQuiz(quizId: number, bankQuestionIds: number[]) {
     method: "POST",
     body: JSON.stringify({ quizId, bankQuestionIds }),
   });
+}
+
+// Team
+export function updateTeamMode(quizId: number, enabled: boolean) {
+  return request<{ success: boolean; teamMode: boolean }>(`/quizzes/${quizId}/team-mode`, {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export function listTeams(quizId: number) {
+  return request<TeamInfo[]>(`/quizzes/${quizId}/teams`);
+}
+
+export function setTeams(quizId: number, teams: { name: string }[]) {
+  return request<TeamInfo[]>(`/quizzes/${quizId}/teams`, {
+    method: "PUT",
+    body: JSON.stringify({ teams }),
+  });
+}
+
+export function getRoomInfo(roomCode: string) {
+  return request<{ teamMode: boolean; teams: TeamInfo[] }>(`/quizzes/room/${roomCode}/info`);
 }
 
 // Media

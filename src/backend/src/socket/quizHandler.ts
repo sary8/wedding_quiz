@@ -139,7 +139,8 @@ export function setupQuizSocket(io: QuizIO) {
           nickname,
           data.selfieData || null,
           socket.id,
-          data.token
+          data.token,
+          data.teamId
         );
 
         if ("error" in result) {
@@ -198,9 +199,14 @@ export function setupQuizSocket(io: QuizIO) {
             });
           }
 
-          // ロビー更新
+          // ロビー更新（チームモード時はteams情報も含める）
+          const quiz = await quizService.getQuizByRoom(data.roomCode);
           const participants = await quizService.getLobbyParticipants(data.roomCode);
-          io.to(data.roomCode).emit("lobbyUpdate", { participants });
+          const lobbyData: { participants: typeof participants; teams?: Awaited<ReturnType<typeof quizService.getTeams>> } = { participants };
+          if (quiz?.team_mode) {
+            lobbyData.teams = await quizService.getTeams(quiz.id);
+          }
+          io.to(data.roomCode).emit("lobbyUpdate", lobbyData);
         }
       } catch (e) {
         const err = e instanceof Error ? e.message : String(e);
@@ -321,6 +327,13 @@ export function setupQuizSocket(io: QuizIO) {
         const quiz = await quizService.getQuizByRoom(roomCode);
         if (quiz && quiz.status !== "draft") {
           const participants = await quizService.getLobbyParticipants(roomCode);
+
+          // ロビー更新通知にteams情報を含める
+          const lobbyData: { participants: typeof participants; teams?: Awaited<ReturnType<typeof quizService.getTeams>> } = { participants };
+          if (quiz.team_mode) {
+            lobbyData.teams = await quizService.getTeams(quiz.id);
+          }
+          io.to(roomCode).emit("lobbyUpdate", lobbyData);
 
           // in_progress時: 現在の問題データ・回答数・タイマー残り時間を復元
           let currentQuestionData = null;
@@ -472,8 +485,8 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        const rankings = await quizService.calculateRanking(data.roomCode);
-        io.to(data.roomCode).emit("rankingUpdate", { rankings });
+        const rankingData = await quizService.calculateRanking(data.roomCode);
+        io.to(data.roomCode).emit("rankingUpdate", rankingData);
 
         logger.info("ranking shown", { roomCode: data.roomCode });
 
@@ -530,7 +543,11 @@ export function setupQuizSocket(io: QuizIO) {
         io.to(data.roomCode).emit("quizReset");
 
         const participants = await quizService.getLobbyParticipants(data.roomCode);
-        io.to(data.roomCode).emit("lobbyUpdate", { participants });
+        const lobbyData: { participants: typeof participants; teams?: Awaited<ReturnType<typeof quizService.getTeams>> } = { participants };
+        if (quiz.team_mode) {
+          lobbyData.teams = await quizService.getTeams(quiz.id);
+        }
+        io.to(data.roomCode).emit("lobbyUpdate", lobbyData);
 
         logger.info("quiz replayed", { roomCode: data.roomCode });
 
@@ -576,8 +593,13 @@ export function setupQuizSocket(io: QuizIO) {
         socket.join(data.roomCode);
         socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
 
+        const quiz = await quizService.getQuizByRoom(data.roomCode);
         const participants = await quizService.getLobbyParticipants(data.roomCode);
-        socket.emit("lobbyUpdate", { participants });
+        const lobbyData: { participants: typeof participants; teams?: Awaited<ReturnType<typeof quizService.getTeams>> } = { participants };
+        if (quiz?.team_mode) {
+          lobbyData.teams = await quizService.getTeams(quiz.id);
+        }
+        socket.emit("lobbyUpdate", lobbyData);
 
         logger.info("viewer joined", { roomCode: data.roomCode });
 

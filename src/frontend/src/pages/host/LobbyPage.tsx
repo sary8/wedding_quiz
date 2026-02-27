@@ -1,4 +1,5 @@
-import type { ParticipantInfo } from "../../types";
+import { useMemo } from "react";
+import type { ParticipantInfo, TeamInfo } from "../../types";
 import { Button } from "../../components/ui/Button";
 import { ParticipantChip } from "../../components/quiz/ParticipantChip";
 import { QRCodeDisplay } from "../../components/quiz/QRCodeDisplay";
@@ -6,11 +7,12 @@ import { QRCodeDisplay } from "../../components/quiz/QRCodeDisplay";
 type Props = {
   roomCode: string;
   participants: ParticipantInfo[];
+  teams?: TeamInfo[];
   onStartGame: () => void;
   isDisplay?: boolean;
 };
 
-export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = false }: Props) {
+export function LobbyPage({ roomCode, participants, teams, onStartGame, isDisplay = false }: Props) {
   const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin;
   const joinUrl = `${appOrigin}/play/${roomCode}`;
 
@@ -48,13 +50,17 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
           参加者: <span className="text-amber-800">{participants.length}</span>人
         </h2>
         {participants.length > 0 ? (
-          <ul className="flex flex-wrap gap-3 justify-center" aria-label="参加者一覧">
-            {participants.map((p) => (
-              <li key={p.id}>
-                <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
-              </li>
-            ))}
-          </ul>
+          teams && teams.length > 0 ? (
+            <TeamGroupedParticipants participants={participants} teams={teams} />
+          ) : (
+            <ul className="flex flex-wrap gap-3 justify-center" aria-label="参加者一覧">
+              {participants.map((p) => (
+                <li key={p.id}>
+                  <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
+                </li>
+              ))}
+            </ul>
+          )
         ) : (
           <p className="text-gray-500 text-base">参加者を待っています…</p>
         )}
@@ -77,6 +83,62 @@ export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = fal
         </>
       )}
     </div>
+    </div>
+  );
+}
+
+type TeamGroupedProps = {
+  participants: ParticipantInfo[];
+  teams: TeamInfo[];
+};
+
+function TeamGroupedParticipants({ participants, teams }: TeamGroupedProps) {
+  const grouped = useMemo(() => {
+    const map = new Map<number | null, ParticipantInfo[]>();
+    for (const p of participants) {
+      const key = p.teamId ?? null;
+      const list = map.get(key) ?? [];
+      list.push(p);
+      map.set(key, list);
+    }
+    return map;
+  }, [participants]);
+
+  const unassigned = grouped.get(null) ?? [];
+
+  return (
+    <div className="space-y-4 text-left">
+      {teams.map((team) => {
+        const members = grouped.get(team.id) ?? [];
+        return (
+          <div key={team.id}>
+            <h3 className="text-sm font-bold text-amber-700 mb-2">{team.name}（{members.length}人）</h3>
+            {members.length > 0 ? (
+              <ul className="flex flex-wrap gap-2" aria-label={`${team.name}の参加者`}>
+                {members.map((p) => (
+                  <li key={p.id}>
+                    <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400 text-sm">メンバーなし</p>
+            )}
+          </div>
+        );
+      })}
+      {unassigned.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-gray-500 mb-2">未所属（{unassigned.length}人）</h3>
+          <ul className="flex flex-wrap gap-2" aria-label="未所属の参加者">
+            {unassigned.map((p) => (
+              <li key={p.id}>
+                <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

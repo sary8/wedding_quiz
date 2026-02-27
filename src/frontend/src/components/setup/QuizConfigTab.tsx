@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Quiz } from "../../types";
-import { updateQuiz, deleteQuiz } from "../../services/api";
+import { updateQuiz, deleteQuiz, updateTeamMode, setTeams as setTeamsApi } from "../../services/api";
 import { cn } from "../../utils/cn";
 
 type Props = {
@@ -33,6 +33,13 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
 
+  const [isTeamMode, setIsTeamMode] = useState(quiz.team_mode ?? false);
+  const [teamNames, setTeamNames] = useState<string[]>(() => {
+    const existing = quiz.teams ?? [];
+    return existing.length >= 2 ? existing.map((t) => t.name) : ["チーム1", "チーム2"];
+  });
+  const [isSavingTeams, setIsSavingTeams] = useState(false);
+
   const questionCount = quiz.questions?.length ?? 0;
   const canStartLobby = questionCount > 0;
 
@@ -57,6 +64,55 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
 
   function handleCancelEdit() {
     setIsEditingTitle(false);
+  }
+
+  async function handleToggleTeamMode() {
+    const newVal = !isTeamMode;
+    setError("");
+    try {
+      await updateTeamMode(quiz.id, newVal);
+      setIsTeamMode(newVal);
+      if (newVal && teamNames.length >= 2) {
+        await handleSaveTeams(teamNames);
+      }
+    } catch {
+      setError("チームモードの切替に失敗しました");
+    }
+  }
+
+  function handleTeamNameChange(index: number, value: string) {
+    setTeamNames((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
+
+  function handleAddTeam() {
+    if (teamNames.length >= 10) return;
+    setTeamNames((prev) => [...prev, `チーム${prev.length + 1}`]);
+  }
+
+  function handleRemoveTeam(index: number) {
+    if (teamNames.length <= 2) return;
+    setTeamNames((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSaveTeams(names?: string[]) {
+    const toSave = names ?? teamNames;
+    if (toSave.some((n) => !n.trim())) {
+      setError("チーム名を入力してください");
+      return;
+    }
+    setIsSavingTeams(true);
+    setError("");
+    try {
+      await setTeamsApi(quiz.id, toSave.map((name) => ({ name: name.trim() })));
+    } catch {
+      setError("チームの保存に失敗しました");
+    } finally {
+      setIsSavingTeams(false);
+    }
   }
 
   return (
@@ -130,6 +186,85 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
             <div className="font-semibold text-gray-800 mt-0.5">{questionCount}問</div>
           </div>
         </div>
+      </div>
+
+      {/* チーム戦モード */}
+      <div className="border border-gray-100 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-500">チーム戦モード</h3>
+          <button
+            type="button"
+            onClick={handleToggleTeamMode}
+            role="switch"
+            aria-checked={isTeamMode}
+            className={cn(
+              "relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 cursor-pointer",
+              btnFocus,
+              isTeamMode ? "bg-primary" : "bg-gray-300",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200",
+                isTeamMode ? "translate-x-6" : "translate-x-1",
+              )}
+            />
+          </button>
+        </div>
+
+        {isTeamMode && (
+          <div className="space-y-3">
+            {teamNames.map((name, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => handleTeamNameChange(i, e.target.value.slice(0, 30))}
+                  maxLength={30}
+                  placeholder={`チーム${i + 1}`}
+                  autoComplete="off"
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent"
+                />
+                {teamNames.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTeam(i)}
+                    aria-label={`${name || `チーム${i + 1}`}を削除`}
+                    className={cn("p-2 text-gray-400 hover:text-red-500 transition-colors duration-150 min-h-[36px] cursor-pointer rounded-lg", btnFocus)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <div className="flex gap-2">
+              {teamNames.length < 10 && (
+                <button
+                  type="button"
+                  onClick={handleAddTeam}
+                  className={cn("px-4 py-2 rounded-lg text-sm text-accent border border-accent/30 hover:bg-accent/5 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                >
+                  + チーム追加
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleSaveTeams()}
+                disabled={isSavingTeams}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold text-white bg-accent hover:bg-accent/90 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                  btnFocus,
+                  isSavingTeams && "opacity-60 cursor-not-allowed",
+                )}
+              >
+                {isSavingTeams ? "保存中…" : "チームを保存"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* プレビュー / リハーサル */}

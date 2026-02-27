@@ -10,6 +10,7 @@ export const quizzes = sqliteTable("quizzes", {
     .notNull()
     .default("draft"),
   current_question_index: integer("current_question_index").notNull().default(-1),
+  team_mode: integer("team_mode", { mode: "boolean" }).notNull().default(false),
   created_at: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -42,11 +43,21 @@ export const questions = sqliteTable("questions", {
   points: integer("points").notNull().default(1000),
 });
 
+export const teams = sqliteTable("teams", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  quiz_id: integer("quiz_id")
+    .notNull()
+    .references(() => quizzes.id, { onDelete: "cascade" }),
+  name: text("name", { length: 100 }).notNull(),
+  order_index: integer("order_index").notNull().default(0),
+});
+
 export const participants = sqliteTable("participants", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   quiz_id: integer("quiz_id")
     .notNull()
     .references(() => quizzes.id, { onDelete: "cascade" }),
+  team_id: integer("team_id").references(() => teams.id, { onDelete: "set null" }),
   nickname: text("nickname", { length: 30 }).notNull(),
   selfie_file_name: text("selfie_file_name"),
   connection_id: text("connection_id").notNull().default(""),
@@ -116,6 +127,7 @@ export const questionBank = sqliteTable("question_bank", {
 export const quizzesRelations = relations(quizzes, ({ many }) => ({
   questions: many(questions),
   participants: many(participants),
+  teams: many(teams),
 }));
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -123,8 +135,14 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
   answers: many(answers),
 }));
 
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  quiz: one(quizzes, { fields: [teams.quiz_id], references: [quizzes.id] }),
+  participants: many(participants),
+}));
+
 export const participantsRelations = relations(participants, ({ one, many }) => ({
   quiz: one(quizzes, { fields: [participants.quiz_id], references: [quizzes.id] }),
+  team: one(teams, { fields: [participants.team_id], references: [teams.id] }),
   answers: many(answers),
 }));
 

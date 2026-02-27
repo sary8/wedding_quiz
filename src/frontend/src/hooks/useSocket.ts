@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import type {
   ParticipantInfo,
+  TeamInfo,
   QuestionData,
   QuestionResultData,
   RankingData,
@@ -11,7 +12,7 @@ import type {
 
 type ServerToClientEvents = {
   participantJoined: (data: ParticipantInfo) => void;
-  lobbyUpdate: (data: { participants: ParticipantInfo[] }) => void;
+  lobbyUpdate: (data: { participants: ParticipantInfo[]; teams?: TeamInfo[] }) => void;
   gameStarted: () => void;
   questionStarted: (data: QuestionData) => void;
   timeUpdate: (data: { remaining: number }) => void;
@@ -36,7 +37,7 @@ type ServerToClientEvents = {
 
 type ClientToServerEvents = {
   joinRoom: (
-    data: { roomCode: string; nickname: string; selfieData?: string; token?: string },
+    data: { roomCode: string; nickname: string; selfieData?: string; token?: string; teamId?: number },
     cb: (res: { success: boolean; participantId?: number; token?: string; error?: string }) => void
   ) => void;
   submitAnswer: (

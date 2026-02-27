@@ -19,10 +19,26 @@ export const MediaType = {
 } as const;
 export type MediaType = (typeof MediaType)[keyof typeof MediaType];
 
+export type TeamInfo = {
+  id: number;
+  name: string;
+  orderIndex: number;
+};
+
+export type TeamRankingEntry = {
+  teamId: number;
+  teamName: string;
+  totalScore: number;
+  memberCount: number;
+  rank: number;
+};
+
 export type ParticipantInfo = {
   id: number;
   nickname: string;
   selfieUrl: string | null;
+  teamId?: number | null;
+  teamName?: string | null;
 };
 
 export type QuestionData = {
@@ -66,6 +82,7 @@ export type RankingEntry = {
 
 export type RankingData = {
   rankings: RankingEntry[];
+  teamRankings?: TeamRankingEntry[];
 };
 
 export type FinalRankingEntry = RankingEntry & {
@@ -77,6 +94,7 @@ export type FinalRankingEntry = RankingEntry & {
 
 export type FinalResultData = {
   rankings: FinalRankingEntry[];
+  teamRankings?: TeamRankingEntry[];
 };
 
 export type QuizSummary = {
@@ -111,6 +129,8 @@ export type ParticipantWithQuiz = {
 
 export type Quiz = QuizSummary & {
   host_secret: string;
+  team_mode?: boolean;
+  teams?: TeamInfo[];
   questions?: Question[];
 };
 

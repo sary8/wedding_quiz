@@ -47,7 +47,7 @@
 | closed | サンキュースクリーン（浮遊アバター） | 管理画面に戻る |
 | recovering | ホスト復旧画面（ゲーム中に再接続時） | 次の問題を配信 / ランキング表示 |
 
-> `key` パラメータ = `host_secret`（localStorage に保存済み）
+> `host_secret` は sessionStorage に保存（URLには露出しない）
 > `quizId` パラメータ = クイズID
 > `?rehearsal=true` でリハーサルモード（黄色バナー表示、最終問題後に自動リプレイ）
 
@@ -69,7 +69,7 @@
 
 ### `/play`
 **ルームコード入力画面**
-- 6桁数字のルームコードを入力して参加
+- 4桁数字のルームコードを入力して参加
 
 ---
 
@@ -78,7 +78,7 @@
 
 | フェーズ | 表示内容 |
 |----------|----------|
-| profile | ニックネーム入力 + 自撮り撮影（任意） |
+| profile | ニックネーム入力 + チーム選択（チーム戦時） + 自撮り撮影（任意） |
 | waiting | 待機画面（ルームコード表示） |
 | answer | 4色ボタンで回答（制限時間カウントダウン・回答数表示） |
 | result | 正解/不正解 + 正解テキスト + 獲得ポイント + 現在順位 |
@@ -125,9 +125,19 @@
 
 | メソッド | パス | 説明 |
 |----------|------|------|
-| POST | `/api/media/upload` | 画像アップロード（JPG/PNG/GIF/WebP、最大5MB） |
+| POST | `/api/media/upload` | 画像アップロード（JPG/PNG/GIF/WebP、最大5MB、IP単位レート制限あり） |
 | POST | `/api/media/selfie` | 自撮りアップロード（base64） |
-| GET | `/api/media/:filename` | メディア配信 |
+| GET | `/api/media/:filename` | メディア配信（パストラバーサル対策済み） |
+
+### チーム管理
+
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/api/quizzes/room/:roomCode/info` | ルーム情報（teamMode, teams）— 参加者がチーム選択用に取得 |
+| PUT | `/api/quizzes/:id/team-mode` | チームモード ON/OFF 切替 (`{ enabled: boolean }`) |
+| GET | `/api/quizzes/:id/teams` | チーム一覧（order_index順） |
+| PUT | `/api/quizzes/:id/teams` | チーム一括設定 (`{ teams: [{ name }] }`, 2〜10件、既存は削除して再作成) |
+| DELETE | `/api/quizzes/:id/teams/:teamId` | チーム個別削除 |
 
 ### 参加者
 
@@ -160,14 +170,14 @@
 | `replayQuiz` | ホスト | ゲームリプレイ（finished → lobby リセット） |
 | `closeGame` | ホスト | ゲーム完全終了（サンキュースクリーン表示） |
 | `watchRoom` | プロジェクター | 読み取り専用参加（既存参加者も取得） |
-| `joinRoom` | 参加者 | ニックネーム・自撮りで参加（同名重複は拒否） |
+| `joinRoom` | 参加者 | ニックネーム・自撮りで参加（同名重複は拒否、チーム戦時は `teamId` 指定可） |
 | `submitAnswer` | 参加者 | 回答送信（`questionId`, `choiceIndex: 1-4`） |
 
 ### Server → Client
 
 | イベント | 受信者 | 説明 |
 |----------|--------|------|
-| `lobbyUpdate` | 全員 | 参加者リスト更新 |
+| `lobbyUpdate` | 全員 | 参加者リスト更新（チーム戦時は `teams` 配列を含む） |
 | `participantJoined` | 全員 | 新規参加者通知 |
 | `gameStarted` | 全員 | ゲーム開始通知 |
 | `questionStarted` | 全員 | 問題データ配信 |
@@ -175,8 +185,8 @@
 | `answerCountUpdate` | 全員 | 現在の回答数 |
 | `questionClosed` | 全員 | 回答締め切り |
 | `questionResult` | 全員 | 正解・分布（参加者は個人結果 + 正解テキスト含む） |
-| `rankingUpdate` | 全員 | ランキングデータ（参加者は自分の順位 + Top5） |
-| `gameEnded` | 全員 | 最終結果データ |
+| `rankingUpdate` | 全員 | ランキングデータ（参加者は自分の順位 + Top5、チーム戦時は `teamRankings` を含む） |
+| `gameEnded` | 全員 | 最終結果データ（チーム戦時は `teamRankings` を含む） |
 | `quizReset` | 全員 | リプレイ時のゲームリセット通知 |
 | `gameClosed` | 全員 | ゲーム終了通知（サンキュースクリーン表示） |
 | `reconnected` | 参加者 | 再接続時のステータス通知 |
@@ -202,4 +212,4 @@
 
 ---
 
-*最終更新: 2026-02-21*
+*最終更新: 2026-02-27*

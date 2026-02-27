@@ -1,13 +1,16 @@
 import { useState, useCallback } from "react";
 import { useCamera } from "../../hooks/useCamera";
+import type { TeamInfo } from "../../types";
 
 type Props = {
-  onJoin: (nickname: string, selfieData?: string) => void;
+  onJoin: (nickname: string, selfieData?: string, teamId?: number) => void;
   isJoining: boolean;
+  teams?: TeamInfo[];
 };
 
-export function ProfilePage({ onJoin, isJoining }: Props) {
+export function ProfilePage({ onJoin, isJoining, teams }: Props) {
   const [nickname, setNickname] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState<number | undefined>(undefined);
   const [captureError, setCaptureError] = useState<string | null>(null);
   const {
     videoRef,
@@ -28,9 +31,12 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
     }
   }, [capture]);
 
+  const hasTeams = teams && teams.length > 0;
+
   function handleSubmit() {
     if (!nickname.trim() || !capturedImage || isJoining) return;
-    onJoin(nickname.trim(), capturedImage);
+    if (hasTeams && selectedTeamId == null) return;
+    onJoin(nickname.trim(), capturedImage, selectedTeamId);
   }
 
   return (
@@ -70,6 +76,31 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSubmit()}
           />
         </div>
+
+        {/* チーム選択 */}
+        {hasTeams && (
+          <div className="w-full">
+            <p className="text-sm font-semibold text-rose-text/80 mb-2">チームを選択</p>
+            <div className="flex flex-wrap gap-2">
+              {teams.map((team) => (
+                <button
+                  key={team.id}
+                  type="button"
+                  onClick={() => setSelectedTeamId(team.id)}
+                  className={[
+                    "px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 min-h-[44px] cursor-pointer",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                    selectedTeamId === team.id
+                      ? "bg-primary text-white ring-2 ring-primary shadow-md"
+                      : "bg-primary/10 text-primary hover:bg-primary/20",
+                  ].join(" ")}
+                >
+                  {team.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 自撮りエリア */}
         <div className="text-center">
@@ -145,10 +176,10 @@ export function ProfilePage({ onJoin, isJoining }: Props) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!nickname.trim() || !capturedImage || isJoining}
+          disabled={!nickname.trim() || !capturedImage || isJoining || (hasTeams && selectedTeamId == null)}
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            nickname.trim() && capturedImage && !isJoining
+            nickname.trim() && capturedImage && !isJoining && (!hasTeams || selectedTeamId != null)
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}

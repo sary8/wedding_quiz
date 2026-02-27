@@ -25,7 +25,7 @@ export type MediaType = (typeof MediaType)[keyof typeof MediaType];
 // Socket.io server → client events
 export type ServerToClientEvents = {
   participantJoined: (data: ParticipantInfo) => void;
-  lobbyUpdate: (data: { participants: ParticipantInfo[] }) => void;
+  lobbyUpdate: (data: { participants: ParticipantInfo[]; teams?: TeamInfo[] }) => void;
   gameStarted: () => void;
   questionStarted: (data: QuestionData) => void;
   timeUpdate: (data: { remaining: number }) => void;
@@ -52,7 +52,7 @@ export type ServerToClientEvents = {
 export type ClientToServerEvents = {
   // Participant
   joinRoom: (
-    data: { roomCode: string; nickname: string; selfieData?: string; token?: string },
+    data: { roomCode: string; nickname: string; selfieData?: string; token?: string; teamId?: number },
     callback: (res: { success: boolean; participantId?: number; token?: string; error?: string }) => void
   ) => void;
   submitAnswer: (
@@ -98,11 +98,28 @@ export type ClientToServerEvents = {
   ) => void;
 };
 
+// Team types
+export type TeamInfo = {
+  id: number;
+  name: string;
+  orderIndex: number;
+};
+
+export type TeamRankingEntry = {
+  teamId: number;
+  teamName: string;
+  totalScore: number;
+  memberCount: number;
+  rank: number;
+};
+
 // Shared data types
 export type ParticipantInfo = {
   id: number;
   nickname: string;
   selfieUrl: string | null;
+  teamId?: number | null;
+  teamName?: string | null;
 };
 
 export type QuestionData = {
@@ -146,6 +163,7 @@ export type RankingEntry = {
 
 export type RankingData = {
   rankings: RankingEntry[];
+  teamRankings?: TeamRankingEntry[];
 };
 
 export type FinalResultData = {
@@ -155,4 +173,5 @@ export type FinalResultData = {
     averageResponseTimeMs: number;
     fastestResponseTimeMs: number;
   })[];
+  teamRankings?: TeamRankingEntry[];
 };

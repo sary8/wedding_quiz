@@ -10,6 +10,7 @@ const CREATE_TABLES_SQL = [
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     current_question_index INTEGER NOT NULL DEFAULT -1,
+    team_mode INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE TABLE IF NOT EXISTS questions (
@@ -32,9 +33,16 @@ const CREATE_TABLES_SQL = [
     time_limit_seconds INTEGER NOT NULL DEFAULT 20,
     points INTEGER NOT NULL DEFAULT 1000
   )`,
+  `CREATE TABLE IF NOT EXISTS teams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    order_index INTEGER NOT NULL DEFAULT 0
+  )`,
   `CREATE TABLE IF NOT EXISTS participants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    team_id INTEGER REFERENCES teams(id) ON DELETE SET NULL,
     nickname TEXT NOT NULL,
     selfie_file_name TEXT,
     connection_id TEXT NOT NULL DEFAULT '',
@@ -93,6 +101,7 @@ export async function initTestDb() {
 export async function resetTestDb() {
   await client.execute("DELETE FROM answers");
   await client.execute("DELETE FROM participants");
+  await client.execute("DELETE FROM teams");
   await client.execute("DELETE FROM questions");
   await client.execute("DELETE FROM quizzes");
   await client.execute("DELETE FROM question_bank");

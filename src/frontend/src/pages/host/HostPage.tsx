@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
   ParticipantInfo,
+  TeamInfo,
   QuestionData,
   QuestionResultData,
   RankingData,
@@ -52,6 +53,7 @@ export function HostPage() {
   const [phase, setPhase] = useState<HostPhase>("lobby");
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
+  const [lobbyTeams, setLobbyTeams] = useState<TeamInfo[] | undefined>(undefined);
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [answerCount, setAnswerCount] = useState(0);
@@ -67,7 +69,10 @@ export function HostPage() {
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
-      on("lobbyUpdate", (data) => setParticipants(data.participants)),
+      on("lobbyUpdate", (data) => {
+        setParticipants(data.participants);
+        if (data.teams) setLobbyTeams(data.teams);
+      }),
       on("participantJoined", () => {
         sounds.playJoinChime();
       }),
@@ -321,6 +326,7 @@ export function HostPage() {
             <LobbyPage
               roomCode={roomCode}
               participants={participants}
+              teams={lobbyTeams}
               onStartGame={handleStartGame}
             />
           </>

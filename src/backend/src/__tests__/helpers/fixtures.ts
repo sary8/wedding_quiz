@@ -67,6 +67,24 @@ export async function createTestQuestion(
   return result[0];
 }
 
+export async function createTestTeam(
+  quizId: number,
+  overrides: Partial<{
+    name: string;
+    orderIndex: number;
+  }> = {}
+) {
+  const result = await db
+    .insert(schema.teams)
+    .values({
+      quiz_id: quizId,
+      name: overrides.name ?? "テストチーム",
+      order_index: overrides.orderIndex ?? 0,
+    })
+    .returning();
+  return result[0];
+}
+
 export async function createTestParticipant(
   quizId: number,
   overrides: Partial<{
@@ -77,12 +95,14 @@ export async function createTestParticipant(
     totalScore: number;
     currentRank: number;
     isConnected: boolean;
+    teamId: number | null;
   }> = {}
 ) {
   const result = await db
     .insert(schema.participants)
     .values({
       quiz_id: quizId,
+      team_id: overrides.teamId ?? null,
       nickname: overrides.nickname ?? "テストユーザー",
       selfie_file_name: overrides.selfieFileName ?? null,
       connection_id: overrides.connectionId ?? "test-connection",

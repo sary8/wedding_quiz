@@ -4,9 +4,12 @@ import { nanoid } from "nanoid";
 import { calculateScore } from "./scoringService.js";
 import type {
   ParticipantInfo,
+  TeamInfo,
+  TeamRankingEntry,
   QuestionData,
   QuestionResultData,
   RankingEntry,
+  RankingData,
   FinalResultData,
 } from "../types/index.js";
 
@@ -47,7 +50,8 @@ export async function joinRoom(
   nickname: string,
   selfieFileName: string | null,
   connectionId: string,
-  existingToken?: string
+  existingToken?: string,
+  teamId?: number
 ) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.room_code, roomCode),
@@ -55,6 +59,19 @@ export async function joinRoom(
   if (!quiz) return { error: "ルームが見つかりません" };
   if (quiz.status !== "lobby" && quiz.status !== "in_progress") {
     return { error: "このルームは現在参加できません" };
+  }
+
+  // team_mode ON 時のバリデーション
+  if (quiz.team_mode && teamId != null) {
+    const team = await db.query.teams.findFirst({
+      where: and(
+        eq(schema.teams.id, teamId),
+        eq(schema.teams.quiz_id, quiz.id)
+      ),
+    });
+    if (!team) {
+      return { error: "指定されたチームが見つかりません" };
+    }
   }
 
   // 再接続チェック
@@ -90,6 +107,7 @@ export async function joinRoom(
     .insert(schema.participants)
     .values({
       quiz_id: quiz.id,
+      team_id: (quiz.team_mode && teamId != null) ? teamId : null,
       nickname: nickname.trim(),
       selfie_file_name: selfieFileName,
       connection_id: connectionId,
@@ -116,15 +134,24 @@ export async function getLobbyParticipants(roomCode: string): Promise<Participan
   });
   if (!quiz) return [];
 
-  const participants = await db
-    .select()
+  const rows = await db
+    .select({
+      id: schema.participants.id,
+      nickname: schema.participants.nickname,
+      selfie_file_name: schema.participants.selfie_file_name,
+      team_id: schema.participants.team_id,
+      team_name: schema.teams.name,
+    })
     .from(schema.participants)
+    .leftJoin(schema.teams, eq(schema.participants.team_id, schema.teams.id))
     .where(eq(schema.participants.quiz_id, quiz.id));
 
-  return participants.map((p) => ({
+  return rows.map((p) => ({
     id: p.id,
     nickname: p.nickname,
     selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
+    teamId: p.team_id,
+    teamName: p.team_name,
   }));
 }
 
@@ -297,12 +324,51 @@ export async function getQuestionResult(
   return result;
 }
 
+// チームランキング計算
+export async function calculateTeamRanking(quizId: number): Promise<TeamRankingEntry[]> {
+  const rows = await db
+    .select({
+      teamId: schema.teams.id,
+      teamName: schema.teams.name,
+      totalScore: sql<number>`COALESCE(SUM(${schema.participants.total_score}), 0)`,
+      memberCount: sql<number>`COUNT(${schema.participants.id})`,
+    })
+    .from(schema.teams)
+    .leftJoin(schema.participants, eq(schema.teams.id, schema.participants.team_id))
+    .where(eq(schema.teams.quiz_id, quizId))
+    .groupBy(schema.teams.id)
+    .orderBy(desc(sql`COALESCE(SUM(${schema.participants.total_score}), 0)`));
+
+  return rows.map((r, i) => ({
+    teamId: r.teamId,
+    teamName: r.teamName,
+    totalScore: r.totalScore,
+    memberCount: r.memberCount,
+    rank: i + 1,
+  }));
+}
+
+// チーム一覧取得
+export async function getTeams(quizId: number): Promise<TeamInfo[]> {
+  const rows = await db
+    .select()
+    .from(schema.teams)
+    .where(eq(schema.teams.quiz_id, quizId))
+    .orderBy(asc(schema.teams.order_index));
+
+  return rows.map((t) => ({
+    id: t.id,
+    name: t.name,
+    orderIndex: t.order_index,
+  }));
+}
+
 // ランキング計算・更新
-export async function calculateRanking(roomCode: string): Promise<RankingEntry[]> {
+export async function calculateRanking(roomCode: string): Promise<RankingData> {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.room_code, roomCode),
   });
-  if (!quiz) return [];
+  if (!quiz) return { rankings: [] };
 
   // participants と currentQuestionId を並列取得
   const [participants, currentQuestionId] = await Promise.all([
@@ -353,7 +419,14 @@ export async function calculateRanking(roomCode: string): Promise<RankingEntry[]
     };
   });
 
-  return rankings;
+  const result: RankingData = { rankings };
+
+  // チームモードの場合はチームランキングも計算
+  if (quiz.team_mode) {
+    result.teamRankings = await calculateTeamRanking(quiz.id);
+  }
+
+  return result;
 }
 
 // 最終結果生成
@@ -430,7 +503,14 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
     .set({ status: "finished" })
     .where(eq(schema.quizzes.id, quiz.id));
 
-  return { rankings };
+  const result: FinalResultData = { rankings };
+
+  // チームモードの場合はチームランキングも計算
+  if (quiz.team_mode) {
+    result.teamRankings = await calculateTeamRanking(quiz.id);
+  }
+
+  return result;
 }
 
 // リプレイ（ゲームリセット）

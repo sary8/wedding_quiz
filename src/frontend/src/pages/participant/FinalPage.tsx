@@ -25,6 +25,18 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
       isTopThree ? "bg-gradient-to-b from-[#FEF3C7] to-[#FDE68A]" : "bg-blush",
     ].join(" ")}>
 
+      {/* チーム成績 */}
+      {data.teamRankings && data.teamRankings.length > 0 && (
+        <div className="w-full max-w-xs bg-amber-50 rounded-2xl border border-amber-200 p-4 mb-4 text-center">
+          <p className="text-sm font-bold text-amber-800 mb-1">チーム成績</p>
+          {data.teamRankings.map((t) => (
+            <p key={t.teamId} className="text-sm text-amber-700">
+              {t.teamName}: 第{t.rank}位（{t.totalScore.toLocaleString()}点）
+            </p>
+          ))}
+        </div>
+      )}
+
       {/* タイトル */}
       <h2 className="font-script text-4xl text-primary mb-1 [text-wrap:balance]">最終結果</h2>
       <div className="flex items-center gap-3 mb-6 w-40">

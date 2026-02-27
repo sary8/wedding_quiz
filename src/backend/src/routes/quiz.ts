@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
-import { eq, sql, and, inArray, asc } from "drizzle-orm";
+import { eq, sql, and, inArray, asc, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const quizRoutes = new Hono();
@@ -75,6 +75,9 @@ quizRoutes.get("/:id", async (c) => {
     with: {
       questions: {
         orderBy: [asc(schema.questions.order_index)],
+      },
+      teams: {
+        orderBy: [asc(schema.teams.order_index)],
       },
     },
   });
@@ -202,6 +205,136 @@ quizRoutes.delete("/:id/participants", async (c) => {
   await db.delete(schema.participants).where(
     eq(schema.participants.quiz_id, quizId),
   );
+  return c.json({ success: true });
+});
+
+// ルーム情報取得（参加者がチーム選択用に取得）
+quizRoutes.get("/room/:roomCode/info", async (c) => {
+  const roomCode = c.req.param("roomCode");
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.room_code, roomCode),
+  });
+  if (!quiz) {
+    return c.json({ error: "ルームが見つかりません" }, 404);
+  }
+
+  let teams: { id: number; name: string; order_index: number }[] = [];
+  if (quiz.team_mode) {
+    teams = await db
+      .select()
+      .from(schema.teams)
+      .where(eq(schema.teams.quiz_id, quiz.id))
+      .orderBy(asc(schema.teams.order_index));
+  }
+
+  return c.json({
+    teamMode: quiz.team_mode,
+    teams: teams.map((t) => ({ id: t.id, name: t.name, orderIndex: t.order_index })),
+  });
+});
+
+// チームモード切替
+quizRoutes.put("/:id/team-mode", async (c) => {
+  const id = Number(c.req.param("id"));
+  const body = await c.req.json<{ enabled: boolean }>();
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, id),
+  });
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+
+  await db
+    .update(schema.quizzes)
+    .set({ team_mode: body.enabled })
+    .where(eq(schema.quizzes.id, id));
+
+  return c.json({ success: true, teamMode: body.enabled });
+});
+
+// チーム一覧取得
+quizRoutes.get("/:id/teams", async (c) => {
+  const id = Number(c.req.param("id"));
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, id),
+  });
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+
+  const teams = await db
+    .select()
+    .from(schema.teams)
+    .where(eq(schema.teams.quiz_id, id))
+    .orderBy(asc(schema.teams.order_index));
+
+  return c.json(teams.map((t) => ({ id: t.id, name: t.name, orderIndex: t.order_index })));
+});
+
+// チーム一括設定
+quizRoutes.put("/:id/teams", async (c) => {
+  const id = Number(c.req.param("id"));
+  const body = await c.req.json<{ teams: { name: string }[] }>();
+
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, id),
+  });
+  if (!quiz) {
+    return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+
+  if (!Array.isArray(body.teams) || body.teams.length < 2 || body.teams.length > 10) {
+    return c.json({ error: "チームは2〜10個で設定してください" }, 400);
+  }
+
+  for (const t of body.teams) {
+    if (!t.name?.trim()) {
+      return c.json({ error: "チーム名は必須です" }, 400);
+    }
+  }
+
+  // 既存チームを削除して再作成
+  await db.delete(schema.teams).where(eq(schema.teams.quiz_id, id));
+
+  // 参加者の team_id を null にリセット
+  await db
+    .update(schema.participants)
+    .set({ team_id: null })
+    .where(eq(schema.participants.quiz_id, id));
+
+  const values = body.teams.map((t, i) => ({
+    quiz_id: id,
+    name: t.name.trim(),
+    order_index: i,
+  }));
+
+  const inserted = await db
+    .insert(schema.teams)
+    .values(values)
+    .returning();
+
+  return c.json(inserted.map((t) => ({ id: t.id, name: t.name, orderIndex: t.order_index })));
+});
+
+// チーム個別削除
+quizRoutes.delete("/:id/teams/:teamId", async (c) => {
+  const quizId = Number(c.req.param("id"));
+  const teamId = Number(c.req.param("teamId"));
+
+  const team = await db.query.teams.findFirst({
+    where: and(
+      eq(schema.teams.id, teamId),
+      eq(schema.teams.quiz_id, quizId),
+    ),
+  });
+
+  if (!team) {
+    return c.json({ error: "チームが見つかりません" }, 404);
+  }
+
+  await db.delete(schema.teams).where(eq(schema.teams.id, teamId));
   return c.json({ success: true });
 });
 

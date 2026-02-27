@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
-import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo } from "../../types";
-import { uploadSelfie } from "../../services/api";
+import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo, TeamInfo } from "../../types";
+import { uploadSelfie, getRoomInfo } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
@@ -29,6 +29,21 @@ export function PlayPage() {
   const [isJoining, setIsJoining] = useState(false);
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
+  const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
+
+  // ルーム情報取得（チームモード判定用）
+  useEffect(() => {
+    if (!roomCode) return;
+    getRoomInfo(roomCode)
+      .then((info) => {
+        if (info.teamMode && info.teams.length > 0) {
+          setRoomTeams(info.teams);
+        }
+      })
+      .catch(() => {
+        // エラー時はチームなしで進行
+      });
+  }, [roomCode]);
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外
   const hasAnsweredRef = useRef(hasAnswered);
@@ -115,7 +130,7 @@ export function PlayPage() {
   }, [on]);
 
   const handleJoin = useCallback(
-    async (nickname: string, selfieData?: string) => {
+    async (nickname: string, selfieData?: string, teamId?: number) => {
       if (!roomCode || isJoining) return;
       setIsJoining(true);
 
@@ -138,7 +153,7 @@ export function PlayPage() {
         setIsJoining(false);
       }, 10000);
 
-      emit("joinRoom", { roomCode, nickname, selfieData: selfieFileName, token }, (res) => {
+      emit("joinRoom", { roomCode, nickname, selfieData: selfieFileName, token, teamId }, (res) => {
         clearTimeout(joinTimeout);
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
@@ -187,7 +202,7 @@ export function PlayPage() {
               {answerError}（タップで閉じる）
             </button>
           ) : null}
-          <ProfilePage onJoin={handleJoin} isJoining={isJoining} />
+          <ProfilePage onJoin={handleJoin} isJoining={isJoining} teams={roomTeams} />
         </>
       );
     case "waiting":

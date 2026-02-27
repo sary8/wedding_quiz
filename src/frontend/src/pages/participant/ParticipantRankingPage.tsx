@@ -22,6 +22,19 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-blush">
+      {/* チーム順位 */}
+      {data.teamRankings && data.teamRankings.length > 0 && (
+        <div className="flex-shrink-0 flex flex-col items-center pt-6 pb-2 px-4">
+          <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-200">
+            {data.teamRankings.map((t) => (
+              <p key={t.teamId} className="text-sm font-bold text-amber-800 text-center">
+                {t.teamName}: 第{t.rank}位（{t.totalScore.toLocaleString()}点）
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 自分の順位 */}
       <div className="flex-shrink-0 flex flex-col items-center justify-center pt-10 pb-6 px-4">
         <div className="text-accent mb-3" aria-hidden="true">

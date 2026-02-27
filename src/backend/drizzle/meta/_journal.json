@@ -29,6 +29,13 @@
       "when": 1772159628704,
       "tag": "0003_solid_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772183597438,
+      "tag": "0004_gifted_the_executioner",
+      "breakpoints": true
     }
   ]
 }
