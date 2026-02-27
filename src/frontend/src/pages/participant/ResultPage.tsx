@@ -1,5 +1,6 @@
 import type { QuestionResultData, QuestionData } from "../../types";
 import { cn } from "../../utils/cn";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type Props = {
   result: QuestionResultData | null;
@@ -21,9 +22,9 @@ export function ResultPage({ result, question }: Props) {
         {correctAnswerText !== null ? (
           <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-6">
             <p className="text-sm text-rose-text/60 mb-1">正解</p>
-            {result && question?.choiceImageUrls?.[result.correctChoice - 1] && (
+            {result && sanitizeMediaUrl(question?.choiceImageUrls?.[result.correctChoice - 1]) && (
               <img
-                src={question.choiceImageUrls[result.correctChoice - 1]!}
+                src={sanitizeMediaUrl(question?.choiceImageUrls?.[result.correctChoice - 1])!}
                 alt={correctAnswerText || "正解の画像"}
                 className="h-16 w-16 object-cover rounded-lg mx-auto mb-2"
               />

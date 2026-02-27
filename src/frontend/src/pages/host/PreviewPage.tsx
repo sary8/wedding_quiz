@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getQuiz } from "../../services/api";
 import type { Quiz, Question, QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 const CHOICE_COLORS = ["red", "blue", "green", "yellow"] as const;
 const NOOP = () => {};
@@ -99,9 +100,9 @@ export function PreviewPage() {
 
       {/* 問題文 */}
       <div className="px-4 py-2 text-gray-900 text-center">
-        {question.mediaUrl !== null && question.mediaType === "image" ? (
+        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
           <img
-            src={question.mediaUrl}
+            src={sanitizeMediaUrl(question.mediaUrl)!}
             alt="問題の画像"
             className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-cover mx-auto"
           />

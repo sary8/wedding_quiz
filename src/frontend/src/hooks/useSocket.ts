@@ -96,8 +96,9 @@ export function useSocket() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
+    const isProduction = import.meta.env.PROD;
     const socket: TypedSocket = io(import.meta.env.VITE_API_URL || undefined, {
-      transports: ["websocket", "polling"],
+      transports: isProduction ? ["websocket"] : ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,

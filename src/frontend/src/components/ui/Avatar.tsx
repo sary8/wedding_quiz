@@ -1,4 +1,5 @@
 import { cn } from "../../utils/cn";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type AvatarSize = "sm" | "md" | "lg";
 
@@ -24,12 +25,13 @@ const sizePx: Record<AvatarSize, number> = {
 
 export function Avatar({ src, alt, fallback, size = "md", className }: Props) {
   const fallbackText = fallback || alt.charAt(0).toUpperCase();
+  const safeSrc = sanitizeMediaUrl(src);
 
   return (
     <div className={cn("relative rounded-full overflow-hidden flex-shrink-0", sizeStyles[size], className)}>
-      {src ? (
+      {safeSrc ? (
         <img
-          src={src}
+          src={safeSrc}
           alt={alt}
           width={sizePx[size]}
           height={sizePx[size]}

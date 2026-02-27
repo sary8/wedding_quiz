@@ -121,7 +121,8 @@ export function SetupPage() {
     if (view === "host" && quizId) {
       getQuiz(quizId)
         .then((quiz) => {
-          navigate(`/host/${quiz.room_code}?quizId=${quiz.id}&key=${quiz.host_secret}`);
+          sessionStorage.setItem(`host_secret_${quiz.room_code}`, quiz.host_secret);
+          navigate(`/host/${quiz.room_code}?quizId=${quiz.id}`);
         })
         .catch(() => setError("クイズの取得に失敗しました"));
     } else if (view === "edit" && quizId) {
@@ -149,7 +150,8 @@ export function SetupPage() {
 
   const handleStartLobby = useCallback((mode?: "rehearsal") => {
     if (!selectedQuiz) return;
-    const base = `/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}&key=${selectedQuiz.host_secret}`;
+    sessionStorage.setItem(`host_secret_${selectedQuiz.room_code}`, selectedQuiz.host_secret);
+    const base = `/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}`;
     navigate(mode === "rehearsal" ? `${base}&rehearsal=true` : base);
   }, [selectedQuiz, navigate]);
 

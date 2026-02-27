@@ -1,9 +1,8 @@
 import { Hono } from "hono";
-import { createReadStream, existsSync } from "fs";
+import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
-import { join, extname } from "path";
+import { join, extname, basename } from "path";
 import { nanoid } from "nanoid";
-import { stream } from "hono/streaming";
 import { readFile } from "fs/promises";
 
 export const mediaRoutes = new Hono();
@@ -11,6 +10,31 @@ export const mediaRoutes = new Hono();
 const UPLOAD_DIR = "./uploads";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
+
+// IP単位のレート制限（アップロード用）
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1分
+const RATE_LIMIT_MAX = 20; // 1分あたり最大20リクエスト
+const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkUploadRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = uploadRateMap.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    uploadRateMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+// 定期クリーンアップ（期限切れエントリを削除）
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of uploadRateMap) {
+    if (now >= entry.resetAt) uploadRateMap.delete(ip);
+  }
+}, 60_000);
 
 // マジックバイトによるファイルタイプ検証
 function validateMagicBytes(buffer: Buffer, ext: string): boolean {
@@ -40,6 +64,11 @@ function validateMagicBytes(buffer: Buffer, ext: string): boolean {
 
 // メディアアップロード
 mediaRoutes.post("/upload", async (c) => {
+  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkUploadRateLimit(ip)) {
+    return c.json({ error: "アップロードが多すぎます。しばらくしてから再試行してください" }, 429);
+  }
+
   const body = await c.req.parseBody();
   const file = body["file"];
 
@@ -73,6 +102,11 @@ mediaRoutes.post("/upload", async (c) => {
 
 // 自撮り画像アップロード (base64)
 mediaRoutes.post("/selfie", async (c) => {
+  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkUploadRateLimit(ip)) {
+    return c.json({ error: "アップロードが多すぎます。しばらくしてから再試行してください" }, 429);
+  }
+
   const body = await c.req.json<{ data: string }>();
 
   if (!body.data) {
@@ -112,19 +146,20 @@ mediaRoutes.post("/selfie", async (c) => {
 // メディア配信
 mediaRoutes.get("/:filename", async (c) => {
   const rawFilename = c.req.param("filename");
-  const filename = decodeURIComponent(rawFilename);
+  const decoded = decodeURIComponent(rawFilename);
 
-  // パストラバーサル防止
-  if (filename.includes("..") || filename.includes("/") || filename.includes("\\") || filename !== rawFilename) {
+  // パストラバーサル防止: basename で安全なファイル名のみ抽出し、元と一致するか検証
+  const safe = basename(decoded);
+  if (!safe || safe !== decoded || safe.includes("..")) {
     return c.json({ error: "不正なファイル名です" }, 400);
   }
 
-  const filepath = join(UPLOAD_DIR, filename);
+  const filepath = join(UPLOAD_DIR, safe);
   if (!existsSync(filepath)) {
     return c.json({ error: "ファイルが見つかりません" }, 404);
   }
 
-  const ext = extname(filename).toLowerCase();
+  const ext = extname(safe).toLowerCase();
   const contentTypes: Record<string, string> = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -138,10 +173,11 @@ mediaRoutes.get("/:filename", async (c) => {
   const contentType = contentTypes[ext] || "application/octet-stream";
   const data = await readFile(filepath);
 
+  // ファイル名にnanoidハッシュを含むためimmutableで長期キャッシュ可
   return new Response(data, {
     headers: {
       "Content-Type": contentType,
-      "Cache-Control": "public, max-age=86400",
+      "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
 });

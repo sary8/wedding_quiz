@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type Props = {
   question: QuestionData | null;
@@ -74,9 +75,9 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
       {/* 問題文 */}
       <div className="px-4 py-2 text-gray-900 text-center">
-        {question.mediaUrl !== null && question.mediaType === "image" ? (
+        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
           <img
-            src={question.mediaUrl}
+            src={sanitizeMediaUrl(question.mediaUrl)!}
             alt={question.mediaAltText || "問題の画像"}
             width={600}
             height={400}

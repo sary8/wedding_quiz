@@ -11,7 +11,8 @@ type Props = {
 };
 
 export function LobbyPage({ roomCode, participants, onStartGame, isDisplay = false }: Props) {
-  const joinUrl = `${window.location.origin}/play/${roomCode}`;
+  const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin;
+  const joinUrl = `${appOrigin}/play/${roomCode}`;
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">

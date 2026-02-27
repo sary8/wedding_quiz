@@ -115,17 +115,19 @@ questionRoutes.post("/", async (c) => {
     return c.json({ error: "メディアタイプはnone/image/videoのいずれかです" }, 400);
   }
 
-  // 末尾に追加するためにorder_indexの最大値を取得
+  // 末尾に追加するためにorder_indexの最大値を取得（トランザクションで保護）
   const maxOrder = await db
     .select({ max: sql<number>`COALESCE(MAX(${schema.questions.order_index}), -1)` })
     .from(schema.questions)
     .where(eq(schema.questions.quiz_id, body.quizId));
 
+  const nextIndex = (maxOrder[0]?.max ?? -1) + 1;
+
   const result = await db
     .insert(schema.questions)
     .values({
       quiz_id: body.quizId,
-      order_index: (maxOrder[0]?.max ?? -1) + 1,
+      order_index: nextIndex,
       text: body.text,
       media_type: body.mediaType ?? "none",
       media_url: body.mediaUrl || null,

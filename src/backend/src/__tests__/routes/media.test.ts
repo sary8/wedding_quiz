@@ -97,7 +97,7 @@ describe("media routes", () => {
   });
 
   describe("GET /:filename", () => {
-    it("存在するファイル → 正しいContent-Type", async () => {
+    it("存在するファイル → 正しいContent-Type + immutableキャッシュ", async () => {
       const testFilename = "test_serve_file.jpg";
       const filepath = join(UPLOAD_DIR, testFilename);
       await writeFile(filepath, Buffer.from("fake-jpeg-content"));
@@ -108,7 +108,7 @@ describe("media routes", () => {
       });
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("image/jpeg");
-      expect(res.headers.get("Cache-Control")).toBe("public, max-age=86400");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
     });
 
     it("未知の拡張子 → application/octet-stream", async () => {
@@ -136,6 +136,20 @@ describe("media routes", () => {
     it("パストラバーサル(\\) → 400", async () => {
       // URL-encoded backslash (%5C) gets decoded in the filename param
       const res = await mediaRoutes.request("/test%5Cfile.jpg", {
+        method: "GET",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("パストラバーサル(%2E%2E) → 400", async () => {
+      const res = await mediaRoutes.request("/%2E%2Esecret.jpg", {
+        method: "GET",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("パストラバーサル(%2F) → 400", async () => {
+      const res = await mediaRoutes.request("/etc%2Fpasswd", {
         method: "GET",
       });
       expect(res.status).toBe(400);

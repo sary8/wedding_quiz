@@ -1,4 +1,5 @@
 import type { QuestionData } from "../../types";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type Props = {
   question: QuestionData | null;
@@ -47,18 +48,18 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
 
       {/* 問題文 */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 min-h-0">
-        {question.mediaUrl !== null && question.mediaType === "image" ? (
+        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "image" ? (
           <div className="max-w-[55%] max-h-[35vh] mb-4 overflow-hidden rounded-xl">
             <img
-              src={question.mediaUrl}
+              src={sanitizeMediaUrl(question.mediaUrl)!}
               alt={question.mediaAltText || "問題の画像"}
               className="w-full h-full object-cover"
             />
           </div>
         ) : null}
-        {question.mediaUrl !== null && question.mediaType === "video" ? (
+        {sanitizeMediaUrl(question.mediaUrl) && question.mediaType === "video" ? (
           <video
-            src={question.mediaUrl}
+            src={sanitizeMediaUrl(question.mediaUrl)!}
             autoPlay
             muted
             aria-label="問題の動画"
@@ -71,7 +72,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
       {/* 選択肢 */}
       <div className="grid grid-cols-2 gap-3 px-8 pb-4">
         {question.choices.map((choice, i) => {
-          const imageUrl = question.choiceImageUrls?.[i];
+          const imageUrl = sanitizeMediaUrl(question.choiceImageUrls?.[i]);
           return (
             <div
               key={i}

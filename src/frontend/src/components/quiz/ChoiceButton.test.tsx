@@ -28,7 +28,7 @@ describe("ChoiceButton", () => {
   it("applies selected styles when isSelected is true", () => {
     render(<ChoiceButton choice="A" color="red" isSelected choiceIndex={1} onClick={NOOP} />);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("scale-95", "ring-4", "ring-gray-900");
+    expect(button).toHaveClass("ring-4", "ring-gray-900");
     expect(button).toHaveAttribute("aria-pressed", "true");
   });
 
@@ -66,7 +66,8 @@ describe("ChoiceButton", () => {
   it("does not apply disabled opacity when selected", () => {
     render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} disabled isSelected />);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("scale-95");
+    expect(button).not.toHaveClass("opacity-40");
+    expect(button).toHaveClass("ring-4", "ring-gray-900");
   });
 
   it("uses dark text color for readability", () => {

@@ -13,6 +13,9 @@ import { logger } from "./utils/logger.js";
 const app = new Hono();
 
 // CORS（環境変数 CORS_ORIGIN で本番ドメインを指定可能）
+if (!process.env.CORS_ORIGIN && process.env.NODE_ENV === "production") {
+  logger.warn("CORS_ORIGIN が未設定です。本番環境では明示的に指定してください");
+}
 const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174,https://localhost:5174,https://localhost:5175,https://localhost:5176")
   .split(",")
   .map((s) => s.trim());

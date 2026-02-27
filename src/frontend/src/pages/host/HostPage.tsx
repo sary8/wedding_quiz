@@ -23,11 +23,28 @@ type HostPhase = "lobby" | "countdown" | "question" | "results" | "ranking" | "f
 
 export function HostPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const [searchParams] = useSearchParams();
-  const hostSecret = searchParams.get("key") || "";
+  const [searchParams, setSearchParams] = useSearchParams();
   const quizId = Number(searchParams.get("quizId")) || 0;
   const isRehearsal = searchParams.get("rehearsal") === "true";
   const navigate = useNavigate();
+
+  // hostSecret: sessionStorage優先、URLフォールバック（後方互換）
+  const urlKey = searchParams.get("key");
+  const hostSecret = (() => {
+    const stored = roomCode ? sessionStorage.getItem(`host_secret_${roomCode}`) : null;
+    if (stored) return stored;
+    // URLにkeyがあればsessionStorageに移行してURLから除去
+    if (urlKey && roomCode) {
+      sessionStorage.setItem(`host_secret_${roomCode}`, urlKey);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("key");
+        return next;
+      }, { replace: true });
+      return urlKey;
+    }
+    return "";
+  })();
   const { emit, on, isConnected, connectionError } = useSocket();
   const sounds = useGameSounds();
   const bgm = useBgm();

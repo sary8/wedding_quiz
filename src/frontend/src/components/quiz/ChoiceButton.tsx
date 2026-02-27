@@ -1,5 +1,6 @@
 import { memo, useCallback, type ButtonHTMLAttributes } from "react";
 import { cn } from "../../utils/cn";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type ChoiceColor = "red" | "blue" | "green" | "yellow";
 
@@ -40,11 +41,11 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
       onClick={handleClick}
       {...props}
     >
-      {choiceImageUrl ? (
+      {sanitizeMediaUrl(choiceImageUrl) ? (
         <div className="flex flex-col items-center gap-1.5 w-full h-full">
           <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden rounded-lg">
             <img
-              src={choiceImageUrl}
+              src={sanitizeMediaUrl(choiceImageUrl)!}
               alt={choice || `選択肢${choiceIndex}`}
               className="max-w-full max-h-full object-cover rounded-lg"
             />

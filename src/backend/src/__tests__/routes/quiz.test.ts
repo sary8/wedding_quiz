@@ -242,6 +242,20 @@ describe("quiz routes", () => {
       expect(remaining[0].nickname).toBe("花子");
     });
 
+    it("ids配列が200件超 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const ids = Array.from({ length: 201 }, (_, i) => i + 1);
+
+      const res = await quizRoutes.request(`/${quiz.id}/participants?key=test-secret-123`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("200人まで");
+    });
+
     it("ids未指定 → 全参加者削除", async () => {
       const quiz = await createTestQuiz();
       await createTestParticipant(quiz.id, { nickname: "太郎" });

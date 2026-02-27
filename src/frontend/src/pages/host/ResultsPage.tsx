@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { QuestionResultData, QuestionData } from "../../types";
 import { cn } from "../../utils/cn";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
 type Props = {
   result: QuestionResultData | null;
@@ -87,10 +88,10 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
             <div key={i} className="mb-5">
               <div className="flex justify-between mb-1.5">
                 <span className={cn("flex items-center gap-3", isCorrect ? "font-bold text-2xl lg:text-4xl" : "font-normal text-2xl lg:text-4xl")}>
-                  {question?.choiceImageUrls?.[i] && (
+                  {sanitizeMediaUrl(question?.choiceImageUrls?.[i]) && (
                     <div className="w-14 h-14 lg:w-20 lg:h-20 shrink-0 overflow-hidden rounded">
                       <img
-                        src={question.choiceImageUrls[i]!}
+                        src={sanitizeMediaUrl(question?.choiceImageUrls?.[i])!}
                         alt={choiceText}
                         className="w-full h-full object-cover"
                       />

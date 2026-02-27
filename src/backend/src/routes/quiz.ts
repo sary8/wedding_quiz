@@ -172,6 +172,10 @@ quizRoutes.delete("/:id/participants", async (c) => {
 
   const body = await c.req.json<{ ids?: number[] }>().catch(() => ({}));
 
+  if ("ids" in body && Array.isArray(body.ids) && body.ids.length > 200) {
+    return c.json({ error: "一度に削除できる参加者は200人までです" }, 400);
+  }
+
   if ("ids" in body && Array.isArray(body.ids) && body.ids.length > 0) {
     await db.delete(schema.answers).where(
       inArray(schema.answers.participant_id, body.ids),

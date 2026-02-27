@@ -13,6 +13,38 @@ const socketMeta = new Map<string, { participantId: number; roomCode: string }>(
 // roomCode → 現在の問題ID
 const activeQuestions = new Map<string, number>();
 
+// roomCode バリデーション: 4桁数字のみ許可
+const ROOM_CODE_RE = /^\d{4}$/;
+
+// nicknameサニタイズ: 制御文字・特殊Unicode除去
+function sanitizeNickname(raw: string): string {
+  // 制御文字 (C0/C1), ZWJ/ZWNJ, 方向制御文字, オブジェクト置換文字を除去
+  return raw.replace(/[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF\uFFFC]/g, "").trim();
+}
+
+// 定期クリーンアップ: 切断済みソケットのゴーストエントリ削除
+let cleanupIo: QuizIO | null = null;
+
+function startMetaCleanup(io: QuizIO) {
+  cleanupIo = io;
+}
+
+setInterval(async () => {
+  if (!cleanupIo) return;
+  const connectedIds = new Set<string>();
+  try {
+    const sockets = await cleanupIo.fetchSockets();
+    for (const s of sockets) connectedIds.add(s.id);
+  } catch {
+    return;
+  }
+  for (const socketId of socketMeta.keys()) {
+    if (!connectedIds.has(socketId)) {
+      socketMeta.delete(socketId);
+    }
+  }
+}, 300_000); // 5分ごと
+
 // 結果配信ヘルパー: closeQuestion と タイマー自動終了 で共通利用
 async function distributeQuestionResult(
   io: QuizIO,
@@ -72,13 +104,15 @@ async function distributeQuestionResult(
 }
 
 export function setupQuizSocket(io: QuizIO) {
+  startMetaCleanup(io);
+
   io.on("connection", (socket: QuizSocket) => {
     logger.info("socket connected", { socketId: socket.id });
 
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
-        if (!data.roomCode || typeof data.roomCode !== "string" || data.roomCode.length !== 4) {
+        if (!data.roomCode || typeof data.roomCode !== "string" || !ROOM_CODE_RE.test(data.roomCode)) {
           logger.warn("joinRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
           return;
@@ -88,7 +122,13 @@ export function setupQuizSocket(io: QuizIO) {
           callback({ success: false, error: "ニックネームを入力してください" });
           return;
         }
-        if (data.nickname.length > 30) {
+        const nickname = sanitizeNickname(data.nickname);
+        if (!nickname || nickname.length === 0) {
+          logger.warn("joinRoom validation failed: nickname empty after sanitize", { roomCode: data.roomCode });
+          callback({ success: false, error: "ニックネームを入力してください" });
+          return;
+        }
+        if (nickname.length > 30) {
           logger.warn("joinRoom validation failed: nickname too long", { roomCode: data.roomCode });
           callback({ success: false, error: "ニックネームが長すぎます" });
           return;
@@ -96,7 +136,7 @@ export function setupQuizSocket(io: QuizIO) {
 
         const result = await quizService.joinRoom(
           data.roomCode,
-          data.nickname,
+          nickname,
           data.selfieData || null,
           socket.id,
           data.token
