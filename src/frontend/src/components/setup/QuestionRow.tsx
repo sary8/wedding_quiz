@@ -104,7 +104,7 @@ export function QuestionRow({
                 : "text-gray-500 hover:bg-gray-200 cursor-pointer",
             )}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@ export function QuestionRow({
                 : "text-gray-500 hover:bg-gray-200 cursor-pointer",
             )}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
           </button>
         </div>
       </div>
