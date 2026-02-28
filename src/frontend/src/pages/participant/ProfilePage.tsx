@@ -58,7 +58,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
         <div className="w-full">
           <label
             htmlFor="nickname"
-            className="block text-sm font-semibold text-rose-text/80 mb-1.5"
+            className="block text-sm font-semibold text-rose-text mb-1.5"
           >
             ニックネーム（20文字以内）
           </label>
@@ -80,7 +80,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
         {/* チーム選択 */}
         {hasTeams && (
           <div className="w-full">
-            <p className="text-sm font-semibold text-rose-text/80 mb-2">チームを選択</p>
+            <p className="text-sm font-semibold text-rose-text mb-2">チームを選択</p>
             <div className="flex flex-wrap gap-2">
               {teams.map((team) => (
                 <button
@@ -104,7 +104,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-rose-text/70 mb-3">自撮り（必須）</p>
+          <p className="text-sm text-rose-text/80 mb-3">自撮り（必須）</p>
 
           {cameraError !== null ? (
             <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">

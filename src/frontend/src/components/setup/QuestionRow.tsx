@@ -80,7 +80,7 @@ export const QuestionRow = memo(function QuestionRow({
           aria-expanded={isExpanded}
           aria-label={`問題${index + 1}: ${question.text}`}
         >
-          <span className="text-sm font-bold text-gray-400 shrink-0">[{index + 1}]</span>
+          <span className="text-sm font-bold text-gray-500 shrink-0">[{index + 1}]</span>
           <span className="flex-1 text-sm font-medium text-gray-800 truncate min-w-0">{question.text}</span>
           {question.media_url && question.media_type === "image" && (
             <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">画像</span>

@@ -21,7 +21,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p className="text-lg text-gray-500">ランキングを読み込み中…</p>
+        <p className="text-lg text-gray-600">ランキングを読み込み中…</p>
       </div>
     );
   }
@@ -51,12 +51,12 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
             <p className="text-5xl font-extrabold text-primary">
               第{myEntry.rank}位
             </p>
-            <p className="text-lg text-gray-600 mt-2">
+            <p className="text-lg text-gray-700 mt-2">
               {myEntry.totalScore}点
             </p>
           </>
         ) : (
-          <p className="text-xl text-gray-500">あなたの順位を確認中…</p>
+          <p className="text-xl text-gray-600">あなたの順位を確認中…</p>
         )}
       </div>
 
@@ -69,7 +69,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
 
       {/* 上位5名ミニランキング */}
       <div className="flex-1 overflow-y-auto px-4 pb-6">
-        <h2 className="text-sm font-semibold text-gray-500 mb-3 text-center">上位ランキング</h2>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3 text-center">上位ランキング</h2>
         <ul className="space-y-2 max-w-sm mx-auto">
           {top5.map((entry) => {
             const isMe = entry.participantId === participantId;
@@ -95,7 +95,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
                 <span className={`flex-1 text-sm font-medium truncate ${isMe ? "text-pink-900 font-bold" : "text-gray-800"}`}>
                   {entry.nickname}{isMe ? "（あなた）" : ""}
                 </span>
-                <span className="text-sm text-gray-500 shrink-0">{entry.totalScore}点</span>
+                <span className="text-sm text-gray-600 shrink-0">{entry.totalScore}点</span>
               </li>
             );
           })}

@@ -27,7 +27,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, isDispla
           <span className="inline-block w-1.5 h-1.5 rotate-45 bg-amber-800/60" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-800/40 max-w-[80px]" />
         </div>
-        <p className="font-serif-wedding text-gray-500 tracking-widest text-sm uppercase">Celebration Game</p>
+        <p className="font-serif-wedding text-gray-600 tracking-widest text-sm uppercase">Celebration Game</p>
       </header>
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
@@ -36,11 +36,11 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, isDispla
 
         {/* ルームコード */}
         <div className="text-center">
-          <p className="text-sm mb-2 text-gray-500 tracking-widest uppercase">Room Code</p>
+          <p className="text-sm mb-2 text-gray-600 tracking-widest uppercase">Room Code</p>
           <p className="text-7xl font-bold tracking-widest text-amber-800" aria-label={`ルームコード: ${roomCode.split('').join(' ')}`}>
             {roomCode}
           </p>
-          <p className="text-gray-500 text-sm mt-2">スマホで参加しよう！</p>
+          <p className="text-gray-600 text-sm mt-2">スマホで参加しよう！</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, isDispla
             </ul>
           )
         ) : (
-          <p className="text-gray-500 text-base">参加者を待っています…</p>
+          <p className="text-gray-600 text-base">参加者を待っています…</p>
         )}
       </section>
 
@@ -77,7 +77,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, isDispla
           >
             ゲーム開始
           </Button>
-          <p className="mt-3 text-gray-500 text-xs">
+          <p className="mt-3 text-gray-600 text-xs">
             プロジェクター: {window.location.origin}/host/{roomCode}/screen
           </p>
         </>
@@ -122,7 +122,7 @@ function TeamGroupedParticipants({ participants, teams }: TeamGroupedProps) {
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-400 text-sm">メンバーなし</p>
+              <p className="text-gray-500 text-sm">メンバーなし</p>
             )}
           </div>
         );

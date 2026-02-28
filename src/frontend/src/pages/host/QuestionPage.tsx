@@ -40,7 +40,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             Q{question.questionIndex + 1} / {question.totalQuestions}
           </span>
           {question.pointMultiplier > 1 && (
-            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-lg lg:text-2xl font-bold animate-pulse">
+            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-lg lg:text-2xl font-bold motion-safe:animate-pulse">
               {question.pointMultiplier}倍
             </span>
           )}

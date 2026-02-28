@@ -307,7 +307,7 @@ export function HostPage() {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-4">
         <p className="text-xl text-red-600">{connectionError}</p>
-        <p className="text-sm text-gray-500">ページを再読み込みしてください</p>
+        <p className="text-sm text-gray-600">ページを再読み込みしてください</p>
       </div>
     );
   }
@@ -403,7 +403,7 @@ export function HostPage() {
             {errorBanner}
             <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
               <p className="text-2xl font-bold">ゲームを再開</p>
-              <p className="text-gray-500">ゲームは進行中です。操作を続けてください。</p>
+              <p className="text-gray-600">ゲームは進行中です。操作を続けてください。</p>
               <div className="flex gap-4">
                 <button
                   type="button"

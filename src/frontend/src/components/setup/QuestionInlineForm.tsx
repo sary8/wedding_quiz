@@ -518,7 +518,7 @@ export function QuestionInlineForm(props: Props) {
                           <button
                             type="button"
                             onClick={() => clearChoiceImage(i)}
-                            className={cn("px-2 py-1 rounded text-xs text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[32px] cursor-pointer", btnFocus)}
+                            className={cn("px-2 py-1 rounded text-xs text-red-600 border border-red-300 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                           >
                             削除
                           </button>

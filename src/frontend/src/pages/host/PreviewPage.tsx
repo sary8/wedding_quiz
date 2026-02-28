@@ -62,8 +62,12 @@ export function PreviewPage() {
 
   if (!quiz) {
     return (
-      <div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white">
-        <p className="text-lg text-gray-500">読み込み中…</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white gap-3">
+        <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <p className="text-lg text-gray-600">読み込み中…</p>
       </div>
     );
   }

@@ -72,7 +72,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
             Q{question.questionIndex + 1} / {question.totalQuestions}
           </span>
           {answerCount !== undefined && answerCount > 0 && (
-            <span className="text-xs text-gray-500">回答済み: {answerCount}人</span>
+            <span className="text-xs text-gray-600">回答済み: {answerCount}人</span>
           )}
         </div>
         <div
@@ -115,7 +115,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
                 onClick={() => handleChoiceClick(choiceIndex)}
                 aria-label={`${choice}`}
                 aria-pressed={isSelected}
-                className={`flex items-center justify-center rounded-2xl text-white font-bold transition-all duration-150 min-h-[44px] ${TF_STYLES[i]} ${isSelected ? "ring-4 ring-white scale-95" : ""} ${selectedChoice !== null && !isSelected ? "opacity-50" : ""} ${selectedChoice !== null ? "cursor-not-allowed" : "cursor-pointer"}`}
+                className={`flex items-center justify-center rounded-2xl text-white font-bold motion-safe:transition-all motion-safe:duration-150 min-h-[44px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 ${TF_STYLES[i]} ${isSelected ? "ring-4 ring-white scale-95" : ""} ${selectedChoice !== null && !isSelected ? "opacity-50" : ""} ${selectedChoice !== null ? "cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <span className="text-7xl">{choice}</span>
               </button>

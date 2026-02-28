@@ -228,7 +228,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
                 <span className="text-4xl font-bold w-16 text-center">{team.rank}位</span>
                 <span className="flex-1 text-2xl font-bold">{team.teamName}</span>
                 <span className="text-2xl font-bold [font-variant-numeric:tabular-nums]">{team.totalScore.toLocaleString()}点</span>
-                <span className="text-sm text-gray-500">{team.memberCount}人</span>
+                <span className="text-sm text-gray-600">{team.memberCount}人</span>
               </motion.div>
             ))}
           </AnimatePresence>
