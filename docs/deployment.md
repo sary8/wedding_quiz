@@ -71,6 +71,26 @@ ALLOWED_ORIGINS=https://<your-static-web-app>.azurestaticapps.net
   4. ビルド
   5. カバレッジレポートのアップロード
 
+### Backend デプロイ (`azure-backend-deploy.yml`)
+
+- **トリガー**: 手動実行（`workflow_dispatch`）※Azure設定完了後に push トリガーを有効化
+- **ジョブ構成**:
+  - **test**: 依存関係インストール → テスト → ビルド
+  - **deploy** (test成功後): 本番依存関係インストール → ビルド → zipパッケージ作成 → Azure App Service へデプロイ
+- **認証**: GitHub Secrets の `AZURE_WEBAPP_PUBLISH_PROFILE`（発行プロファイル）
+- **起動コマンド**: `npm run db:migrate && npm start`（マイグレーション自動適用）
+- **GitHub環境**: `production`（デプロイURLを出力）
+
+#### App Service 起動コマンドの設定
+
+Azure Portal の App Service → 構成 → 全般設定 → スタートアップコマンドに以下を設定：
+
+```
+npm run db:migrate && npm start
+```
+
+これにより、デプロイ時にDBマイグレーションが自動適用されてからサーバーが起動します。
+
 ### Azure Static Web Apps デプロイ (`azure-static-web-apps.yml`)
 
 - **トリガー**: main ブランチへのpush、またはPull Request
