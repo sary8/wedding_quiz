@@ -866,3 +866,68 @@ describe("stats routes", () => {
     });
   });
 });
+
+// ============================================================
+// データエクスポートエンドポイント
+// ============================================================
+describe("export routes", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  describe("GET /:id/export", () => {
+    it("JSON形式でエクスポート", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+      const q = await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+      const p = await createTestParticipant(quiz.id, { nickname: "太郎", totalScore: 800 });
+      await createTestAnswer({ questionId: q.id, participantId: p.id, choiceIndex: 1, isCorrect: true, responseTimeMs: 3000, scoreAwarded: 800 });
+
+      const res = await quizRoutes.request(`/${quiz.id}/export?format=json`, { method: "GET" });
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/json");
+      expect(res.headers.get("content-disposition")).toContain("attachment");
+
+      const data = await res.json();
+      expect(data.quiz.id).toBe(quiz.id);
+      expect(data.questions).toHaveLength(1);
+      expect(data.participants).toHaveLength(1);
+      expect(data.answers).toHaveLength(1);
+    });
+
+    it("CSV形式でエクスポート", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+      await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+
+      const res = await quizRoutes.request(`/${quiz.id}/export?format=csv`, { method: "GET" });
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/csv");
+      expect(res.headers.get("content-disposition")).toContain("attachment");
+
+      const text = await res.text();
+      expect(text).toContain("# クイズ情報");
+      expect(text).toContain("# 問題データ");
+      expect(text).toContain("# 参加者情報");
+      expect(text).toContain("# 回答履歴");
+    });
+
+    it("format未指定 → JSON", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/export`, { method: "GET" });
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/json");
+    });
+
+    it("不正なformat → 400", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+
+      const res = await quizRoutes.request(`/${quiz.id}/export?format=xml`, { method: "GET" });
+      expect(res.status).toBe(400);
+    });
+
+    it("存在しないid → 404", async () => {
+      const res = await quizRoutes.request("/9999/export?format=json", { method: "GET" });
+      expect(res.status).toBe(404);
+    });
+  });
+});

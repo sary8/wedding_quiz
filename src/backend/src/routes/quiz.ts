@@ -363,6 +363,36 @@ quizRoutes.get("/:id/stats", async (c) => {
   return c.json(stats);
 });
 
+// データエクスポート
+quizRoutes.get("/:id/export", async (c) => {
+  const id = Number(c.req.param("id"));
+  const format = c.req.query("format") ?? "json";
+  if (format !== "csv" && format !== "json") {
+    return c.json({ error: "format は csv または json を指定してください" }, 400);
+  }
+
+  const { getExportData, buildCsv } = await import("../services/exportService.js");
+  const data = await getExportData(id);
+  if (!data) return c.json({ error: "クイズが見つかりません" }, 404);
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const safeName = data.quiz.title.replace(/[^\p{L}\p{N}\s_-]/gu, "").trim() || "quiz";
+  const ext = format === "csv" ? "csv" : "json";
+  const encodedName = encodeURIComponent(`${safeName}_${timestamp}.${ext}`);
+  const disposition = `attachment; filename="quiz_${data.quiz.id}_${timestamp}.${ext}"; filename*=UTF-8''${encodedName}`;
+
+  if (format === "csv") {
+    const csv = buildCsv(data);
+    c.header("Content-Type", "text/csv; charset=utf-8");
+    c.header("Content-Disposition", disposition);
+    return c.body(csv);
+  }
+
+  c.header("Content-Type", "application/json; charset=utf-8");
+  c.header("Content-Disposition", disposition);
+  return c.body(JSON.stringify(data, null, 2));
+});
+
 // 全参加者一覧（クイズ情報付き）
 // index.ts で /api/participants にマウント
 export const participantRoutes = new Hono();

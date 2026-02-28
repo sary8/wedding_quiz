@@ -4,61 +4,7 @@ import { QuizStatus } from "../../types";
 import { getQuiz, listQuizParticipants, deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 import { CHOICE_LABELS } from "./constants";
-
-function triggerDownload(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function escapeCsvField(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function buildSortedParticipants(participants: ParticipantSummary[]) {
-  return [...participants].sort((a, b) => a.current_rank - b.current_rank || b.total_score - a.total_score);
-}
-
-function exportCSV(quiz: Quiz, participants: ParticipantSummary[]) {
-  const sorted = buildSortedParticipants(participants);
-  const bom = "\uFEFF";
-  const header = ["順位", "ニックネーム", "スコア"].map(escapeCsvField).join(",");
-  const rows = sorted.map((p, i) =>
-    [String(p.current_rank || i + 1), escapeCsvField(p.nickname), String(p.total_score)].join(","),
-  );
-  const csv = bom + [header, ...rows].join("\r\n");
-  triggerDownload(csv, `${quiz.title}_結果.csv`, "text/csv;charset=utf-8");
-}
-
-function exportJSON(quiz: Quiz, participants: ParticipantSummary[]) {
-  const sorted = buildSortedParticipants(participants);
-  const data = {
-    quiz: {
-      id: quiz.id,
-      title: quiz.title,
-      roomCode: quiz.room_code,
-      questionCount: quiz.questions?.length ?? 0,
-      createdAt: quiz.created_at,
-    },
-    participants: sorted.map((p, i) => ({
-      rank: p.current_rank || i + 1,
-      nickname: p.nickname,
-      totalScore: p.total_score,
-      joinedAt: p.joined_at,
-    })),
-  };
-  const json = JSON.stringify(data, null, 2);
-  triggerDownload(json, `${quiz.title}_結果.json`, "application/json;charset=utf-8");
-}
+import { exportQuizData } from "./exportUtils";
 
 type Props = {
   quizList: QuizSummary[];
@@ -239,14 +185,14 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => exportCSV(detail.quiz, detail.participants)}
+                          onClick={() => exportQuizData(q.id, "csv")}
                           className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           CSV出力
                         </button>
                         <button
                           type="button"
-                          onClick={() => exportJSON(detail.quiz, detail.participants)}
+                          onClick={() => exportQuizData(q.id, "json")}
                           className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           JSON出力

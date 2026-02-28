@@ -3,6 +3,7 @@ import type { QuizSummary, QuizStatsData, QuestionStats, Difficulty } from "../.
 import { QuizStatus } from "../../types";
 import { getQuizStats } from "../../services/api";
 import { cn } from "../../utils/cn";
+import { exportQuizData } from "./exportUtils";
 
 type Props = {
   quizList: QuizSummary[];
@@ -135,6 +136,24 @@ export function StatsView({ quizList }: Props) {
             {activeTab === "participants" && (
               <ParticipantStatsTab stats={stats} />
             )}
+          </div>
+
+          {/* エクスポート */}
+          <div className="px-6 pb-6 flex gap-2 border-t border-gray-100 pt-4">
+            <button
+              type="button"
+              onClick={() => exportQuizData(stats.quizId, "csv")}
+              className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+            >
+              CSV出力
+            </button>
+            <button
+              type="button"
+              onClick={() => exportQuizData(stats.quizId, "json")}
+              className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+            >
+              JSON出力
+            </button>
           </div>
         </section>
       )}
