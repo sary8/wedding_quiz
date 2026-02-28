@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
@@ -20,7 +20,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  const questions = useMemo(() => quiz.questions ?? [], [quiz.questions]);
+  const questions = quiz.questions ?? [];
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

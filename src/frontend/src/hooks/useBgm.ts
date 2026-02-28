@@ -16,16 +16,24 @@ const FADE_DURATION_MS = 1000;
 const FADE_INTERVAL_MS = 50;
 
 function loadVolume(): number {
-  const stored = localStorage.getItem(STORAGE_KEY_VOLUME);
-  if (stored !== null) {
-    const v = Number(stored);
-    if (!Number.isNaN(v) && v >= 0 && v <= 1) return v;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_VOLUME);
+    if (stored !== null) {
+      const v = Number(stored);
+      if (!Number.isNaN(v) && v >= 0 && v <= 1) return v;
+    }
+  } catch {
+    // localStorage unavailable
   }
   return 0.5;
 }
 
 function loadMuted(): boolean {
-  return localStorage.getItem(STORAGE_KEY_MUTED) === "true";
+  try {
+    return localStorage.getItem(STORAGE_KEY_MUTED) === "true";
+  } catch {
+    return false;
+  }
 }
 
 export function useBgm() {
@@ -34,6 +42,8 @@ export function useBgm() {
   const currentTrackRef = useRef<BgmTrack | null>(null);
   const [volume, setVolumeState] = useState(loadVolume);
   const [isMuted, setIsMutedState] = useState(loadMuted);
+  const volumeRef = useRef(volume);
+  const isMutedRef = useRef(isMuted);
 
   // audio要素の初期化（volumeは下のuseEffectで同期される）
   useEffect(() => {
@@ -49,6 +59,8 @@ export function useBgm() {
 
   // volume/mute変更をaudio要素に反映
   useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume;
     }
@@ -69,11 +81,11 @@ export function useBgm() {
 
     currentTrackRef.current = track;
     audio.src = `/audio/${track}.mp3`;
-    audio.volume = isMuted ? 0 : volume;
+    audio.volume = isMutedRef.current ? 0 : volumeRef.current;
     audio.play().catch(() => {
       // ユーザー操作前の自動再生ブロック — 無視
     });
-  }, [volume, isMuted]);
+  }, []);
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
@@ -117,13 +129,13 @@ export function useBgm() {
   const setVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v));
     setVolumeState(clamped);
-    localStorage.setItem(STORAGE_KEY_VOLUME, String(clamped));
+    try { localStorage.setItem(STORAGE_KEY_VOLUME, String(clamped)); } catch { /* storage unavailable */ }
   }, []);
 
   const toggleMute = useCallback(() => {
     setIsMutedState((prev) => {
       const next = !prev;
-      localStorage.setItem(STORAGE_KEY_MUTED, String(next));
+      try { localStorage.setItem(STORAGE_KEY_MUTED, String(next)); } catch { /* storage unavailable */ }
       return next;
     });
   }, []);

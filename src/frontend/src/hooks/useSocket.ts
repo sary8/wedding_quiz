@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { io, Socket } from "socket.io-client";
 import type {
   ParticipantInfo,
@@ -147,5 +147,8 @@ export function useSocket() {
     []
   );
 
-  return { socket: socketRef, isConnected, connectionError, emit, on };
+  return useMemo(
+    () => ({ socket: socketRef, isConnected, connectionError, emit, on }),
+    [isConnected, connectionError, emit, on],
+  );
 }

@@ -188,20 +188,22 @@ export function PlayPage() {
 
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
+  const errorBanner = answerError !== null ? (
+    <button
+      type="button"
+      onClick={() => setAnswerError(null)}
+      aria-label="エラーを閉じる"
+      className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-[1000] w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
+    >
+      {answerError}（タップで閉じる）
+    </button>
+  ) : null;
+
   switch (phase) {
     case "profile":
       return (
         <>
-          {answerError !== null ? (
-            <button
-              type="button"
-              onClick={() => setAnswerError(null)}
-              aria-label="エラーを閉じる"
-              className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-[1000] w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
-            >
-              {answerError}（タップで閉じる）
-            </button>
-          ) : null}
+          {errorBanner}
           <ProfilePage onJoin={handleJoin} isJoining={isJoining} teams={roomTeams} />
         </>
       );
@@ -210,16 +212,7 @@ export function PlayPage() {
     case "answer":
       return (
         <>
-          {answerError !== null ? (
-            <button
-              type="button"
-              onClick={() => setAnswerError(null)}
-              aria-label="エラーを閉じる"
-              className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-[1000] w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
-            >
-              {answerError}（タップで閉じる）
-            </button>
-          ) : null}
+          {errorBanner}
           <AnswerPage
             question={currentQuestion}
             timeRemaining={timeRemaining}

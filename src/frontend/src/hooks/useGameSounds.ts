@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useMemo, useEffect } from "react";
 
 function getAudioContext(): AudioContext | null {
   try {
@@ -39,6 +39,15 @@ export function useGameSounds() {
       ctxRef.current.resume();
     }
     return ctxRef.current;
+  }, []);
+
+  // AudioContextリソース解放
+  useEffect(() => {
+    return () => {
+      if (ctxRef.current && ctxRef.current.state !== "closed") {
+        ctxRef.current.close();
+      }
+    };
   }, []);
 
   // C5→E5→G5 上昇チャイム

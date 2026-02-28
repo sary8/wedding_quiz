@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import type { QuizSummary, QuizStatsData, QuestionStats, Difficulty } from "../../types";
 import { QuizStatus } from "../../types";
 import { getQuizStats } from "../../services/api";
@@ -33,6 +33,11 @@ const RATE_BAR_CLASSES = [
 ];
 
 type StatsTab = "questions" | "participants";
+
+const STATS_TABS = [
+  { key: "questions" as const, label: "問題別統計" },
+  { key: "participants" as const, label: "参加者別統計" },
+] as const;
 
 export function StatsView({ quizList }: Props) {
   const finished = quizList.filter((q) => q.status === QuizStatus.Finished);
@@ -106,10 +111,7 @@ export function StatsView({ quizList }: Props) {
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
           {/* タブ */}
           <div className="flex border-b border-gray-200" role="tablist">
-            {([
-              { key: "questions" as const, label: "問題別統計" },
-              { key: "participants" as const, label: "参加者別統計" },
-            ]).map(({ key, label }) => (
+            {STATS_TABS.map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
@@ -187,7 +189,7 @@ function QuestionStatsTab({ stats }: { stats: QuizStatsData }) {
   );
 }
 
-function QuestionStatsRow({ q, totalParticipants, isExpanded, onToggle }: {
+const QuestionStatsRow = memo(function QuestionStatsRow({ q, totalParticipants, isExpanded, onToggle }: {
   q: QuestionStats;
   totalParticipants: number;
   isExpanded: boolean;
@@ -255,7 +257,7 @@ function QuestionStatsRow({ q, totalParticipants, isExpanded, onToggle }: {
       )}
     </div>
   );
-}
+});
 
 // 参加者別統計タブ
 function ParticipantStatsTab({ stats }: { stats: QuizStatsData }) {
@@ -307,7 +309,7 @@ function ParticipantStatsTab({ stats }: { stats: QuizStatsData }) {
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={() => setShowChart(!showChart)}
+            onClick={() => setShowChart((prev) => !prev)}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs border transition-colors duration-150 cursor-pointer",
               btnFocus,

@@ -9,6 +9,8 @@ type Props = {
   onClose: () => void;
 };
 
+const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50";
+
 export function TemplatePanel({ onImport, onClose }: Props) {
   const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -16,8 +18,6 @@ export function TemplatePanel({ onImport, onClose }: Props) {
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-
-  const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50";
 
   useEffect(() => {
     loadBank();

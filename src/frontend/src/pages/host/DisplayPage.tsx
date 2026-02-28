@@ -27,7 +27,7 @@ const NOOP = () => {}; // stable reference for display-only props
 export function DisplayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const { emit, on, isConnected, connectionError } = useSocket();
-  const sounds = useGameSounds();
+  const { playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll, playFanfare } = useGameSounds();
   const bgm = useBgm();
 
   const [phase, setPhase] = useState<DisplayPhase>("lobby");
@@ -60,7 +60,7 @@ export function DisplayPage() {
           if (prev.some((p) => p.id === participant.id)) return prev;
           return [...prev, participant];
         });
-        sounds.playJoinChime();
+        playJoinChime();
       }),
       on("questionStarted", (data) => {
         setCurrentQuestion(data);
@@ -68,7 +68,7 @@ export function DisplayPage() {
         setAnswerCount(0);
         setQuestionResult(null);
         setPhase("question");
-        sounds.playQuestionStart();
+        playQuestionStart();
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;
@@ -77,12 +77,12 @@ export function DisplayPage() {
       on("timeUpdate", (data) => {
         setTimeRemaining(Math.max(0, data.remaining));
         if (data.remaining <= 5 && data.remaining > 0) {
-          sounds.playTick();
+          playTick();
         }
       }),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionClosed", () => {
-        sounds.playBuzzer();
+        playBuzzer();
         resultTimeoutRef.current = setTimeout(() => {
           setPhase("results");
         }, 5000);
@@ -94,17 +94,17 @@ export function DisplayPage() {
         }
         setQuestionResult(data);
         setPhase("results");
-        sounds.playResultReveal();
+        playResultReveal();
       }),
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setPhase("ranking");
-        sounds.playRankingFanfare();
+        playRankingFanfare();
       }),
       on("gameEnded", (data) => {
         setFinalData(data);
         setPhase("final");
-        sounds.playDrumRoll();
+        playDrumRoll();
       }),
       on("quizReset", () => {
         setPhase("lobby");
@@ -122,28 +122,30 @@ export function DisplayPage() {
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [on, sounds]);
+  }, [on, playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll]);
 
   // フェーズに応じたBGMトラック自動切替
+  const bgmPlay = bgm.play;
+  const bgmFadeOut = bgm.fadeOut;
   useEffect(() => {
     switch (phase) {
       case "lobby":
-        bgm.play("lobby");
+        bgmPlay("lobby");
         break;
       case "countdown":
       case "question":
-        bgm.play("question");
+        bgmPlay("question");
         break;
       case "results":
       case "ranking":
       case "final":
-        bgm.play("results");
+        bgmPlay("results");
         break;
       case "closed":
-        bgm.fadeOut();
+        bgmFadeOut();
         break;
     }
-  }, [phase, bgm]);
+  }, [phase, bgmPlay, bgmFadeOut]);
 
   // カウントダウン表示（表示のみ、nextQuestionは呼ばない）
   useEffect(() => {
@@ -250,7 +252,7 @@ export function DisplayPage() {
         return (
           <>
             {errorBanner}
-            <FinalPage data={finalData} isDisplay={true} onSpotlight={sounds.playFanfare} />
+            <FinalPage data={finalData} isDisplay={true} onSpotlight={playFanfare} />
           </>
         );
       case "closed":

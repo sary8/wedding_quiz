@@ -130,7 +130,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                                   "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
                                   i === 0 ? "bg-yellow-400 text-white" : i === 1 ? "bg-gray-300 text-white" : i === 2 ? "bg-orange-300 text-white" : "bg-gray-200 text-gray-600",
                                 )}>
-                                  {p.current_rank || i + 1}
+                                  {p.current_rank > 0 ? p.current_rank : i + 1}
                                 </span>
                                 {p.selfie_file_name ? (
                                   <img

@@ -69,15 +69,20 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
     return {
       rankings: r,
       reversed: [...r].reverse(),
-      top3: r.filter((e) => e.rank <= 3).sort((a, b) => b.rank - a.rank),
+      top3: [...r.filter((e) => e.rank <= 3)].sort((a, b) => b.rank - a.rank),
     };
   }, [data]);
+
+  const sortedTeams = useMemo(
+    () => [...(data?.teamRankings ?? [])].sort((a, b) => b.rank - a.rank),
+    [data?.teamRankings],
+  );
 
   // チームランキング発表フェーズ
   const [teamRevealIndex, setTeamRevealIndex] = useState(-1);
   useEffect(() => {
-    if (phase !== "teamReveal" || !data?.teamRankings) return;
-    const teamRankings = [...data.teamRankings].sort((a, b) => b.rank - a.rank); // 下位から表示
+    if (phase !== "teamReveal" || sortedTeams.length === 0) return;
+    const teamRankings = sortedTeams;
     let cancelled = false;
     let i = 0;
 
@@ -102,7 +107,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
 
     const initTimer = setTimeout(showNext, 500);
     return () => { cancelled = true; clearTimeout(initTimer); };
-  }, [phase, data?.teamRankings, prefersReducedMotion]);
+  }, [phase, sortedTeams, prefersReducedMotion]);
 
   // スクロール演出 (setTimeout再帰で速度を段階制御)
   useEffect(() => {
@@ -202,7 +207,6 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
 
   // チームランキング発表フェーズ
   if (phase === "teamReveal" && data.teamRankings) {
-    const sortedTeams = [...data.teamRankings].sort((a, b) => b.rank - a.rank);
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-amber-50 to-amber-100 flex flex-col items-center justify-center text-gray-900 p-6">
         <h2 className="font-script text-5xl lg:text-7xl text-amber-800 mb-8 [text-wrap:balance]">チーム結果発表</h2>

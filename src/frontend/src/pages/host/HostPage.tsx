@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type {
@@ -31,23 +31,28 @@ export function HostPage() {
 
   // hostSecret: sessionStorage優先、URLフォールバック（後方互換）
   const urlKey = searchParams.get("key");
-  const hostSecret = (() => {
+  const hostSecret = useMemo(() => {
     const stored = roomCode ? sessionStorage.getItem(`host_secret_${roomCode}`) : null;
     if (stored) return stored;
-    // URLにkeyがあればsessionStorageに移行してURLから除去
     if (urlKey && roomCode) {
       sessionStorage.setItem(`host_secret_${roomCode}`, urlKey);
+      return urlKey;
+    }
+    return "";
+  }, [roomCode, urlKey]);
+
+  // URLからkeyパラメータを除去
+  useEffect(() => {
+    if (urlKey) {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.delete("key");
         return next;
       }, { replace: true });
-      return urlKey;
     }
-    return "";
-  })();
+  }, [urlKey, setSearchParams]);
   const { emit, on, isConnected, connectionError } = useSocket();
-  const sounds = useGameSounds();
+  const { playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll, playFanfare } = useGameSounds();
   const bgm = useBgm();
 
   const [phase, setPhase] = useState<HostPhase>("lobby");
@@ -74,7 +79,7 @@ export function HostPage() {
         if (data.teams) setLobbyTeams(data.teams);
       }),
       on("participantJoined", () => {
-        sounds.playJoinChime();
+        playJoinChime();
       }),
       on("questionStarted", (data) => {
         setCurrentQuestion(data);
@@ -82,7 +87,7 @@ export function HostPage() {
         setAnswerCount(0);
         setQuestionResult(null);
         setPhase("question");
-        sounds.playQuestionStart();
+        playQuestionStart();
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;
@@ -91,12 +96,12 @@ export function HostPage() {
       on("timeUpdate", (data) => {
         setTimeRemaining(Math.max(0, data.remaining));
         if (data.remaining <= 5 && data.remaining > 0) {
-          sounds.playTick();
+          playTick();
         }
       }),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionClosed", () => {
-        sounds.playBuzzer();
+        playBuzzer();
         // 5秒以内にquestionResultが届かなければ自動で results フェーズへ遷移
         resultTimeoutRef.current = setTimeout(() => {
           setPhase("results");
@@ -109,17 +114,17 @@ export function HostPage() {
         }
         setQuestionResult(data);
         setPhase("results");
-        sounds.playResultReveal();
+        playResultReveal();
       }),
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setPhase("ranking");
-        sounds.playRankingFanfare();
+        playRankingFanfare();
       }),
       on("gameEnded", (data) => {
         setFinalData(data);
         setPhase("final");
-        sounds.playDrumRoll();
+        playDrumRoll();
       }),
       on("quizReset", () => {
         setPhase("lobby");
@@ -158,28 +163,30 @@ export function HostPage() {
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [on, sounds]);
+  }, [on, playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll]);
 
   // フェーズに応じたBGMトラック自動切替
+  const bgmPlay = bgm.play;
+  const bgmFadeOut = bgm.fadeOut;
   useEffect(() => {
     switch (phase) {
       case "lobby":
-        bgm.play("lobby");
+        bgmPlay("lobby");
         break;
       case "countdown":
       case "question":
-        bgm.play("question");
+        bgmPlay("question");
         break;
       case "results":
       case "ranking":
       case "final":
-        bgm.play("results");
+        bgmPlay("results");
         break;
       case "closed":
-        bgm.fadeOut();
+        bgmFadeOut();
         break;
     }
-  }, [phase, bgm]);
+  }, [phase, bgmPlay, bgmFadeOut]);
 
   // ルーム開設（初回接続 + 再接続時に再実行してルームに再join）
   useEffect(() => {
@@ -380,7 +387,7 @@ export function HostPage() {
         return (
           <>
             {errorBanner}
-            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={sounds.playFanfare} />
+            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={playFanfare} />
           </>
         );
       case "closed":

@@ -150,27 +150,31 @@ export function SetupPage() {
     setView("dashboard");
   }
 
+  const selectedQuizId = selectedQuiz?.id;
+  const selectedQuizRoomCode = selectedQuiz?.room_code;
+  const selectedQuizHostSecret = selectedQuiz?.host_secret;
+
   const handleStartLobby = useCallback((mode?: "rehearsal") => {
-    if (!selectedQuiz) return;
-    sessionStorage.setItem(`host_secret_${selectedQuiz.room_code}`, selectedQuiz.host_secret);
-    const base = `/host/${selectedQuiz.room_code}?quizId=${selectedQuiz.id}`;
+    if (!selectedQuizRoomCode || !selectedQuizHostSecret || !selectedQuizId) return;
+    sessionStorage.setItem(`host_secret_${selectedQuizRoomCode}`, selectedQuizHostSecret);
+    const base = `/host/${selectedQuizRoomCode}?quizId=${selectedQuizId}`;
     navigate(mode === "rehearsal" ? `${base}&rehearsal=true` : base);
-  }, [selectedQuiz, navigate]);
+  }, [selectedQuizId, selectedQuizRoomCode, selectedQuizHostSecret, navigate]);
 
   const handleQuestionUpdate = useCallback(async () => {
-    if (!selectedQuiz) return;
+    if (!selectedQuizId) return;
     try {
-      const [updated] = await Promise.all([getQuiz(selectedQuiz.id), loadQuizzes()]);
+      const [updated] = await Promise.all([getQuiz(selectedQuizId), loadQuizzes()]);
       setSelectedQuiz(updated);
     } catch {
       setError("問題の更新に失敗しました");
     }
-  }, [selectedQuiz]);
+  }, [selectedQuizId]);
 
   const handleTitleSaved = useCallback(async () => {
     try {
-      if (selectedQuiz) {
-        const [, updated] = await Promise.all([loadQuizzes(), getQuiz(selectedQuiz.id)]);
+      if (selectedQuizId) {
+        const [, updated] = await Promise.all([loadQuizzes(), getQuiz(selectedQuizId)]);
         setSelectedQuiz(updated);
       } else {
         await loadQuizzes();
@@ -178,7 +182,7 @@ export function SetupPage() {
     } catch {
       setError("クイズの更新に失敗しました");
     }
-  }, [selectedQuiz]);
+  }, [selectedQuizId]);
 
   const headerSubtext = currentView === "dashboard"
     ? "ホスト管理"

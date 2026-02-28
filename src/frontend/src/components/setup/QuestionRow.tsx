@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -17,7 +18,7 @@ type Props = {
   onSaved: () => void;
 };
 
-export function QuestionRow({
+export const QuestionRow = memo(function QuestionRow({
   question,
   index,
   totalCount,
@@ -145,4 +146,4 @@ export function QuestionRow({
       </AnimatePresence>
     </div>
   );
-}
+});

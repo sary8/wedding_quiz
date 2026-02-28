@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { FinalResultData } from "../../types";
 
 type Props = {
@@ -6,10 +7,12 @@ type Props = {
 };
 
 export function ParticipantFinalPage({ data, participantId }: Props) {
-  if (!data || !participantId) return null;
+  const myResult = useMemo(
+    () => (data && participantId) ? data.rankings.find((r) => r.participantId === participantId) : null,
+    [data, participantId],
+  );
 
-  const myResult = data.rankings.find((r) => r.participantId === participantId);
-  if (!myResult) return null;
+  if (!data || !participantId || !myResult) return null;
 
   const accuracyPercent = myResult.totalQuestions > 0
     ? Math.round((myResult.correctCount / myResult.totalQuestions) * 100)

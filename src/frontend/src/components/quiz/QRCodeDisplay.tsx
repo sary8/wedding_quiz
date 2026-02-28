@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card } from "../ui/Card";
 
@@ -7,7 +8,7 @@ type Props = {
   label?: string;
 };
 
-export function QRCodeDisplay({ value, size = 200, label = "参加用QRコード" }: Props) {
+export const QRCodeDisplay = memo(function QRCodeDisplay({ value, size = 200, label = "参加用QRコード" }: Props) {
   return (
     <Card padding="md" className="bg-white">
       <div role="img" aria-label={label} className="flex flex-col items-center gap-2">
@@ -16,4 +17,4 @@ export function QRCodeDisplay({ value, size = 200, label = "参加用QRコード
       </div>
     </Card>
   );
-}
+});

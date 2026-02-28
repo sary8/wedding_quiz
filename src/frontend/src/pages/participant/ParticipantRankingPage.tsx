@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Trophy } from "lucide-react";
 import type { RankingData } from "../../types";
 
@@ -7,6 +8,12 @@ type Props = {
 };
 
 export function ParticipantRankingPage({ data, participantId }: Props) {
+  const myEntry = useMemo(
+    () => (data && participantId) ? data.rankings.find((r) => r.participantId === participantId) : null,
+    [data, participantId],
+  );
+  const top5 = useMemo(() => data ? data.rankings.slice(0, 5) : [], [data]);
+
   if (!data) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900">
@@ -14,11 +21,6 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
       </div>
     );
   }
-
-  const myEntry = participantId
-    ? data.rankings.find((r) => r.participantId === participantId)
-    : null;
-  const top5 = data.rankings.slice(0, 5);
 
   return (
     <div className="h-[100dvh] flex flex-col bg-blush">

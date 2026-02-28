@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { QuizSummary } from "../../types";
 import { QuizStatus } from "../../types";
 import { deleteQuiz } from "../../services/api";
@@ -43,12 +43,30 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const drafts = quizList.filter((q) => q.status === QuizStatus.Draft);
-  const active = quizList.filter((q) => q.status === QuizStatus.Lobby || q.status === QuizStatus.InProgress);
-  const finished = quizList.filter((q) => q.status === QuizStatus.Finished);
-
-  const totalParticipants = quizList.reduce((sum, q) => sum + q.participant_count, 0);
-  const finishedQuestions = finished.reduce((sum, q) => sum + q.question_count, 0);
+  const { drafts, active, finished, totalParticipants, finishedQuestions } = useMemo(() => {
+    const d: QuizSummary[] = [];
+    const a: QuizSummary[] = [];
+    const f: QuizSummary[] = [];
+    let tp = 0;
+    let fq = 0;
+    for (const q of quizList) {
+      tp += q.participant_count;
+      switch (q.status) {
+        case QuizStatus.Draft:
+          d.push(q);
+          break;
+        case QuizStatus.Lobby:
+        case QuizStatus.InProgress:
+          a.push(q);
+          break;
+        case QuizStatus.Finished:
+          f.push(q);
+          fq += q.question_count;
+          break;
+      }
+    }
+    return { drafts: d, active: a, finished: f, totalParticipants: tp, finishedQuestions: fq };
+  }, [quizList]);
 
   async function handleDeleteQuiz(id: number) {
     setIsDeleting(true);

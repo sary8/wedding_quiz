@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn } from "../../utils/cn";
 import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 
@@ -23,7 +24,7 @@ const sizePx: Record<AvatarSize, number> = {
   lg: 64,
 };
 
-export function Avatar({ src, alt, fallback, size = "md", className }: Props) {
+export const Avatar = memo(function Avatar({ src, alt, fallback, size = "md", className }: Props) {
   const fallbackText = fallback || alt.charAt(0).toUpperCase();
   const safeSrc = sanitizeMediaUrl(src);
 
@@ -45,4 +46,4 @@ export function Avatar({ src, alt, fallback, size = "md", className }: Props) {
       )}
     </div>
   );
-}
+});

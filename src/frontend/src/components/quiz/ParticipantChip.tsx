@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Avatar } from "../ui/Avatar";
 import { cn } from "../../utils/cn";
 
@@ -8,7 +9,7 @@ type Props = {
   className?: string;
 };
 
-export function ParticipantChip({ nickname, selfieUrl, variant = "dark", className }: Props) {
+export const ParticipantChip = memo(function ParticipantChip({ nickname, selfieUrl, variant = "dark", className }: Props) {
   const isLight = variant === "light";
 
   return (
@@ -33,4 +34,4 @@ export function ParticipantChip({ nickname, selfieUrl, variant = "dark", classNa
       </span>
     </div>
   );
-}
+});

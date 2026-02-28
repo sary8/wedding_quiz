@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -26,6 +26,13 @@ export function useCamera() {
       });
       streamRef.current = stream;
       setIsActive(true);
+      // video要素へストリームを接続
+      requestAnimationFrame(() => {
+        if (videoRef.current && streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+          videoRef.current.play().catch(() => {});
+        }
+      });
     } catch (e) {
       const err = e as DOMException;
       if (err.name === "NotAllowedError") {
@@ -81,14 +88,6 @@ export function useCamera() {
     startCamera();
   }, [startCamera]);
 
-  // isActive変化後にvideo要素へストリームを接続
-  useEffect(() => {
-    if (isActive && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch(() => {});
-    }
-  }, [isActive]);
-
   // クリーンアップ
   useEffect(() => {
     return () => {
@@ -96,7 +95,7 @@ export function useCamera() {
     };
   }, []);
 
-  return {
+  return useMemo(() => ({
     videoRef,
     canvasRef,
     isActive,
@@ -107,5 +106,5 @@ export function useCamera() {
     retake,
     error,
     isSupported,
-  };
+  }), [isActive, capturedImage, startCamera, stopCamera, capture, retake, error, isSupported]);
 }
