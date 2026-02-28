@@ -7,8 +7,10 @@ import { quizRoutes, participantRoutes } from "./routes/quiz.js";
 import { questionRoutes } from "./routes/question.js";
 import { mediaRoutes } from "./routes/media.js";
 import { questionBankRoutes } from "./routes/questionBank.js";
+import { authRoutes } from "./routes/auth.js";
 import { setupQuizSocket } from "./socket/quizHandler.js";
 import { logger } from "./utils/logger.js";
+import { validateSession } from "./services/authService.js";
 
 const app = new Hono();
 
@@ -25,6 +27,7 @@ app.use(
   cors({
     origin: corsOrigins,
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
+    allowHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -36,6 +39,45 @@ app.use("/api/*", async (c, next) => {
   logger.info(`${c.req.method} ${c.req.path} ${c.res.status}`, { ms });
 });
 
+// 公開ルート判定
+function isPublicRoute(method: string, path: string): boolean {
+  // Health check
+  if (path === "/api/health") return true;
+
+  // Auth endpoints
+  if (path.startsWith("/api/auth/")) return true;
+
+  // 参加者用: チーム選択情報取得
+  if (method === "GET" && /^\/api\/quizzes\/room\/[^/]+\/info$/.test(path)) return true;
+
+  // 参加者用: 自撮りアップロード
+  if (method === "POST" && path === "/api/media/selfie") return true;
+
+  // メディア配信
+  if (method === "GET" && /^\/api\/media\/[^/]+$/.test(path)) return true;
+
+  return false;
+}
+
+// Admin認証ミドルウェア
+app.use("/api/*", async (c, next) => {
+  if (isPublicRoute(c.req.method, c.req.path)) {
+    return next();
+  }
+
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "認証が必要です" }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  if (!validateSession(token)) {
+    return c.json({ error: "セッションが無効または期限切れです" }, 401);
+  }
+
+  return next();
+});
+
 // グローバルエラーハンドラ
 app.onError((err, c) => {
   logger.error("unhandled error", { error: err.message, path: c.req.path });
@@ -43,6 +85,7 @@ app.onError((err, c) => {
 });
 
 // REST API routes
+app.route("/api/auth", authRoutes);
 app.route("/api/quizzes", quizRoutes);
 app.route("/api/participants", participantRoutes);
 app.route("/api/questions", questionRoutes);

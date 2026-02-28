@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes } from "../../services/api";
+import { createQuiz, getQuiz, listQuizzes, checkAuthStatus, isAdminAuthenticated } from "../../services/api";
 import type { Quiz, QuizSummary } from "../../types";
+import { AdminLoginForm } from "../../components/setup/AdminLoginForm";
 import { DashboardHub } from "../../components/setup/DashboardHub";
 import { GameHistoryView } from "../../components/setup/GameHistoryView";
 import { ParticipantGalleryView } from "../../components/setup/ParticipantGalleryView";
@@ -44,6 +45,29 @@ export function SetupPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isLoadingQuizList, setIsLoadingQuizList] = useState(true);
   const [error, setError] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isPinRequired, setIsPinRequired] = useState(false);
+
+  // 初回マウント時にセッション状態を確認
+  useEffect(() => {
+    async function checkAuth() {
+      if (isAdminAuthenticated()) {
+        const valid = await checkAuthStatus();
+        setIsAuthenticated(valid);
+        if (!valid) {
+          const res = await fetch(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api"}/auth/pin-required`);
+          const data = await res.json() as { required: boolean };
+          setIsPinRequired(data.required);
+        }
+      } else {
+        const res = await fetch(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api"}/auth/pin-required`);
+        const data = await res.json() as { required: boolean };
+        setIsPinRequired(data.required);
+        setIsAuthenticated(false);
+      }
+    }
+    checkAuth();
+  }, []);
 
   const currentView = parseView(searchParams.get("view"));
   const editQuizId = searchParams.get("quizId");
@@ -199,6 +223,25 @@ export function SetupPage() {
     : currentView === "edit"
       ? selectedQuiz?.title ?? "クイズ編集"
       : VIEW_TITLES[currentView];
+
+  // 認証状態チェック中
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-500 text-sm">読み込み中...</p>
+      </div>
+    );
+  }
+
+  // 未認証 → ログインフォーム表示
+  if (!isAuthenticated) {
+    return (
+      <AdminLoginForm
+        isPinRequired={isPinRequired}
+        onAuthenticated={() => setIsAuthenticated(true)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">

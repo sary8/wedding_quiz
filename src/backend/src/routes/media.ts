@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { existsSync } from "fs";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, readdir, stat } from "fs/promises";
 import { join, extname, basename } from "path";
 import { nanoid } from "nanoid";
 import { readFile } from "fs/promises";
@@ -9,7 +9,20 @@ export const mediaRoutes = new Hono();
 
 const UPLOAD_DIR = "./uploads";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_STORAGE_BYTES = (Number(process.env.MAX_STORAGE_MB) || 500) * 1024 * 1024; // デフォルト500MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
+
+// ストレージ使用量チェック
+async function getStorageUsage(): Promise<number> {
+  if (!existsSync(UPLOAD_DIR)) return 0;
+  const files = await readdir(UPLOAD_DIR);
+  let total = 0;
+  for (const file of files) {
+    const fileStat = await stat(join(UPLOAD_DIR, file)).catch(() => null);
+    if (fileStat?.isFile()) total += fileStat.size;
+  }
+  return total;
+}
 
 // IP単位のレート制限（アップロード用）
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1分
@@ -91,6 +104,12 @@ mediaRoutes.post("/upload", async (c) => {
     return c.json({ error: "ファイルの内容が拡張子と一致しません" }, 400);
   }
 
+  // ストレージ上限チェック
+  const usage = await getStorageUsage();
+  if (usage + buffer.length > MAX_STORAGE_BYTES) {
+    return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
+  }
+
   await mkdir(UPLOAD_DIR, { recursive: true });
   const filename = `${nanoid(16)}${ext}`;
   const filepath = join(UPLOAD_DIR, filename);
@@ -133,6 +152,12 @@ mediaRoutes.post("/selfie", async (c) => {
 
   if (!validateMagicBytes(buffer, dotExt)) {
     return c.json({ error: "画像データの内容が形式と一致しません" }, 400);
+  }
+
+  // ストレージ上限チェック
+  const usage = await getStorageUsage();
+  if (usage + buffer.length > MAX_STORAGE_BYTES) {
+    return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
   }
 
   await mkdir(UPLOAD_DIR, { recursive: true });

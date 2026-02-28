@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { eq } from "drizzle-orm";
 import { initTestDb, resetTestDb, db, testSchema as schema } from "../helpers/testDb.js";
 import { createTestQuiz, createTestQuestion, createTestParticipant, createTestAnswer, createTestTeam } from "../helpers/fixtures.js";
+import { getTestAdminToken } from "../helpers/testAuth.js";
+import { validateSession } from "../../services/authService.js";
 
 vi.mock("../../db/index.js", async () => {
   const testDb = await import("../helpers/testDb.js");
@@ -12,8 +14,28 @@ vi.mock("../../db/index.js", async () => {
 
 const { quizRoutes, participantRoutes } = await import("../../routes/quiz.js");
 
-// メインアプリと同じ構成で app.route() マウントしたテスト用アプリ
+// メインアプリと同じ構成で app.route() マウントしたテスト用アプリ（adminAuthミドルウェア付き）
 const app = new Hono();
+
+// 公開ルート判定（index.tsと同じロジック）
+function isPublicRoute(method: string, path: string): boolean {
+  if (path === "/api/health") return true;
+  if (path.startsWith("/api/auth/")) return true;
+  if (method === "GET" && /^\/api\/quizzes\/room\/[^/]+\/info$/.test(path)) return true;
+  if (method === "POST" && path === "/api/media/selfie") return true;
+  if (method === "GET" && /^\/api\/media\/[^/]+$/.test(path)) return true;
+  return false;
+}
+
+app.use("/api/*", async (c, next) => {
+  if (isPublicRoute(c.req.method, c.req.path)) return next();
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return c.json({ error: "認証が必要です" }, 401);
+  const token = authHeader.slice(7);
+  if (!validateSession(token)) return c.json({ error: "セッションが無効または期限切れです" }, 401);
+  return next();
+});
+
 app.route("/api/quizzes", quizRoutes);
 app.route("/api/participants", participantRoutes);
 
@@ -514,9 +536,16 @@ describe("participant routes", () => {
 // ユニットテスト（quizRoutes.request）では見つからないルーティング問題を検出
 // ============================================================
 describe("app.route() 経由のルーティング", () => {
+  let adminToken: string;
+
   beforeEach(async () => {
     await resetTestDb();
+    adminToken = getTestAdminToken();
   });
+
+  function authHeader(extra?: Record<string, string>): Record<string, string> {
+    return { Authorization: `Bearer ${adminToken}`, ...extra };
+  }
 
   it("DELETE /api/quizzes/:id/participants → 参加者一括削除（クイズは残る）", async () => {
     const quiz = await createTestQuiz();
@@ -525,7 +554,7 @@ describe("app.route() 経由のルーティング", () => {
 
     const res = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeader({ "Content-Type": "application/json" }),
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(200);
@@ -535,6 +564,7 @@ describe("app.route() 経由のルーティング", () => {
     // 参加者が消えていること
     const pRes = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     const participants = await pRes.json();
     expect(participants).toHaveLength(0);
@@ -542,6 +572,7 @@ describe("app.route() 経由のルーティング", () => {
     // クイズは残っていること（DELETE /:id に誤マッチしていないことを確認）
     const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     expect(qRes.status).toBe(200);
     const quizData = await qRes.json();
@@ -555,12 +586,14 @@ describe("app.route() 経由のルーティング", () => {
 
     const res = await app.request(`/api/quizzes/${quiz.id}/participants/${p1.id}?key=test-secret-123`, {
       method: "DELETE",
+      headers: authHeader(),
     });
     expect(res.status).toBe(200);
 
     // 花子だけ残る
     const pRes = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     const participants = await pRes.json();
     expect(participants).toHaveLength(1);
@@ -569,6 +602,7 @@ describe("app.route() 経由のルーティング", () => {
     // クイズは残っている
     const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     expect(qRes.status).toBe(200);
   });
@@ -578,11 +612,13 @@ describe("app.route() 経由のルーティング", () => {
 
     const res = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
       method: "DELETE",
+      headers: authHeader(),
     });
     expect(res.status).toBe(200);
 
     const qRes = await app.request(`/api/quizzes/${quiz.id}?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     expect(qRes.status).toBe(404);
   });
@@ -593,6 +629,7 @@ describe("app.route() 経由のルーティング", () => {
 
     const res = await app.request(`/api/quizzes/${quiz.id}/participants?key=test-secret-123`, {
       method: "GET",
+      headers: authHeader(),
     });
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -606,7 +643,10 @@ describe("app.route() 経由のルーティング", () => {
     const quiz = await createTestQuiz();
     await createTestParticipant(quiz.id, { nickname: "太郎" });
 
-    const res = await app.request("/api/participants", { method: "GET" });
+    const res = await app.request("/api/participants", {
+      method: "GET",
+      headers: authHeader(),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
@@ -954,5 +994,44 @@ describe("export routes", () => {
       const res = await quizRoutes.request("/9999/export?format=json", { method: "GET" });
       expect(res.status).toBe(404);
     });
+  });
+});
+
+// ============================================================
+// adminAuth ミドルウェア統合テスト
+// ============================================================
+describe("adminAuth ミドルウェア", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("保護ルート: Authorizationヘッダなし → 401", async () => {
+    const res = await app.request("/api/quizzes", { method: "GET" });
+    expect(res.status).toBe(401);
+    const data = await res.json();
+    expect(data.error).toContain("認証");
+  });
+
+  it("保護ルート: 無効なトークン → 401", async () => {
+    const res = await app.request("/api/quizzes", {
+      method: "GET",
+      headers: { Authorization: "Bearer invalid-token" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("保護ルート: 有効なトークン → 200", async () => {
+    const token = getTestAdminToken();
+    const res = await app.request("/api/quizzes", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("公開ルート: /api/quizzes/room/:roomCode/info → 認証不要", async () => {
+    await createTestQuiz({ roomCode: "1234" });
+    const res = await app.request("/api/quizzes/room/1234/info", { method: "GET" });
+    expect(res.status).toBe(200);
   });
 });

@@ -4,17 +4,87 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : "/api";
 
+const ADMIN_TOKEN_KEY = "admin_session_token";
+
+// Adminトークン管理
+function getAdminToken(): string | null {
+  return sessionStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+function setAdminToken(token: string): void {
+  sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+function clearAdminToken(): void {
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getAdminToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers,
     ...options,
   });
+
+  if (res.status === 401) {
+    clearAdminToken();
+    throw new Error("セッションが期限切れです。再ログインしてください。");
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `HTTP ${res.status}`);
   }
   return res.json();
 }
+
+// Auth
+export async function createAdminSession(pin?: string): Promise<string> {
+  const body: Record<string, string> = {};
+  if (pin) body.pin = pin;
+
+  const res = await fetch(`${API_BASE}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json() as { token: string };
+  setAdminToken(data.token);
+  return data.token;
+}
+
+export async function checkAuthStatus(): Promise<boolean> {
+  const token = getAdminToken();
+  if (!token) return false;
+
+  const res = await fetch(`${API_BASE}/auth/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) return false;
+  const data = await res.json() as { authenticated: boolean };
+  if (!data.authenticated) {
+    clearAdminToken();
+  }
+  return data.authenticated;
+}
+
+export function isAdminAuthenticated(): boolean {
+  return !!getAdminToken();
+}
+
+export { clearAdminToken };
 
 // Quiz
 export function createQuiz(title: string) {
@@ -236,7 +306,24 @@ export function uploadSelfie(base64Data: string) {
 export async function uploadMedia(file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${API_BASE}/media/upload`, { method: "POST", body: formData });
+
+  const headers: Record<string, string> = {};
+  const token = getAdminToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}/media/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    clearAdminToken();
+    throw new Error("セッションが期限切れです。再ログインしてください。");
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { error?: string };
     throw new Error(body.error ?? `HTTP ${res.status}`);
