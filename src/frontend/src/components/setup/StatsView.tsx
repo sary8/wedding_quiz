@@ -404,13 +404,13 @@ function ScoreProgressChart({ stats }: { stats: QuizStatsData }) {
             return (
               <g key={ratio}>
                 <line x1={padL} y1={yPos} x2={chartW - padR} y2={yPos} stroke="#e5e7eb" strokeWidth={1} />
-                <text x={padL - 8} y={yPos + 4} textAnchor="end" className="text-[10px] fill-gray-400">{val}</text>
+                <text x={padL - 8} y={yPos + 4} textAnchor="end" className="text-[10px] sm:text-xs fill-gray-600">{val}</text>
               </g>
             );
           })}
           {/* X軸ラベル */}
           {Array.from({ length: stats.totalQuestions }, (_, i) => (
-            <text key={i} x={x(i)} y={chartH - 6} textAnchor="middle" className="text-[10px] fill-gray-400">Q{i + 1}</text>
+            <text key={i} x={x(i)} y={chartH - 6} textAnchor="middle" className="text-[10px] sm:text-xs fill-gray-600">Q{i + 1}</text>
           ))}
           {/* 折れ線 */}
           {top5.map((p, pi) => {

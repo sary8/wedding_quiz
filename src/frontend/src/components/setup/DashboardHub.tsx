@@ -168,7 +168,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                       type="button"
                       onClick={() => handleDeleteQuiz(q.id)}
                       disabled={isDeleting}
-                      className={cn("px-3 py-1.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                      className={cn("px-4 py-2 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                     >
                       {isDeleting ? "削除中…" : "確認"}
                     </button>
@@ -176,7 +176,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                       type="button"
                       onClick={() => setPendingDeleteId(null)}
                       disabled={isDeleting}
-                      className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                      className={cn("px-4 py-2 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                     >
                       戻る
                     </button>
@@ -186,7 +186,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                     type="button"
                     onClick={() => setPendingDeleteId(q.id)}
                     aria-label={`「${q.title}」を削除`}
-                    className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer shrink-0", btnFocus)}
+                    className={cn("px-4 py-2 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer shrink-0", btnFocus)}
                   >
                     削除
                   </button>
@@ -233,7 +233,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                         type="button"
                         onClick={() => handleDeleteQuiz(q.id)}
                         disabled={isDeleting}
-                        className={cn("px-3 py-1.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                        className={cn("px-4 py-2 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                       >
                         {isDeleting ? "削除中…" : "確認"}
                       </button>
@@ -241,7 +241,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                         type="button"
                         onClick={() => setPendingDeleteId(null)}
                         disabled={isDeleting}
-                        className={cn("px-3 py-1.5 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                        className={cn("px-4 py-2 rounded text-xs text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                       >
                         戻る
                       </button>
@@ -251,7 +251,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
                       type="button"
                       onClick={() => setPendingDeleteId(q.id)}
                       aria-label={`「${q.title}」を削除`}
-                      className={cn("px-3 py-1.5 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                      className={cn("px-4 py-2 rounded text-xs text-red-500 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                     >
                       削除
                     </button>

@@ -226,7 +226,14 @@ export function SetupPage() {
         )}
 
         {isLoadingQuizList && currentView === "dashboard" ? (
-          <div className="text-center py-8 text-gray-500 text-sm">読み込み中…</div>
+          <div className="flex flex-col gap-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
+                <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
+                <div className="h-10 bg-gray-200 rounded w-full" />
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             {currentView === "dashboard" && (

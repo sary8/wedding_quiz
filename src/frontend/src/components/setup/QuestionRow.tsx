@@ -91,7 +91,7 @@ export const QuestionRow = memo(function QuestionRow({
           </span>
         </button>
         {/* 並べ替えボタン */}
-        <div className="flex gap-0.5 shrink-0">
+        <div className="flex gap-1 shrink-0">
           <button
             type="button"
             onClick={() => onReorder(index, "up")}

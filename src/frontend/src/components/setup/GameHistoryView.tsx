@@ -186,14 +186,14 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                         <button
                           type="button"
                           onClick={() => exportQuizData(q.id, "csv")}
-                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                          className={cn("px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           CSV出力
                         </button>
                         <button
                           type="button"
                           onClick={() => exportQuizData(q.id, "json")}
-                          className={cn("px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
+                          className={cn("px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                         >
                           JSON出力
                         </button>

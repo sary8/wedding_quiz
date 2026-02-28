@@ -73,7 +73,7 @@
 @layer components {
   .bg-medal-gold {
     background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-    color: #92400E;
+    color: #78350F;
   }
   .bg-medal-silver {
     background: linear-gradient(135deg, #c0c0c0, #e0e0e0);

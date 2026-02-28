@@ -50,7 +50,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
       <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 gap-6">
-        <p className="text-2xl text-gray-500">結果データを取得中…</p>
+        <p className="text-2xl text-gray-700">結果データを取得中…</p>
         {!isDisplay && (
           <div className="flex gap-4">
             <button

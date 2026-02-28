@@ -156,7 +156,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
             type="button"
             onClick={handleStartEditTitle}
             aria-label="クイズタイトルを編集"
-            className="group flex items-center gap-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg p-1 -m-1"
+            className="group flex items-center gap-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg p-1"
           >
             <span className="text-lg font-semibold text-gray-800">{quiz.title}</span>
             <svg
@@ -230,7 +230,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                     type="button"
                     onClick={() => handleRemoveTeam(i)}
                     aria-label={`${name || `チーム${i + 1}`}を削除`}
-                    className={cn("p-2 text-gray-400 hover:text-red-500 transition-colors duration-150 min-h-[36px] cursor-pointer rounded-lg", btnFocus)}
+                    className={cn("p-2 text-gray-400 hover:text-red-500 transition-colors duration-150 min-h-[44px] cursor-pointer rounded-lg", btnFocus)}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
@@ -245,7 +245,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                 <button
                   type="button"
                   onClick={handleAddTeam}
-                  className={cn("px-4 py-2 rounded-lg text-sm text-accent border border-accent/30 hover:bg-accent/5 transition-colors duration-150 min-h-[36px] cursor-pointer", btnFocus)}
+                  className={cn("px-4 py-2 rounded-lg text-sm text-accent border border-accent/30 hover:bg-accent/5 transition-colors duration-150 min-h-[44px] cursor-pointer", btnFocus)}
                 >
                   + チーム追加
                 </button>
@@ -255,7 +255,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                 onClick={() => handleSaveTeams()}
                 disabled={isSavingTeams}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-bold text-white bg-accent hover:bg-accent/90 transition-colors duration-150 min-h-[36px] cursor-pointer",
+                  "px-4 py-2 rounded-lg text-sm font-bold text-white bg-accent hover:bg-accent/90 transition-colors duration-150 min-h-[44px] cursor-pointer",
                   btnFocus,
                   isSavingTeams && "opacity-60 cursor-not-allowed",
                 )}
@@ -301,7 +301,7 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
           disabled={!canStartLobby}
           className={[
             "w-full py-4 rounded-xl text-lg font-bold text-white transition-opacity duration-200 min-h-[44px]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             canStartLobby
               ? "bg-gradient-to-r from-primary to-primary-dark shadow-lg hover:opacity-95 cursor-pointer"
               : "bg-gray-300 cursor-not-allowed",

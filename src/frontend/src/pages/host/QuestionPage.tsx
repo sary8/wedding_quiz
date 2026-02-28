@@ -106,7 +106,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
                 {imageUrl ? (
                   <div className="flex items-center gap-4 w-full">
                     <div className="w-28 h-28 lg:w-36 lg:h-36 shrink-0 overflow-hidden rounded-lg">
-                      <img src={imageUrl} alt={choice || `選択肢${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={imageUrl} alt={choice ? `${choice}の画像` : `選択肢${i + 1}の画像`} className="w-full h-full object-cover" />
                     </div>
                     {choice && <span className="truncate">{choice}</span>}
                   </div>

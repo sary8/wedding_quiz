@@ -68,7 +68,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                       {team.totalScore.toLocaleString()}点
                     </span>
                   </div>
-                  <span className="w-16 text-sm text-gray-500 text-right">{team.memberCount}人</span>
+                  <span className="w-16 text-sm text-gray-700 text-right">{team.memberCount}人</span>
                 </motion.div>
               );
             })}
@@ -148,7 +148,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* 回答速度 */}
-                <span className="w-[90px] text-sm lg:text-base text-gray-500 text-right [font-variant-numeric:tabular-nums]">
+                <span className="w-[90px] text-sm lg:text-base text-gray-700 text-right [font-variant-numeric:tabular-nums]">
                   {entry.lastResponseTimeMs != null
                     ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
                     : "---"}

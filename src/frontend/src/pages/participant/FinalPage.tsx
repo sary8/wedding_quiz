@@ -51,7 +51,7 @@ export function ParticipantFinalPage({ data, participantId }: Props) {
       {/* 順位 */}
       <p className={[
         "text-7xl font-bold mb-6",
-        isTopThree ? "text-[#92400E]" : "text-rose-text",
+        isTopThree ? "text-[#78350F]" : "text-rose-text",
       ].join(" ")}>
         {rankLabel}
       </p>

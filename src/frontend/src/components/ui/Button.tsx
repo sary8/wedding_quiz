@@ -19,8 +19,8 @@ const variantStyles: Record<ButtonVariant, string> = {
 
 const sizeStyles: Record<ButtonSize, string> = {
   sm: "px-4 py-2 text-sm rounded-lg min-h-[44px]",
-  md: "px-6 py-3 text-base rounded-xl",
-  lg: "px-12 py-4 text-xl rounded-2xl",
+  md: "px-6 py-3 text-base rounded-xl min-h-[44px]",
+  lg: "px-12 py-4 text-xl rounded-2xl min-h-[44px]",
 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(
@@ -29,7 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       <button
         ref={ref}
         className={cn(
-          "font-bold transition-[opacity,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30",
+          "font-bold transition-[opacity,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50",
           "disabled:cursor-not-allowed",
           variantStyles[variant],
           sizeStyles[size],
