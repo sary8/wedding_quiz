@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import type { QuizSummary, QuizStatsData, QuestionStats, ParticipantStatsEntry, Difficulty } from "../../types";
+import { useState } from "react";
+import type { QuizSummary, QuizStatsData, QuestionStats, Difficulty } from "../../types";
 import { QuizStatus } from "../../types";
 import { getQuizStats } from "../../services/api";
 import { cn } from "../../utils/cn";
@@ -41,18 +41,17 @@ export function StatsView({ quizList }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<StatsTab>("questions");
 
-  useEffect(() => {
-    if (!selectedQuizId) {
-      setStats(null);
-      return;
-    }
+  function handleSelectQuiz(quizId: number) {
+    if (quizId === selectedQuizId) return;
+    setSelectedQuizId(quizId);
+    setStats(null);
     setIsLoading(true);
     setError(null);
-    getQuizStats(selectedQuizId)
+    getQuizStats(quizId)
       .then(setStats)
       .catch(() => setError("統計データの取得に失敗しました"))
       .finally(() => setIsLoading(false));
-  }, [selectedQuizId]);
+  }
 
   if (finished.length === 0) {
     return (
@@ -73,7 +72,7 @@ export function StatsView({ quizList }: Props) {
             <button
               key={q.id}
               type="button"
-              onClick={() => setSelectedQuizId(q.id)}
+              onClick={() => handleSelectQuiz(q.id)}
               className={cn(
                 "px-4 py-3 rounded-lg text-left transition-colors duration-150 min-h-[44px] cursor-pointer",
                 btnFocus,
