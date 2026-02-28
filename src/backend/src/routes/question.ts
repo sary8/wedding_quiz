@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, asc } from "drizzle-orm";
 
 const VALID_MEDIA_TYPES = ["none", "image", "video"] as const;
 type ValidMediaType = typeof VALID_MEDIA_TYPES[number];
@@ -43,6 +43,35 @@ questionRoutes.put("/reorder", async (c) => {
 
   const check = await verifyQuizExists(body.quizId);
   if ("error" in check) return c.json({ error: check.error }, check.status);
+
+  if (!Array.isArray(body.questionIds) || body.questionIds.length === 0) {
+    return c.json({ error: "questionIdsは空でない配列で指定してください" }, 400);
+  }
+
+  // 重複チェック
+  const uniqueIds = new Set(body.questionIds);
+  if (uniqueIds.size !== body.questionIds.length) {
+    return c.json({ error: "questionIdsに重複があります" }, 400);
+  }
+
+  // 該当クイズの全問題IDを取得し、完全一致を検証
+  const existingQuestions = await db
+    .select({ id: schema.questions.id })
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, body.quizId))
+    .orderBy(asc(schema.questions.id));
+
+  const existingIds = new Set(existingQuestions.map((q) => q.id));
+
+  if (existingIds.size !== body.questionIds.length) {
+    return c.json({ error: "questionIdsの件数がクイズの問題数と一致しません" }, 400);
+  }
+
+  for (const id of body.questionIds) {
+    if (!existingIds.has(id)) {
+      return c.json({ error: "このクイズに属さない問題IDが含まれています" }, 400);
+    }
+  }
 
   const reorderUpdates = body.questionIds.map((id, i) =>
     db

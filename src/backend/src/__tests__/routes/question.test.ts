@@ -664,6 +664,73 @@ describe("question routes", () => {
       expect(updated2!.order_index).toBe(2);
     });
 
+    it("重複questionIds → 400", async () => {
+      const quiz = await createTestQuiz();
+      const q1 = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      const q2 = await createTestQuestion(quiz.id, { orderIndex: 1 });
+
+      const res = await questionRoutes.request("/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          questionIds: [q1.id, q1.id],
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("重複");
+    });
+
+    it("問題数不一致 → 400", async () => {
+      const quiz = await createTestQuiz();
+      const q1 = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      await createTestQuestion(quiz.id, { orderIndex: 1 });
+
+      const res = await questionRoutes.request("/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          questionIds: [q1.id],
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("件数");
+    });
+
+    it("他クイズのquestionId → 400", async () => {
+      const quiz1 = await createTestQuiz();
+      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const q1 = await createTestQuestion(quiz1.id, { orderIndex: 0 });
+      const q2 = await createTestQuestion(quiz2.id, { orderIndex: 0 });
+
+      const res = await questionRoutes.request("/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz1.id,
+          questionIds: [q2.id],
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("空配列 → 400", async () => {
+      const quiz = await createTestQuiz();
+
+      const res = await questionRoutes.request("/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          questionIds: [],
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
   });
 
   describe("ポイント倍率 (point_multiplier)", () => {

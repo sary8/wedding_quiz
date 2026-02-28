@@ -66,7 +66,7 @@ quizRoutes.get("/", async (c) => {
   return c.json(rows);
 });
 
-// クイズ取得
+// クイズ取得（host_secretは除外）
 quizRoutes.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
 
@@ -86,7 +86,8 @@ quizRoutes.get("/:id", async (c) => {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
 
-  return c.json(quiz);
+  const { host_secret: _, ...quizWithoutSecret } = quiz;
+  return c.json(quizWithoutSecret);
 });
 
 // クイズ更新
@@ -108,7 +109,8 @@ quizRoutes.put("/:id", async (c) => {
     .where(eq(schema.quizzes.id, id))
     .returning();
 
-  return c.json(updated[0]);
+  const { host_secret: _, ...updatedWithoutSecret } = updated[0];
+  return c.json(updatedWithoutSecret);
 });
 
 // 特定クイズの参加者一覧

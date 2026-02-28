@@ -136,7 +136,7 @@ export type ParticipantWithQuiz = {
 };
 
 export type Quiz = QuizSummary & {
-  host_secret: string;
+  host_secret?: string;
   team_mode?: boolean;
   teams?: TeamInfo[];
   questions?: Question[];

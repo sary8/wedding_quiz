@@ -87,6 +87,18 @@ describe("quiz routes", () => {
       expect(data.questions[0].text).toBe("質問1");
     });
 
+    it("host_secretがレスポンスに含まれない", async () => {
+      const quiz = await createTestQuiz();
+
+      const res = await quizRoutes.request(`/${quiz.id}`, {
+        method: "GET",
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).not.toHaveProperty("host_secret");
+      expect(data.title).toBe("テストクイズ");
+    });
+
     it("存在しないid → 404", async () => {
       const res = await quizRoutes.request("/9999?key=anything", {
         method: "GET",
@@ -106,6 +118,19 @@ describe("quiz routes", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.title).toBe("新タイトル");
+    });
+
+    it("host_secretがレスポンスに含まれない", async () => {
+      const quiz = await createTestQuiz();
+      const res = await quizRoutes.request(`/${quiz.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "テスト" }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).not.toHaveProperty("host_secret");
+      expect(data.title).toBe("テスト");
     });
 
     it("titleなしで更新 → 既存タイトル維持", async () => {

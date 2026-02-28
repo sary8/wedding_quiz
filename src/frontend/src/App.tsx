@@ -12,7 +12,7 @@ const PreviewPage = lazy(() => import("./pages/host/PreviewPage").then((m) => ({
 function LoadingFallback() {
   return (
     <div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white">
-      <p className="text-lg text-gray-500">読み込み中…</p>
+      <p className="text-lg text-gray-600">読み込み中…</p>
     </div>
   );
 }
