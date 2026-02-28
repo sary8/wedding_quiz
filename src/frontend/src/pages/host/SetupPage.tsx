@@ -6,6 +6,7 @@ import { DashboardHub } from "../../components/setup/DashboardHub";
 import { GameHistoryView } from "../../components/setup/GameHistoryView";
 import { ParticipantGalleryView } from "../../components/setup/ParticipantGalleryView";
 import { QuestionLibraryView } from "../../components/setup/QuestionLibraryView";
+import { StatsView } from "../../components/setup/StatsView";
 import { TabBar } from "../../components/setup/TabBar";
 import { QuizConfigTab } from "../../components/setup/QuizConfigTab";
 import { cn } from "../../utils/cn";
@@ -14,10 +15,10 @@ const QuestionManagementTab = lazy(() =>
   import("../../components/setup/QuestionManagementTab").then((m) => ({ default: m.QuestionManagementTab })),
 );
 
-type SetupView = "dashboard" | "history" | "participants" | "questions" | "edit";
+type SetupView = "dashboard" | "history" | "participants" | "questions" | "stats" | "edit";
 
 function parseView(value: string | null): SetupView {
-  if (value === "history" || value === "participants" || value === "questions" || value === "edit") {
+  if (value === "history" || value === "participants" || value === "questions" || value === "stats" || value === "edit") {
     return value;
   }
   return "dashboard";
@@ -31,6 +32,7 @@ const VIEW_TITLES: Record<Exclude<SetupView, "dashboard" | "edit">, string> = {
   history: "ゲーム履歴",
   participants: "参加者一覧",
   questions: "問題ライブラリ",
+  stats: "統計ダッシュボード",
 };
 
 const btnFocus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
@@ -117,7 +119,7 @@ export function SetupPage() {
     }
   }
 
-  function handleNavigate(view: "history" | "participants" | "questions" | "edit" | "host", quizId?: number) {
+  function handleNavigate(view: "history" | "participants" | "questions" | "stats" | "edit" | "host", quizId?: number) {
     if (view === "host" && quizId) {
       getQuiz(quizId)
         .then((quiz) => {
@@ -247,6 +249,10 @@ export function SetupPage() {
               <QuestionLibraryView
                 quizList={quizList}
               />
+            )}
+
+            {currentView === "stats" && (
+              <StatsView quizList={quizList} />
             )}
 
             {currentView === "edit" && selectedQuiz && (

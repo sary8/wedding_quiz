@@ -832,3 +832,37 @@ describe("team routes", () => {
     });
   });
 });
+
+// ============================================================
+// 統計エンドポイント
+// ============================================================
+describe("stats routes", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  describe("GET /:id/stats", () => {
+    it("統計データを返す", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+      const q = await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+      const p = await createTestParticipant(quiz.id, { nickname: "太郎", totalScore: 800 });
+      await createTestAnswer({ questionId: q.id, participantId: p.id, choiceIndex: 1, isCorrect: true, responseTimeMs: 3000, scoreAwarded: 800 });
+
+      const res = await quizRoutes.request(`/${quiz.id}/stats`, { method: "GET" });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.quizId).toBe(quiz.id);
+      expect(data.totalParticipants).toBe(1);
+      expect(data.totalQuestions).toBe(1);
+      expect(data.questionStats).toHaveLength(1);
+      expect(data.participantStats).toHaveLength(1);
+      expect(data.questionStats[0].correctRate).toBe(100);
+      expect(data.participantStats[0].nickname).toBe("太郎");
+    });
+
+    it("存在しないid → 404", async () => {
+      const res = await quizRoutes.request("/9999/stats", { method: "GET" });
+      expect(res.status).toBe(404);
+    });
+  });
+});

@@ -1,4 +1,4 @@
-import type { Quiz, QuizSummary, Question, QuestionBankItem, ParticipantSummary, ParticipantWithQuiz, TeamInfo } from "../types";
+import type { Quiz, QuizSummary, Question, QuestionBankItem, ParticipantSummary, ParticipantWithQuiz, TeamInfo, QuizStatsData } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
@@ -215,6 +215,10 @@ export function setTeams(quizId: number, teams: { name: string }[]) {
     method: "PUT",
     body: JSON.stringify({ teams }),
   });
+}
+
+export function getQuizStats(quizId: number) {
+  return request<QuizStatsData>(`/quizzes/${quizId}/stats`);
 }
 
 export function getRoomInfo(roomCode: string) {

@@ -4,7 +4,7 @@ import { QuizStatus } from "../../types";
 import { deleteQuiz } from "../../services/api";
 import { cn } from "../../utils/cn";
 
-type SetupView = "history" | "participants" | "questions" | "edit" | "host";
+type SetupView = "history" | "participants" | "questions" | "stats" | "edit" | "host";
 
 type Props = {
   quizList: QuizSummary[];
@@ -246,7 +246,7 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
       )}
 
       {/* ナビカード */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
           type="button"
           onClick={() => onNavigate("history")}
@@ -296,6 +296,21 @@ export function DashboardHub({ quizList, onCreateQuiz, onNavigate, onQuizDeleted
           </svg>
           <div className="font-semibold text-gray-800">問題ライブラリ</div>
           <div className="text-sm text-gray-500 mt-1">{finishedQuestions > 0 ? `${finishedQuestions}問` : "テンプレート・過去問"}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate("stats")}
+          className={cn(
+            "bg-white rounded-xl p-6 shadow-sm text-left hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-transparent hover:border-accent/20",
+            btnFocus,
+          )}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent mb-2" aria-hidden="true">
+            <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
+          </svg>
+          <div className="font-semibold text-gray-800">統計ダッシュボード</div>
+          <div className="text-sm text-gray-500 mt-1">{finished.length > 0 ? `${finished.length}ゲームの統計` : "ゲーム結果の分析"}</div>
         </button>
       </div>
     </div>

@@ -187,3 +187,54 @@ export type Question = {
   points: number;
   point_multiplier: number;
 };
+
+// 難易度
+export const Difficulty = {
+  Easy: "easy",
+  Normal: "normal",
+  Hard: "hard",
+  VeryHard: "very_hard",
+} as const;
+export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
+
+// 統計データ型
+export type QuestionStats = {
+  questionId: number;
+  orderIndex: number;
+  text: string;
+  questionType: QuestionType;
+  correctChoice: number;
+  pointMultiplier: number;
+  totalAnswers: number;
+  correctCount: number;
+  correctRate: number;
+  averageResponseTimeMs: number;
+  distribution: number[];
+  noAnswerCount: number;
+  difficulty: Difficulty;
+};
+
+export type ParticipantStatsEntry = {
+  participantId: number;
+  nickname: string;
+  selfieUrl: string | null;
+  teamName: string | null;
+  totalScore: number;
+  rank: number;
+  correctCount: number;
+  correctRate: number;
+  averageResponseTimeMs: number;
+  fastestResponseTimeMs: number;
+  scoreProgress: number[];
+};
+
+export type QuizStatsData = {
+  quizId: number;
+  title: string;
+  createdAt: string;
+  teamMode: boolean;
+  totalParticipants: number;
+  totalQuestions: number;
+  questionStats: QuestionStats[];
+  participantStats: ParticipantStatsEntry[];
+};

@@ -354,6 +354,15 @@ quizRoutes.delete("/:id", async (c) => {
   return c.json({ success: true });
 });
 
+// 統計データ取得
+quizRoutes.get("/:id/stats", async (c) => {
+  const id = Number(c.req.param("id"));
+  const { getQuizStats } = await import("../services/statsService.js");
+  const stats = await getQuizStats(id);
+  if (!stats) return c.json({ error: "クイズが見つかりません" }, 404);
+  return c.json(stats);
+});
+
 // 全参加者一覧（クイズ情報付き）
 // index.ts で /api/participants にマウント
 export const participantRoutes = new Hono();
