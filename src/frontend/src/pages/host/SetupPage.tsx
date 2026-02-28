@@ -100,19 +100,22 @@ export function SetupPage() {
     setView("dashboard");
   }
 
+  // 認証済みの場合のみクイズ一覧をロード
   useEffect(() => {
-    loadQuizzes();
-  }, []);
+    if (isAuthenticated) {
+      loadQuizzes();
+    }
+  }, [isAuthenticated]);
 
-  // view=edit でquizIdがある場合、自動でクイズをロード
+  // view=edit でquizIdがある場合、認証済みなら自動でクイズをロード
   useEffect(() => {
-    if (currentView === "edit" && editQuizId && !selectedQuiz) {
+    if (isAuthenticated && currentView === "edit" && editQuizId && !selectedQuiz) {
       const id = Number(editQuizId);
       getQuiz(id)
         .then((quiz) => setSelectedQuiz(quiz))
         .catch(() => setError("クイズの取得に失敗しました"));
     }
-  }, [currentView, editQuizId, selectedQuiz]);
+  }, [isAuthenticated, currentView, editQuizId, selectedQuiz]);
 
   async function loadQuizzes() {
     setIsLoadingQuizList(true);
