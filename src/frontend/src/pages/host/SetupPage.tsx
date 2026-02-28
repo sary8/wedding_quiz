@@ -153,10 +153,8 @@ export function SetupPage() {
     if (view === "host" && quizId) {
       getQuiz(quizId)
         .then((quiz) => {
-          const secret = sessionStorage.getItem(`host_secret_${quiz.room_code}`);
-          if (!secret) {
-            setError("ホスト認証情報が見つかりません。クイズを再作成してください。");
-            return;
+          if (quiz.host_secret) {
+            sessionStorage.setItem(`host_secret_${quiz.room_code}`, quiz.host_secret);
           }
           navigate(`/host/${quiz.room_code}?quizId=${quiz.id}`);
         })
@@ -187,12 +185,19 @@ export function SetupPage() {
   const selectedQuizId = selectedQuiz?.id;
   const selectedQuizRoomCode = selectedQuiz?.room_code;
 
-  const handleStartLobby = useCallback((mode?: "rehearsal") => {
+  const handleStartLobby = useCallback(async (mode?: "rehearsal") => {
     if (!selectedQuizRoomCode || !selectedQuizId) return;
-    const secret = sessionStorage.getItem(`host_secret_${selectedQuizRoomCode}`);
-    if (!secret) {
-      setError("ホスト認証情報が見つかりません。クイズを再作成してください。");
-      return;
+    // sessionStorageにない場合はAPIから取得
+    if (!sessionStorage.getItem(`host_secret_${selectedQuizRoomCode}`)) {
+      try {
+        const quiz = await getQuiz(selectedQuizId);
+        if (quiz.host_secret) {
+          sessionStorage.setItem(`host_secret_${quiz.room_code}`, quiz.host_secret);
+        }
+      } catch {
+        setError("クイズの取得に失敗しました");
+        return;
+      }
     }
     const base = `/host/${selectedQuizRoomCode}?quizId=${selectedQuizId}`;
     navigate(mode === "rehearsal" ? `${base}&rehearsal=true` : base);

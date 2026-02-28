@@ -66,7 +66,7 @@ quizRoutes.get("/", async (c) => {
   return c.json(rows);
 });
 
-// クイズ取得（host_secretは除外）
+// クイズ取得（admin認証済みのためhost_secret含む）
 quizRoutes.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
 
@@ -86,8 +86,7 @@ quizRoutes.get("/:id", async (c) => {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
 
-  const { host_secret: _, ...quizWithoutSecret } = quiz;
-  return c.json(quizWithoutSecret);
+  return c.json(quiz);
 });
 
 // クイズ更新

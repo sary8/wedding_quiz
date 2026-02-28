@@ -109,7 +109,7 @@ describe("quiz routes", () => {
       expect(data.questions[0].text).toBe("質問1");
     });
 
-    it("host_secretがレスポンスに含まれない", async () => {
+    it("host_secretがレスポンスに含まれる（admin認証済み）", async () => {
       const quiz = await createTestQuiz();
 
       const res = await quizRoutes.request(`/${quiz.id}`, {
@@ -117,7 +117,7 @@ describe("quiz routes", () => {
       });
       expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data).not.toHaveProperty("host_secret");
+      expect(data.host_secret).toBeTruthy();
       expect(data.title).toBe("テストクイズ");
     });
 
