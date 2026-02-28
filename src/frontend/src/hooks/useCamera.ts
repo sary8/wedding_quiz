@@ -30,7 +30,7 @@ export function useCamera() {
       requestAnimationFrame(() => {
         if (videoRef.current && streamRef.current) {
           videoRef.current.srcObject = streamRef.current;
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play()?.catch(() => {});
         }
       });
     } catch (e) {
