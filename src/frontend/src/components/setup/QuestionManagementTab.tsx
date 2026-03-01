@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
@@ -22,7 +22,9 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
 
   const questions = quiz.questions ?? [];
   const questionsRef = useRef(questions);
-  questionsRef.current = questions;
+  useEffect(() => {
+    questionsRef.current = questions;
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
