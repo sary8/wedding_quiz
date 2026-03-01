@@ -925,16 +925,12 @@ describe("quizService", () => {
       expect(p!.team_id).toBeNull();
     });
 
-    it("team_mode ON + teamId未指定 → team_id null で参加可能", async () => {
+    it("team_mode ON + teamId未指定 → error", async () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
 
       const result = await joinRoom("1234", "ゲスト1", null, "conn-team-5");
-      expect(result).not.toHaveProperty("error");
-
-      const { participant } = result as { participant: { id: number; token: string }; reconnect: boolean };
-      const p = await db.query.participants.findFirst({ where: eq(schema.participants.id, participant.id) });
-      expect(p!.team_id).toBeNull();
+      expect(result).toHaveProperty("error", "チームモードではチームの選択が必須です");
     });
   });
 

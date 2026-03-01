@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
 import { eq, sql, and, inArray, asc, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { deleteMediaFile } from "./media.js";
 
 export const quizRoutes = new Hono();
 
@@ -158,6 +159,10 @@ quizRoutes.delete("/:id/participants/:participantId", async (c) => {
 
   await db.delete(schema.answers).where(eq(schema.answers.participant_id, participantId));
   await db.delete(schema.participants).where(eq(schema.participants.id, participantId));
+
+  // セルフィーファイル削除
+  await deleteMediaFile(participant.selfie_file_name);
+
   return c.json({ success: true });
 });
 
@@ -181,31 +186,49 @@ quizRoutes.delete("/:id/participants", async (c) => {
   }
 
   if ("ids" in body && Array.isArray(body.ids) && body.ids.length > 0) {
-    await db.delete(schema.answers).where(
-      inArray(schema.answers.participant_id, body.ids),
-    );
-    await db.delete(schema.participants).where(
-      and(
-        eq(schema.participants.quiz_id, quizId),
-        inArray(schema.participants.id, body.ids),
-      ),
-    );
-    return c.json({ success: true, deleted: body.ids.length });
+    // body.idsを該当クイズの参加者に限定
+    const validParticipants = await db
+      .select({ id: schema.participants.id, selfie_file_name: schema.participants.selfie_file_name })
+      .from(schema.participants)
+      .where(
+        and(
+          eq(schema.participants.quiz_id, quizId),
+          inArray(schema.participants.id, body.ids),
+        ),
+      );
+    const validIds = validParticipants.map((p) => p.id);
+
+    if (validIds.length > 0) {
+      await db.delete(schema.answers).where(
+        inArray(schema.answers.participant_id, validIds),
+      );
+      await db.delete(schema.participants).where(
+        inArray(schema.participants.id, validIds),
+      );
+
+      // セルフィーファイル削除
+      await Promise.all(validParticipants.map((p) => deleteMediaFile(p.selfie_file_name)));
+    }
+    return c.json({ success: true, deleted: validIds.length });
   }
 
-  const participantIds = await db
-    .select({ id: schema.participants.id })
+  const allParticipantsForDelete = await db
+    .select({ id: schema.participants.id, selfie_file_name: schema.participants.selfie_file_name })
     .from(schema.participants)
     .where(eq(schema.participants.quiz_id, quizId));
 
-  if (participantIds.length > 0) {
+  if (allParticipantsForDelete.length > 0) {
     await db.delete(schema.answers).where(
-      inArray(schema.answers.participant_id, participantIds.map((p) => p.id)),
+      inArray(schema.answers.participant_id, allParticipantsForDelete.map((p) => p.id)),
     );
   }
   await db.delete(schema.participants).where(
     eq(schema.participants.quiz_id, quizId),
   );
+
+  // セルフィーファイル削除
+  await Promise.all(allParticipantsForDelete.map((p) => deleteMediaFile(p.selfie_file_name)));
+
   return c.json({ success: true });
 });
 
@@ -351,7 +374,40 @@ quizRoutes.delete("/:id", async (c) => {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
 
+  // 削除前にメディアファイル情報を取得
+  const [participantsWithSelfie, questionsWithMedia] = await Promise.all([
+    db
+      .select({ selfie_file_name: schema.participants.selfie_file_name })
+      .from(schema.participants)
+      .where(eq(schema.participants.quiz_id, id)),
+    db
+      .select({
+        media_url: schema.questions.media_url,
+        choice1_image_url: schema.questions.choice1_image_url,
+        choice2_image_url: schema.questions.choice2_image_url,
+        choice3_image_url: schema.questions.choice3_image_url,
+        choice4_image_url: schema.questions.choice4_image_url,
+      })
+      .from(schema.questions)
+      .where(eq(schema.questions.quiz_id, id)),
+  ]);
+
   await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
+
+  // メディアファイル削除
+  const deletePromises: Promise<void>[] = [];
+  for (const p of participantsWithSelfie) {
+    deletePromises.push(deleteMediaFile(p.selfie_file_name));
+  }
+  for (const q of questionsWithMedia) {
+    deletePromises.push(deleteMediaFile(q.media_url));
+    deletePromises.push(deleteMediaFile(q.choice1_image_url));
+    deletePromises.push(deleteMediaFile(q.choice2_image_url));
+    deletePromises.push(deleteMediaFile(q.choice3_image_url));
+    deletePromises.push(deleteMediaFile(q.choice4_image_url));
+  }
+  await Promise.all(deletePromises);
+
   return c.json({ success: true });
 });
 

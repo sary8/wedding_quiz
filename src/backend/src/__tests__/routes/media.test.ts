@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach, afterEach } 
 import { existsSync } from "fs";
 import { writeFile, mkdir, rm, unlink } from "fs/promises";
 import { join } from "path";
-import { mediaRoutes } from "../../routes/media.js";
+import { mediaRoutes, deleteMediaFile } from "../../routes/media.js";
 
 const UPLOAD_DIR = "./uploads";
 const createdFiles: string[] = [];
@@ -255,6 +255,40 @@ describe("media routes", () => {
 
       expect(res.status).toBe(400);
     });
+  });
+});
+
+describe("deleteMediaFile", () => {
+  it("ファイルが存在する場合は削除する", async () => {
+    const testFilename = "delete_test_file.jpg";
+    const filepath = join(UPLOAD_DIR, testFilename);
+    await writeFile(filepath, Buffer.from("test-content"));
+    expect(existsSync(filepath)).toBe(true);
+
+    await deleteMediaFile(testFilename);
+    expect(existsSync(filepath)).toBe(false);
+  });
+
+  it("URLパスからファイル名を抽出して削除する", async () => {
+    const testFilename = "delete_url_test.jpg";
+    const filepath = join(UPLOAD_DIR, testFilename);
+    await writeFile(filepath, Buffer.from("test-content"));
+    expect(existsSync(filepath)).toBe(true);
+
+    await deleteMediaFile(`/api/media/${testFilename}`);
+    expect(existsSync(filepath)).toBe(false);
+  });
+
+  it("nullの場合は何もしない", async () => {
+    await expect(deleteMediaFile(null)).resolves.toBeUndefined();
+  });
+
+  it("存在しないファイルでもエラーにならない", async () => {
+    await expect(deleteMediaFile("nonexistent_file.jpg")).resolves.toBeUndefined();
+  });
+
+  it("パストラバーサルを含む場合は何もしない", async () => {
+    await expect(deleteMediaFile("../etc/passwd")).resolves.toBeUndefined();
   });
 });
 

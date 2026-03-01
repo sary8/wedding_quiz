@@ -585,18 +585,30 @@ export function setupQuizSocket(io: QuizIO) {
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {
-        if (!data.roomCode || typeof data.roomCode !== "string") {
+        if (!data.roomCode || typeof data.roomCode !== "string" || !ROOM_CODE_RE.test(data.roomCode)) {
           logger.warn("watchRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
           return;
         }
-        socket.join(data.roomCode);
-        socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
 
+        // 実在ルーム確認
         const quiz = await quizService.getQuizByRoom(data.roomCode);
+        if (!quiz) {
+          callback({ success: false, error: "ルームが見つかりません" });
+          return;
+        }
+
+        socket.join(data.roomCode);
+
+        // host socketの場合はmetaを上書きしない
+        const existingMeta = socketMeta.get(socket.id);
+        if (!existingMeta || existingMeta.participantId !== -1) {
+          socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
+        }
+
         const participants = await quizService.getLobbyParticipants(data.roomCode);
         const lobbyData: { participants: typeof participants; teams?: Awaited<ReturnType<typeof quizService.getTeams>> } = { participants };
-        if (quiz?.team_mode) {
+        if (quiz.team_mode) {
           lobbyData.teams = await quizService.getTeams(quiz.id);
         }
         socket.emit("lobbyUpdate", lobbyData);

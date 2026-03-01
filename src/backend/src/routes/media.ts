@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { existsSync } from "fs";
-import { writeFile, mkdir, readdir, stat } from "fs/promises";
+import { writeFile, mkdir, readdir, stat, unlink } from "fs/promises";
 import { join, extname, basename } from "path";
 import { nanoid } from "nanoid";
 import { readFile } from "fs/promises";
@@ -11,6 +11,20 @@ const UPLOAD_DIR = "./uploads";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_STORAGE_BYTES = (Number(process.env.MAX_STORAGE_MB) || 500) * 1024 * 1024; // デフォルト500MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
+
+/**
+ * メディアファイルを削除する。
+ * URLパス (/api/media/xxx.jpg) またはファイル名 (xxx.jpg) を受け取る。
+ */
+export async function deleteMediaFile(fileNameOrUrl: string | null): Promise<void> {
+  if (!fileNameOrUrl) return;
+  const filename = basename(fileNameOrUrl);
+  if (!filename || filename !== basename(filename)) return;
+  // パストラバーサル防止
+  if (filename.includes("..") || filename.includes("\\")) return;
+  const filepath = join(UPLOAD_DIR, filename);
+  await unlink(filepath).catch(() => {});
+}
 
 // ストレージ使用量チェック
 async function getStorageUsage(): Promise<number> {

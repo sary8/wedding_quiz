@@ -62,6 +62,9 @@ export async function joinRoom(
   }
 
   // team_mode ON 時のバリデーション
+  if (quiz.team_mode && teamId == null) {
+    return { error: "チームモードではチームの選択が必須です" };
+  }
   if (quiz.team_mode && teamId != null) {
     const team = await db.query.teams.findFirst({
       where: and(

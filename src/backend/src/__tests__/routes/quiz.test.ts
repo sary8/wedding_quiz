@@ -304,6 +304,53 @@ describe("quiz routes", () => {
       expect(data.error).toContain("200人まで");
     });
 
+    it("ids指定に他クイズの参加者IDを含めても他クイズの回答は削除されない", async () => {
+      const quizA = await createTestQuiz({ roomCode: "1111" });
+      const quizB = await createTestQuiz({ roomCode: "2222" });
+      const questionA = await createTestQuestion(quizA.id, { text: "クイズA問題" });
+      const questionB = await createTestQuestion(quizB.id, { text: "クイズB問題" });
+      const pA = await createTestParticipant(quizA.id, { nickname: "A太郎" });
+      const pB = await createTestParticipant(quizB.id, { nickname: "B太郎" });
+      await createTestAnswer({
+        questionId: questionA.id,
+        participantId: pA.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1000,
+      });
+      await createTestAnswer({
+        questionId: questionB.id,
+        participantId: pB.id,
+        choiceIndex: 2,
+        isCorrect: false,
+        responseTimeMs: 2000,
+      });
+
+      // クイズAの参加者削除APIにクイズBの参加者IDを含めて呼び出し
+      const res = await quizRoutes.request(`/${quizA.id}/participants`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [pA.id, pB.id] }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      // クイズAの参加者のみ削除される
+      expect(data.deleted).toBe(1);
+
+      // クイズBの参加者と回答は残っている
+      const bParticipants = await db
+        .select()
+        .from(schema.participants)
+        .where(eq(schema.participants.quiz_id, quizB.id));
+      expect(bParticipants).toHaveLength(1);
+
+      const bAnswers = await db
+        .select()
+        .from(schema.answers)
+        .where(eq(schema.answers.participant_id, pB.id));
+      expect(bAnswers).toHaveLength(1);
+    });
+
     it("ids未指定 → 全参加者削除", async () => {
       const quiz = await createTestQuiz();
       await createTestParticipant(quiz.id, { nickname: "太郎" });

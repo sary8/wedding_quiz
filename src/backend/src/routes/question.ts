@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
 import { eq, and, sql, asc } from "drizzle-orm";
+import { deleteMediaFile } from "./media.js";
 
 const VALID_MEDIA_TYPES = ["none", "image", "video"] as const;
 type ValidMediaType = typeof VALID_MEDIA_TYPES[number];
@@ -307,5 +308,15 @@ questionRoutes.delete("/:id", async (c) => {
   if (!question) return c.json({ error: "問題が見つかりません" }, 404);
 
   await db.delete(schema.questions).where(eq(schema.questions.id, id));
+
+  // メディアファイル削除
+  await Promise.all([
+    deleteMediaFile(question.media_url),
+    deleteMediaFile(question.choice1_image_url),
+    deleteMediaFile(question.choice2_image_url),
+    deleteMediaFile(question.choice3_image_url),
+    deleteMediaFile(question.choice4_image_url),
+  ]);
+
   return c.json({ success: true });
 });
