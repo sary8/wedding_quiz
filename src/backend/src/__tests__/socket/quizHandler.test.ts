@@ -7,9 +7,11 @@ import type { ClientToServerEvents, ServerToClientEvents } from "../../types/ind
 // quizService をモック
 vi.mock("../../services/quizService.js", () => ({
   openRoom: vi.fn(),
+  joinRoom: vi.fn(),
   getQuizByRoom: vi.fn(),
   getLobbyParticipants: vi.fn(),
   getTeams: vi.fn(),
+  getParticipant: vi.fn(),
   verifyHostSecret: vi.fn(),
   handleDisconnect: vi.fn(),
 }));
@@ -214,6 +216,65 @@ describe("watchRoom", () => {
       // host (-1) でも viewer (-2) でも呼ばれないが、
       // hostの場合はactiveQuestions掃除が発生する → ここでは呼ばれないことだけ確認
       expect(quizService.handleDisconnect).not.toHaveBeenCalled();
+    } catch {
+      client.disconnect();
+      throw new Error("テスト中にエラーが発生しました");
+    }
+  });
+
+  it("参加者がwatchRoom呼んでもmeta上書きされない（disconnect時にhandleDisconnect呼出）", async () => {
+    // joinRoom モック: 参加者として登録
+    vi.mocked(quizService.joinRoom).mockResolvedValue({
+      participant: { id: 42, token: "test-token-42" },
+      reconnect: false,
+    });
+    vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+      id: 10,
+      room_code: "3333",
+      host_secret: "secret",
+      title: "テスト",
+      status: "lobby",
+      current_question_index: -1,
+      team_mode: false,
+      created_at: new Date().toISOString(),
+    });
+    vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
+    vi.mocked(quizService.getParticipant).mockResolvedValue({
+      id: 42,
+      quiz_id: 10,
+      team_id: null,
+      nickname: "テスト",
+      selfie_file_name: null,
+      connection_id: "conn",
+      token: "test-token-42",
+      total_score: 0,
+      current_rank: 0,
+      is_connected: true,
+      joined_at: new Date().toISOString(),
+    });
+    vi.mocked(quizService.handleDisconnect).mockResolvedValue();
+
+    const client = await connectClient();
+    try {
+      // 1. joinRoomで参加者として登録
+      const joinRes = await emitWithCallback<{ success: boolean; participantId?: number }>(
+        client, "joinRoom", { roomCode: "3333", nickname: "テスト" },
+      );
+      expect(joinRes.success).toBe(true);
+      expect(joinRes.participantId).toBe(42);
+
+      // 2. watchRoomを呼ぶ（meta上書きされないはず）
+      const watchRes = await emitWithCallback<{ success: boolean }>(
+        client, "watchRoom", { roomCode: "3333" },
+      );
+      expect(watchRes.success).toBe(true);
+
+      // 3. 切断 → handleDisconnectが呼ばれる（metaがparticipant=42のまま）
+      client.disconnect();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // 参加者metaが保持されていればhandleDisconnectが呼ばれる
+      expect(quizService.handleDisconnect).toHaveBeenCalled();
     } catch {
       client.disconnect();
       throw new Error("テスト中にエラーが発生しました");

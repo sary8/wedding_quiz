@@ -12,6 +12,9 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_STORAGE_BYTES = (Number(process.env.MAX_STORAGE_MB) || 500) * 1024 * 1024; // デフォルト500MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
 
+// アップロード時の命名パターン (nanoid + 許容拡張子) にマッチするファイルのみ削除許可
+const SAFE_FILENAME_RE = /^[A-Za-z0-9_-]+\.(jpg|jpeg|png|gif|webp|mp4|webm)$/;
+
 /**
  * メディアファイルを削除する。
  * URLパス (/api/media/xxx.jpg) またはファイル名 (xxx.jpg) を受け取る。
@@ -19,9 +22,7 @@ const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".
 export async function deleteMediaFile(fileNameOrUrl: string | null): Promise<void> {
   if (!fileNameOrUrl) return;
   const filename = basename(fileNameOrUrl);
-  if (!filename || filename !== basename(filename)) return;
-  // パストラバーサル防止
-  if (filename.includes("..") || filename.includes("\\")) return;
+  if (!filename || !SAFE_FILENAME_RE.test(filename)) return;
   const filepath = join(UPLOAD_DIR, filename);
   await unlink(filepath).catch(() => {});
 }

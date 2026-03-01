@@ -575,6 +575,22 @@ describe("participant routes", () => {
       const res = await participantRoutes.request("/", { method: "DELETE" });
       expect(res.status).toBe(200);
     });
+
+    it("selfie付き参加者の全削除でメディアファイルも削除される", async () => {
+      const quiz = await createTestQuiz();
+      await createTestParticipant(quiz.id, { nickname: "太郎", selfieFileName: "abc123.jpg" });
+      await createTestParticipant(quiz.id, { nickname: "花子", selfieFileName: "def456.png" });
+
+      const { deleteMediaFile } = await import("../../routes/media.js");
+      const spy = vi.spyOn(await import("../../routes/media.js"), "deleteMediaFile");
+
+      const res = await participantRoutes.request("/", { method: "DELETE" });
+      expect(res.status).toBe(200);
+
+      expect(spy).toHaveBeenCalledWith("abc123.jpg");
+      expect(spy).toHaveBeenCalledWith("def456.png");
+      spy.mockRestore();
+    });
   });
 });
 

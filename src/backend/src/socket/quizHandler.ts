@@ -600,9 +600,9 @@ export function setupQuizSocket(io: QuizIO) {
 
         socket.join(data.roomCode);
 
-        // host socketの場合はmetaを上書きしない
+        // meta設定済み（host/participant/既存viewer）は上書きしない
         const existingMeta = socketMeta.get(socket.id);
-        if (!existingMeta || existingMeta.participantId !== -1) {
+        if (!existingMeta) {
           socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
         }
 

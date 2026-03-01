@@ -932,6 +932,22 @@ describe("quizService", () => {
       const result = await joinRoom("1234", "ゲスト1", null, "conn-team-5");
       expect(result).toHaveProperty("error", "チームモードではチームの選択が必須です");
     });
+
+    it("team_mode ON + 既存トークンで再接続 + teamId未指定 → 成功（回帰防止）", async () => {
+      const quiz = await createTestQuiz({ status: "lobby" });
+      await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
+      const team = await createTestTeam(quiz.id, { name: "紅組" });
+
+      // 初回参加（teamId指定）
+      const first = await joinRoom("1234", "再接続テスト", null, "conn-rc-1", undefined, team.id);
+      expect(first).not.toHaveProperty("error");
+      const { participant } = first as { participant: { id: number; token: string }; reconnect: boolean };
+
+      // 再接続（teamId未指定でも既存トークンがあれば成功する）
+      const reconnect = await joinRoom("1234", "再接続テスト", null, "conn-rc-2", participant.token);
+      expect(reconnect).not.toHaveProperty("error");
+      expect((reconnect as { reconnect: boolean }).reconnect).toBe(true);
+    });
   });
 
   describe("getLobbyParticipants with teams", () => {

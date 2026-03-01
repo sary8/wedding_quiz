@@ -457,7 +457,7 @@ export const participantRoutes = new Hono();
 // 全参加者削除
 participantRoutes.delete("/", async (c) => {
   const allParticipants = await db
-    .select({ id: schema.participants.id })
+    .select({ id: schema.participants.id, selfie_file_name: schema.participants.selfie_file_name })
     .from(schema.participants);
 
   if (allParticipants.length > 0) {
@@ -466,6 +466,10 @@ participantRoutes.delete("/", async (c) => {
     );
   }
   await db.delete(schema.participants);
+
+  // メディアファイル削除
+  await Promise.all(allParticipants.map((p) => deleteMediaFile(p.selfie_file_name)));
+
   return c.json({ success: true });
 });
 

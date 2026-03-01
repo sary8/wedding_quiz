@@ -290,6 +290,23 @@ describe("deleteMediaFile", () => {
   it("パストラバーサルを含む場合は何もしない", async () => {
     await expect(deleteMediaFile("../etc/passwd")).resolves.toBeUndefined();
   });
+
+  it("許容外の拡張子は削除しない", async () => {
+    const filepath = join(UPLOAD_DIR, "malicious.exe");
+    await writeFile(filepath, Buffer.from("bad"));
+    createdFiles.push(filepath);
+
+    await deleteMediaFile("malicious.exe");
+    expect(existsSync(filepath)).toBe(true);
+  });
+
+  it("拡張子なしのファイル名は削除しない", async () => {
+    await expect(deleteMediaFile("noextension")).resolves.toBeUndefined();
+  });
+
+  it("空文字は何もしない", async () => {
+    await expect(deleteMediaFile("")).resolves.toBeUndefined();
+  });
 });
 
 describe("ストレージ上限", () => {

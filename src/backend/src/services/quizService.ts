@@ -61,23 +61,7 @@ export async function joinRoom(
     return { error: "このルームは現在参加できません" };
   }
 
-  // team_mode ON 時のバリデーション
-  if (quiz.team_mode && teamId == null) {
-    return { error: "チームモードではチームの選択が必須です" };
-  }
-  if (quiz.team_mode && teamId != null) {
-    const team = await db.query.teams.findFirst({
-      where: and(
-        eq(schema.teams.id, teamId),
-        eq(schema.teams.quiz_id, quiz.id)
-      ),
-    });
-    if (!team) {
-      return { error: "指定されたチームが見つかりません" };
-    }
-  }
-
-  // 再接続チェック
+  // 再接続チェック（teamIdバリデーションより先に実行: 再接続時はteamId不要）
   if (existingToken) {
     const existing = await db.query.participants.findFirst({
       where: and(
@@ -91,6 +75,22 @@ export async function joinRoom(
         .set({ connection_id: connectionId, is_connected: true })
         .where(eq(schema.participants.id, existing.id));
       return { participant: { id: existing.id, token: existing.token }, reconnect: true };
+    }
+  }
+
+  // team_mode ON 時のバリデーション（新規参加のみ）
+  if (quiz.team_mode && teamId == null) {
+    return { error: "チームモードではチームの選択が必須です" };
+  }
+  if (quiz.team_mode && teamId != null) {
+    const team = await db.query.teams.findFirst({
+      where: and(
+        eq(schema.teams.id, teamId),
+        eq(schema.teams.quiz_id, quiz.id)
+      ),
+    });
+    if (!team) {
+      return { error: "指定されたチームが見つかりません" };
     }
   }
 
