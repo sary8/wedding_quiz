@@ -1045,6 +1045,68 @@ describe("export routes", () => {
 });
 
 // ============================================================
+// エクスポート認証統合テスト
+// ============================================================
+describe("export routes（adminAuth経由）", () => {
+  let adminToken: string;
+
+  beforeEach(async () => {
+    await resetTestDb();
+    adminToken = getTestAdminToken();
+  });
+
+  it("認証付きエクスポート → 200 + JSONデータ", async () => {
+    const quiz = await createTestQuiz({ status: "finished" });
+    await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+    const p = await createTestParticipant(quiz.id, { nickname: "太郎", totalScore: 800 });
+    await createTestAnswer({ questionId: (await db.query.questions.findFirst())!.id, participantId: p.id, choiceIndex: 1, isCorrect: true, responseTimeMs: 3000, scoreAwarded: 800 });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/export?format=json`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(res.headers.get("content-disposition")).toContain("attachment");
+
+    const data = await res.json();
+    expect(data.quiz.id).toBe(quiz.id);
+    expect(data.participants).toHaveLength(1);
+  });
+
+  it("認証なしでエクスポート → 401", async () => {
+    const quiz = await createTestQuiz({ status: "finished" });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/export?format=json`, {
+      method: "GET",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("無効なトークンでエクスポート → 401", async () => {
+    const quiz = await createTestQuiz({ status: "finished" });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/export?format=json`, {
+      method: "GET",
+      headers: { Authorization: "Bearer invalid-token-xxx" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("認証付きCSVエクスポート → 200", async () => {
+    const quiz = await createTestQuiz({ status: "finished" });
+    await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+
+    const res = await app.request(`/api/quizzes/${quiz.id}/export?format=csv`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/csv");
+  });
+});
+
+// ============================================================
 // adminAuth ミドルウェア統合テスト
 // ============================================================
 describe("adminAuth ミドルウェア", () => {
