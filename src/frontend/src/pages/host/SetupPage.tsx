@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { createQuiz, getQuiz, listQuizzes, checkAuthStatus, isAdminAuthenticated } from "../../services/api";
+import { createQuiz, getQuiz, listQuizzes, checkAuthStatus, checkPinRequired, isAdminAuthenticated } from "../../services/api";
 import type { Quiz, QuizSummary } from "../../types";
 import { AdminLoginForm } from "../../components/setup/AdminLoginForm";
 import { DashboardHub } from "../../components/setup/DashboardHub";
@@ -55,14 +55,10 @@ export function SetupPage() {
         const valid = await checkAuthStatus();
         setIsAuthenticated(valid);
         if (!valid) {
-          const res = await fetch(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api"}/auth/pin-required`);
-          const data = await res.json() as { required: boolean };
-          setIsPinRequired(data.required);
+          setIsPinRequired(await checkPinRequired());
         }
       } else {
-        const res = await fetch(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api"}/auth/pin-required`);
-        const data = await res.json() as { required: boolean };
-        setIsPinRequired(data.required);
+        setIsPinRequired(await checkPinRequired());
         setIsAuthenticated(false);
       }
     }

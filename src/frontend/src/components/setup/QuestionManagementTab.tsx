@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
@@ -21,6 +21,8 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
   const prefersReducedMotion = useReducedMotion();
 
   const questions = quiz.questions ?? [];
+  const questionsRef = useRef(questions);
+  questionsRef.current = questions;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -32,12 +34,13 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const oldIndex = questions.findIndex((q) => q.id === active.id);
-      const newIndex = questions.findIndex((q) => q.id === over.id);
+      const current = questionsRef.current;
+      const oldIndex = current.findIndex((q) => q.id === active.id);
+      const newIndex = current.findIndex((q) => q.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
       setExpandedQuestionId(null);
-      const ids = questions.map((q) => q.id);
+      const ids = current.map((q) => q.id);
       const [moved] = ids.splice(oldIndex, 1);
       ids.splice(newIndex, 0, moved);
       try {
@@ -47,7 +50,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
         setError("問題の並べ替えに失敗しました");
       }
     },
-    [questions, quiz.id, onUpdate],
+    [quiz.id, onUpdate],
   );
 
   function handleAddNew() {
@@ -69,10 +72,11 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
 
   const handleReorder = useCallback(
     async (questionIndex: number, direction: "up" | "down") => {
+      const current = questionsRef.current;
       const targetIndex = direction === "up" ? questionIndex - 1 : questionIndex + 1;
-      if (targetIndex < 0 || targetIndex >= questions.length) return;
+      if (targetIndex < 0 || targetIndex >= current.length) return;
       setExpandedQuestionId(null);
-      const ids = questions.map((q) => q.id);
+      const ids = current.map((q) => q.id);
       [ids[questionIndex], ids[targetIndex]] = [ids[targetIndex], ids[questionIndex]];
       try {
         await reorderQuestions(quiz.id, ids);
@@ -81,7 +85,7 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
         setError("問題の並べ替えに失敗しました");
       }
     },
-    [questions, quiz.id, onUpdate],
+    [quiz.id, onUpdate],
   );
 
   const handleTemplateImport = useCallback(
@@ -93,7 +97,10 @@ export function QuestionManagementTab({ quiz, onUpdate }: Props) {
     [quiz.id, onUpdate],
   );
 
-  const motionTransition = prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const };
+  const motionTransition = useMemo(
+    () => prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" as const },
+    [prefersReducedMotion],
+  );
 
   return (
     <div>

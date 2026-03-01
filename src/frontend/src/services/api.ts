@@ -80,6 +80,17 @@ export async function checkAuthStatus(): Promise<boolean> {
   return data.authenticated;
 }
 
+export async function checkPinRequired(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/pin-required`);
+    if (!res.ok) return false;
+    const data = await res.json() as { required: boolean };
+    return data.required;
+  } catch {
+    return false;
+  }
+}
+
 export function isAdminAuthenticated(): boolean {
   return !!getAdminToken();
 }
