@@ -124,7 +124,11 @@ export function useGameSounds() {
     if (!ctx) return;
     const t = ctx.currentTime;
 
-    if (rank === 3) {
+    if (rank >= 4) {
+      // 4位・5位: 軽いリビール音
+      playNote(ctx, 523, t, 0.15, "triangle", 0.25);
+      playNote(ctx, 659, t + 0.15, 0.3, "triangle", 0.3);
+    } else if (rank === 3) {
       // ブロンズ: シンプルな2音
       playNote(ctx, 330, t, 0.2, "triangle", 0.3);
       playNote(ctx, 440, t + 0.2, 0.4, "triangle", 0.35);

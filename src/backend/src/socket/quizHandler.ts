@@ -636,6 +636,29 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ホスト: Top5順位発表（Display画面へリレー） ===
+    socket.on("revealNextRank", async (data, callback) => {
+      try {
+        const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
+        if (!quiz) {
+          logger.warn("revealNextRank auth failed", { roomCode: data.roomCode });
+          callback({ success: false, error: "認証エラー" });
+          return;
+        }
+
+        // ルーム内の全クライアントにリレー（ホスト自身を除く）
+        socket.to(data.roomCode).emit("revealNextRank");
+
+        logger.info("revealNextRank relayed", { roomCode: data.roomCode });
+
+        callback({ success: true });
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("revealNextRank error", { error: err, roomCode: data.roomCode });
+        callback({ success: false, error: "順位発表に失敗しました" });
+      }
+    });
+
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {

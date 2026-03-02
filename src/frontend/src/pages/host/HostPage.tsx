@@ -283,6 +283,11 @@ export function HostPage() {
     });
   }, [roomCode, hostSecret, emit, isProcessing]);
 
+  const handleRevealNext = useCallback(() => {
+    if (!roomCode) return;
+    emit("revealNextRank", { roomCode, hostSecret }, () => {});
+  }, [roomCode, hostSecret, emit]);
+
   const handleCloseGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
@@ -393,7 +398,7 @@ export function HostPage() {
         return (
           <>
             {errorBanner}
-            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onSpotlight={playFanfare} />
+            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onRevealNext={handleRevealNext} onDrumRoll={playDrumRoll} onSpotlight={playFanfare} />
           </>
         );
       case "closed":

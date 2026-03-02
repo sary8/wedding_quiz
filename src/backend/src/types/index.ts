@@ -54,6 +54,7 @@ export type ServerToClientEvents = {
     finalData?: FinalResultData | null;
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
+  revealNextRank: () => void;
 };
 
 // Socket.io client → server events
@@ -101,6 +102,10 @@ export type ClientToServerEvents = {
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
   closeGame: (
+    data: { roomCode: string; hostSecret: string },
+    callback: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  revealNextRank: (
     data: { roomCode: string; hostSecret: string },
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;

@@ -16,17 +16,26 @@ type Props = {
   onReplay?: () => void;
   onCloseGame?: () => void;
   isDisplay?: boolean;
+  revealTrigger?: number;
+  onRevealNext?: () => void;
+  onDrumRoll?: () => void;
   onSpotlight?: (rank: number) => void;
 };
 
-type RevealPhase = "teamReveal" | "scroll" | "top3" | "winner" | "done" | "group";
+type RevealPhase = "teamReveal" | "batchScroll" | "top5Waiting" | "top5Spotlight" | "done" | "group";
 
-function getScrollDelay(rank: number): number {
-  if (rank > 20) return 200;
-  if (rank > 10) return 500;
-  if (rank > 3) return 1000;
-  return 1000;
-}
+type Batch = {
+  entries: FinalRankingEntry[];
+  speed: number;
+};
+
+const SUSPENSE_DURATION: Record<number, number> = {
+  5: 1500,
+  4: 2000,
+  3: 2000,
+  2: 2500,
+  1: 3500,
+};
 
 const MEDAL_CLASSES: Record<number, string> = {
   1: "bg-medal-gold",
@@ -48,28 +57,65 @@ const PASTEL_BG_CLASSES = [
   "bg-choice-pastel-amber/40",
 ];
 
+function computeBatches(rankings: FinalRankingEntry[]): Batch[] {
+  const rest = rankings.filter((r) => r.rank > 5).sort((a, b) => a.rank - b.rank);
+  const slowEntries = rest.filter((r) => r.rank <= 10);
+  const fastEntries = rest.filter((r) => r.rank > 10);
+
+  const batches: Batch[] = [];
+
+  // 高速バッチ: 20人ずつ、下位から（最下位バッチを最初に表示）
+  const chunks: FinalRankingEntry[][] = [];
+  for (let i = 0; i < fastEntries.length; i += 20) {
+    chunks.push(fastEntries.slice(i, i + 20));
+  }
+  chunks.reverse();
+  for (const chunk of chunks) {
+    batches.push({ entries: chunk, speed: 150 });
+  }
+
+  // 低速バッチ: 10位〜6位
+  if (slowEntries.length > 0) {
+    batches.push({ entries: slowEntries, speed: 800 });
+  }
+
+  return batches;
+}
+
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
   return x - Math.floor(x);
 }
 
-export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight }: Props) {
+export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigger, onRevealNext, onDrumRoll, onSpotlight }: Props) {
   const hasTeamRankings = (data?.teamRankings?.length ?? 0) > 0;
-  const [phase, setPhase] = useState<RevealPhase>(hasTeamRankings ? "teamReveal" : "scroll");
-  const [visibleIndex, setVisibleIndex] = useState(-1);
-  const [spotlightEntry, setSpotlightEntry] = useState<FinalRankingEntry | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const onSpotlightRef = useRef(onSpotlight);
-  onSpotlightRef.current = onSpotlight;
+  const [phase, setPhase] = useState<RevealPhase>(hasTeamRankings ? "teamReveal" : "batchScroll");
   const prefersReducedMotion = useReducedMotion();
 
-  const { rankings, reversed, top3 } = useMemo(() => {
+  // バッチスクロール状態
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [visibleRowCount, setVisibleRowCount] = useState(0);
+  const [batchFading, setBatchFading] = useState(false);
+
+  // Top5スポットライト状態
+  const [top5Index, setTop5Index] = useState(0);
+  const [spotlightStage, setSpotlightStage] = useState<"waiting" | "suspense" | "reveal">("waiting");
+
+  // チーム発表状態
+  const [teamRevealIndex, setTeamRevealIndex] = useState(-1);
+
+  const onDrumRollRef = useRef(onDrumRoll);
+  onDrumRollRef.current = onDrumRoll;
+  const onSpotlightRef = useRef(onSpotlight);
+  onSpotlightRef.current = onSpotlight;
+  const prevRevealTriggerRef = useRef(revealTrigger ?? 0);
+
+  const { rankings, batches, top5 } = useMemo(() => {
     const r = data?.rankings ?? [];
     return {
       rankings: r,
-      reversed: [...r].reverse(),
-      top3: [...r.filter((e) => e.rank <= 3)].sort((a, b) => b.rank - a.rank),
+      batches: computeBatches(r),
+      top5: r.filter((e) => e.rank <= 5).sort((a, b) => b.rank - a.rank),
     };
   }, [data]);
 
@@ -78,24 +124,20 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
     [data?.teamRankings],
   );
 
-  // チームランキング発表フェーズ
-  const [teamRevealIndex, setTeamRevealIndex] = useState(-1);
+  // --- チームランキング発表フェーズ（現状維持） ---
   useEffect(() => {
     if (phase !== "teamReveal" || sortedTeams.length === 0) return;
-    const teamRankings = sortedTeams;
     let cancelled = false;
     let i = 0;
 
     function showNext() {
-      if (cancelled || i >= teamRankings.length) {
+      if (cancelled || i >= sortedTeams.length) {
         if (!cancelled) {
-          // 1位表示後の紙吹雪
           if (!prefersReducedMotion) {
             fireConfetti({ particleCount: 150, spread: 100, colors: ["#ffd700", "#ffec8b", "#f59e0b"] });
           }
-          // scroll フェーズに遷移
           setTimeout(() => {
-            if (!cancelled) setPhase("scroll");
+            if (!cancelled) setPhase("batchScroll");
           }, 3000);
         }
         return;
@@ -109,103 +151,124 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
     return () => { cancelled = true; clearTimeout(initTimer); };
   }, [phase, sortedTeams, prefersReducedMotion]);
 
-  // スクロール演出 (setTimeout再帰で速度を段階制御)
+  // --- バッチスクロールフェーズ ---
   useEffect(() => {
-    if (phase !== "scroll" || reversed.length === 0) return;
+    if (phase !== "batchScroll") return;
 
-    let cancelled = false;
-    let index = 0;
-
-    function showNext() {
-      if (cancelled || index >= reversed.length) return;
-
-      const entry = reversed[index];
-
-      // Top3に達したらスクロール停止 → top3フェーズへ
-      if (entry.rank <= 3) {
-        setPhase("top3");
-        return;
-      }
-
-      setVisibleIndex(index);
-      index++;
-
-      // 次のエントリの rank でディレイを決定
-      const nextEntry = reversed[index];
-      const delay = nextEntry ? getScrollDelay(nextEntry.rank) : 300;
-      setTimeout(showNext, delay);
+    // バッチがない（全員Top5内）→ 即座にTop5へ
+    if (batches.length === 0) {
+      setPhase(top5.length > 0 ? "top5Waiting" : "done");
+      return;
     }
 
-    // 初回は少し待ってから開始
-    const initTimer = setTimeout(showNext, 500);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(initTimer);
-    };
-  }, [phase, reversed]);
-
-  // Top3演出（一時停止対応）
-  const isPausedRef = useRef(isPaused);
-  useEffect(() => { isPausedRef.current = isPaused; });
-
-  useEffect(() => {
-    if (phase !== "top3") return;
-
     let cancelled = false;
-    let i = 0;
+    const batch = batches[currentBatchIndex];
+    if (!batch) {
+      setPhase(top5.length > 0 ? "top5Waiting" : "done");
+      return;
+    }
 
-    function showNext() {
-      if (cancelled || i >= top3.length) {
-        if (!cancelled && i >= top3.length) setPhase("done");
+    let rowIdx = 0;
+    setVisibleRowCount(0);
+    setBatchFading(false);
+
+    function showNextRow() {
+      if (cancelled) return;
+
+      if (rowIdx >= batch.entries.length) {
+        // 全行表示完了 → 2秒停止 → フェードアウト → 次のバッチ
+        setTimeout(() => {
+          if (cancelled) return;
+          setBatchFading(true);
+          setTimeout(() => {
+            if (cancelled) return;
+            const nextIdx = currentBatchIndex + 1;
+            if (nextIdx < batches.length) {
+              setCurrentBatchIndex(nextIdx);
+              setVisibleRowCount(0);
+              setBatchFading(false);
+            } else {
+              setPhase(top5.length > 0 ? "top5Waiting" : "done");
+            }
+          }, 500); // フェードアウト時間
+        }, 2000); // 停止時間
         return;
       }
-      // 一時停止中はリトライ
-      if (isPausedRef.current) {
-        setTimeout(showNext, 200);
-        return;
+
+      rowIdx++;
+      setVisibleRowCount(rowIdx);
+      setTimeout(showNextRow, batch.speed);
+    }
+
+    const initTimer = setTimeout(showNextRow, 300);
+    return () => { cancelled = true; clearTimeout(initTimer); };
+  }, [phase, currentBatchIndex, batches, top5.length]);
+
+  // --- Top5: ホストのボタンクリック（ローカル） ---
+  const handleRevealClick = useCallback(() => {
+    if (phase !== "top5Waiting" || spotlightStage !== "waiting") return;
+    onRevealNext?.();
+    startSpotlight();
+  }, [phase, spotlightStage, onRevealNext]);
+
+  // --- Top5: Display側の外部トリガー ---
+  useEffect(() => {
+    const current = revealTrigger ?? 0;
+    if (current > prevRevealTriggerRef.current && phase === "top5Waiting" && spotlightStage === "waiting") {
+      startSpotlight();
+    }
+    prevRevealTriggerRef.current = current;
+  }, [revealTrigger, phase, spotlightStage]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- startSpotlight is stable
+  function startSpotlight() {
+    if (top5Index >= top5.length) {
+      setPhase("done");
+      return;
+    }
+    setSpotlightStage("suspense");
+    onDrumRollRef.current?.();
+
+    const entry = top5[top5Index];
+    const suspenseDuration = SUSPENSE_DURATION[entry.rank] ?? 2000;
+
+    setTimeout(() => {
+      setSpotlightStage("reveal");
+      onSpotlightRef.current?.(entry.rank);
+      fireRankConfetti(entry.rank, prefersReducedMotion);
+
+      // 1位の追加演出: 画面フラッシュ
+      if (entry.rank === 1 && !prefersReducedMotion) {
+        const flash = document.createElement("div");
+        flash.style.cssText = "position:fixed;inset:0;background:white;z-index:9999;pointer-events:none;opacity:0.8;transition:opacity 200ms";
+        document.body.appendChild(flash);
+        setTimeout(() => { flash.style.opacity = "0"; }, 50);
+        setTimeout(() => { flash.remove(); }, 300);
       }
 
-      const entry = top3[i];
-      setSpotlightEntry(entry);
-
-      if (onSpotlightRef.current && entry.rank >= 1 && entry.rank <= 3) {
-        onSpotlightRef.current(entry.rank);
-      }
-
-      if (!prefersReducedMotion) {
-        if (entry.rank === 3) {
-          fireConfetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
-        } else if (entry.rank === 2) {
-          fireConfetti({ particleCount: 100, spread: 80, colors: ["#c0c0c0", "#d4d4d4"] });
-        } else if (entry.rank === 1) {
-          fireConfetti({ particleCount: 200, spread: 120, colors: ["#ffd700", "#ffec8b", "#ff6347"] });
-          setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
-          setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
+      // 表示後、次の待機へ
+      setTimeout(() => {
+        const nextIdx = top5Index + 1;
+        if (nextIdx >= top5.length) {
+          setPhase("done");
+        } else {
+          setTop5Index(nextIdx);
+          setSpotlightStage("waiting");
         }
-      }
+      }, 3000);
+    }, suspenseDuration);
+  }
 
-      i++;
-      setTimeout(showNext, 4000);
-    }
-
-    showNext();
-
-    return () => { cancelled = true; };
-  }, [phase, top3, prefersReducedMotion]);
-
-  // done → 5秒後に group フェーズへ自動遷移
+  // --- done → 5秒後に group フェーズへ自動遷移 ---
   useEffect(() => {
     if (phase !== "done") return;
     const timer = setTimeout(() => setPhase("group"), 5000);
     return () => clearTimeout(timer);
   }, [phase]);
 
-  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
-
   if (!data || rankings.length === 0) return null;
 
-  // チームランキング発表フェーズ
+  // ========== チームランキング発表 ==========
   if (phase === "teamReveal" && data.teamRankings) {
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-amber-50 to-amber-100 flex flex-col items-center justify-center text-gray-900 p-6">
@@ -244,144 +307,272 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
     );
   }
 
-  // 集合写真フェーズ
+  // ========== 集合写真フェーズ（現状維持） ==========
   if (phase === "group") {
     return <GroupPhotoView rankings={rankings} onReplay={onReplay} onCloseGame={onCloseGame} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
   }
 
-  // Top3 スポットライト表示（メダル背景はそのまま維持）
-  if ((phase === "top3" || phase === "done") && spotlightEntry) {
-    const medalClass = MEDAL_CLASSES[spotlightEntry.rank] || "bg-gradient-to-b from-blush to-white text-gray-900";
-    const accuracyPercent = spotlightEntry.totalQuestions > 0
-      ? Math.round((spotlightEntry.correctCount / spotlightEntry.totalQuestions) * 100)
-      : 0;
+  // ========== Top5 スポットライト ==========
+  if (phase === "top5Waiting" || phase === "top5Spotlight") {
+    const currentEntry = top5[top5Index];
 
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={spotlightEntry.participantId}
-          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, type: "spring" }}
-          className={`h-[100dvh] flex flex-col items-center justify-center relative ${medalClass}`}
-        >
-          {/* 一時停止ボタン（スクリーンには表示しない） */}
-          {!isDisplay && (
-            <button
-              type="button"
-              onClick={togglePause}
-              className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-black/20 text-inherit text-sm min-h-[44px] hover:bg-black/30 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-            >
-              {isPaused ? "再開" : "一時停止"}
-            </button>
-          )}
-
-          {phase === "done" && !isDisplay && (
-            <div className="absolute bottom-8 flex gap-4">
-              {onReplay && (
-                <button
-                  type="button"
-                  onClick={onReplay}
-                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                >
-                  もう一度プレイ
-                </button>
-              )}
-              {onCloseGame && (
-                <button
-                  type="button"
-                  onClick={onCloseGame}
-                  className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  ゲーム終了
-                </button>
-              )}
-            </div>
-          )}
-
+    // じらし中
+    if (spotlightStage === "suspense" && currentEntry) {
+      return (
+        <div className="h-[100dvh] bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center text-white relative overflow-hidden">
           <motion.div
-            initial={prefersReducedMotion ? false : { y: -50 }}
-            animate={{ y: 0 }}
-            className="text-5xl md:text-8xl font-bold mb-4"
+            animate={prefersReducedMotion ? {} : { x: [-2, 2, -2] }}
+            transition={{ duration: 0.15, repeat: Infinity, ease: "linear" }}
+            className="text-7xl md:text-9xl font-extrabold text-center"
           >
-            第{spotlightEntry.rank}位
+            第{currentEntry.rank}位は…
           </motion.div>
+        </div>
+      );
+    }
 
-          {spotlightEntry.selfieUrl ? (
-            <img
-              src={spotlightEntry.selfieUrl}
-              alt={`${spotlightEntry.nickname}のアバター`}
-              width={192}
-              height={192}
-              className="w-48 h-48 rounded-full object-cover mb-6 border-[6px] border-white/50"
-            />
-          ) : (
-            <div
-              className="w-48 h-48 rounded-full flex items-center justify-center text-8xl font-bold mb-6 bg-white/30"
-            >
-              {spotlightEntry.nickname?.[0] || "?"}
-            </div>
-          )}
+    // 発表中
+    if (spotlightStage === "reveal" && currentEntry) {
+      const bgClass = currentEntry.rank <= 3
+        ? (MEDAL_CLASSES[currentEntry.rank] || "bg-gradient-to-b from-blush to-white")
+        : currentEntry.rank === 1
+          ? "bg-gradient-to-b from-amber-300 to-amber-500"
+          : "bg-gradient-to-b from-blush to-white";
+      const textClass = currentEntry.rank <= 3 ? "" : "text-gray-900";
 
+      return (
+        <AnimatePresence mode="wait">
           <motion.div
+            key={currentEntry.participantId}
             initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.5 }}
-            className="text-center"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className={`h-[100dvh] flex flex-col items-center justify-center relative ${bgClass} ${textClass}`}
           >
-            <div className="text-3xl md:text-5xl font-bold mb-2">{spotlightEntry.nickname}</div>
-            <div className="text-2xl md:text-4xl mb-6">{spotlightEntry.totalScore.toLocaleString()}点</div>
-            <div className="text-base md:text-lg opacity-90">
-              正答率: {accuracyPercent}% / 平均回答速度: {(spotlightEntry.averageResponseTimeMs / 1000).toFixed(2)}秒
-            </div>
+            <motion.div
+              initial={prefersReducedMotion ? false : { scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 120 }}
+              className="text-5xl md:text-8xl font-extrabold mb-6"
+            >
+              第{currentEntry.rank}位
+            </motion.div>
+
+            <motion.div
+              initial={prefersReducedMotion ? false : { scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 120, delay: 0.2 }}
+            >
+              {currentEntry.selfieUrl ? (
+                <img
+                  src={currentEntry.selfieUrl}
+                  alt={`${currentEntry.nickname}のアバター`}
+                  width={192}
+                  height={192}
+                  className="w-48 h-48 rounded-full object-cover border-[6px] border-white/50 mb-6"
+                />
+              ) : (
+                <div className="w-48 h-48 rounded-full flex items-center justify-center text-8xl font-bold mb-6 bg-white/30">
+                  {currentEntry.nickname?.[0] || "?"}
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={prefersReducedMotion ? false : { y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.3 }}
+              className="text-3xl md:text-5xl font-bold mb-2"
+            >
+              {currentEntry.nickname}
+            </motion.div>
+
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.6 }}
+              className="text-center"
+            >
+              <div className="text-2xl md:text-4xl mb-2">{currentEntry.totalScore.toLocaleString()}点</div>
+              <div className="text-base md:text-lg opacity-90">
+                平均回答: {(currentEntry.averageResponseTimeMs / 1000).toFixed(2)}秒
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      );
+    }
+
+    // 待機中（ボタン表示）
+    return (
+      <div className="h-[100dvh] bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center text-white">
+        <h2 className="font-script text-5xl lg:text-7xl text-amber-400 mb-8 [text-wrap:balance]">
+          {top5Index === 0 ? "いよいよ Top 5 発表！" : `次は 第${top5[top5Index]?.rank}位…`}
+        </h2>
+        {!isDisplay && (
+          <button
+            type="button"
+            onClick={handleRevealClick}
+            className="px-12 py-6 rounded-2xl bg-amber-500 text-gray-900 text-2xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-safe:animate-pulse"
+          >
+            次の順位を発表
+          </button>
+        )}
+        {isDisplay && (
+          <p className="text-lg text-gray-400">ホストの操作を待っています…</p>
+        )}
+      </div>
     );
   }
 
-  // スクロール表示
-  return (
-    <div
-      ref={containerRef}
-      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col items-center justify-end p-6"
-    >
-      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 absolute top-6 [text-wrap:balance]">最終結果発表</h2>
-      <AnimatePresence>
-        {reversed.slice(0, visibleIndex + 1).map((entry) => (
-          <motion.div
-            key={entry.participantId}
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={[
-              "flex items-center gap-4 px-6 py-2 mb-1",
-              entry.rank <= 10 ? "text-2xl lg:text-3xl font-bold" : "text-lg lg:text-xl font-normal",
-            ].join(" ")}
-          >
-            <span className="w-10 text-center">{entry.rank}位</span>
-            {entry.selfieUrl ? (
-              <img
-                src={entry.selfieUrl}
-                alt={`${entry.nickname}のアバター`}
-                width={36}
-                height={36}
-                className={`w-9 h-9 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
-                loading="lazy"
-              />
-            ) : (
-              <div className={`w-9 h-9 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-gray-900 shrink-0`}>
-                {entry.nickname?.[0] || "?"}
-              </div>
+  // ========== done フェーズ（最後のスポットライト後） ==========
+  if (phase === "done") {
+    const winner = top5.find((e) => e.rank === 1) ?? rankings[0];
+    if (!winner) return null;
+
+    return (
+      <div className={`h-[100dvh] flex flex-col items-center justify-center relative ${MEDAL_CLASSES[1]}`}>
+        <motion.div
+          initial={prefersReducedMotion ? false : { scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80 }}
+          className="text-5xl md:text-8xl font-extrabold mb-4"
+        >
+          第1位
+        </motion.div>
+        {winner.selfieUrl ? (
+          <img
+            src={winner.selfieUrl}
+            alt={`${winner.nickname}のアバター`}
+            width={192}
+            height={192}
+            className="w-48 h-48 rounded-full object-cover mb-6 border-[6px] border-white/50"
+          />
+        ) : (
+          <div className="w-48 h-48 rounded-full flex items-center justify-center text-8xl font-bold mb-6 bg-white/30">
+            {winner.nickname?.[0] || "?"}
+          </div>
+        )}
+        <div className="text-3xl md:text-5xl font-bold mb-2">{winner.nickname}</div>
+        <div className="text-2xl md:text-4xl mb-6">{winner.totalScore.toLocaleString()}点</div>
+
+        {!isDisplay && (
+          <div className="absolute bottom-8 flex gap-4">
+            {onReplay && (
+              <button
+                type="button"
+                onClick={onReplay}
+                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                もう一度プレイ
+              </button>
             )}
-            <span className="w-28 truncate">{entry.nickname}</span>
-            <span>{entry.totalScore.toLocaleString()}点</span>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
+            {onCloseGame && (
+              <button
+                type="button"
+                onClick={onCloseGame}
+                className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                ゲーム終了
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ========== バッチスクロール表示 ==========
+  const currentBatch = batches[currentBatchIndex];
+  if (!currentBatch) return null;
+
+  // 表示する行: 末尾からvisibleRowCount個（最下位から出現）
+  const visibleEntries = currentBatch.entries.slice(currentBatch.entries.length - visibleRowCount);
+
+  return (
+    <motion.div
+      animate={{ opacity: batchFading ? 0 : 1 }}
+      transition={{ duration: 0.5 }}
+      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col p-6"
+    >
+      <h2 className="font-script text-4xl lg:text-6xl text-amber-800 text-center mb-4 [text-wrap:balance]">最終結果発表</h2>
+
+      {/* バッチ内容 */}
+      <div className="flex-1 flex flex-col justify-end gap-1 max-w-4xl mx-auto w-full overflow-hidden">
+        <AnimatePresence>
+          {visibleEntries.map((entry) => (
+            <motion.div
+              key={entry.participantId}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
+              className="flex items-center gap-2 md:gap-3 px-3 py-1.5 even:bg-white/40 rounded-lg"
+            >
+              {/* 順位 */}
+              <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
+
+              {/* アバター */}
+              {entry.selfieUrl ? (
+                <img
+                  src={entry.selfieUrl}
+                  alt={`${entry.nickname}のアバター`}
+                  width={36}
+                  height={36}
+                  className={`w-9 h-9 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+                  loading="lazy"
+                />
+              ) : (
+                <div className={`w-9 h-9 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-sm font-bold text-gray-900 shrink-0`}>
+                  {entry.nickname?.[0] || "?"}
+                </div>
+              )}
+
+              {/* ニックネーム */}
+              <span className="flex-1 text-lg md:text-xl font-bold truncate">{entry.nickname}</span>
+
+              {/* スコア */}
+              <span className="w-24 text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
+                {entry.totalScore.toLocaleString()}点
+              </span>
+
+              {/* 平均回答時間 */}
+              <span className="w-28 text-sm text-gray-600 text-right [font-variant-numeric:tabular-nums] shrink-0">
+                avg {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
+              </span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* バッチラベル */}
+      <div className="text-center mt-3 text-gray-500 text-sm">
+        {visibleRowCount >= currentBatch.entries.length && !batchFading && (
+          <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
+        )}
+      </div>
+    </motion.div>
   );
 }
+
+// ========== 紙吹雪ヘルパー ==========
+
+function fireRankConfetti(rank: number, prefersReducedMotion: boolean | null) {
+  if (prefersReducedMotion) return;
+  if (rank === 3) {
+    fireConfetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
+  } else if (rank === 2) {
+    fireConfetti({ particleCount: 100, spread: 80, colors: ["#c0c0c0", "#d4d4d4"] });
+  } else if (rank === 1) {
+    fireConfetti({ particleCount: 200, spread: 120, colors: ["#ffd700", "#ffec8b", "#ff6347"] });
+    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
+    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
+    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.3, y: 0.3 } }), 1500);
+    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.7, y: 0.3 } }), 2000);
+  }
+}
+
+// ========== 集合写真ビュー（現状維持） ==========
 
 type FloatConfig = {
   startX: number;
@@ -426,7 +617,6 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
-      {/* 浮遊アバター or 静的グリッド */}
       {prefersReducedMotion ? (
         <div className="flex flex-wrap justify-center gap-3 max-w-5xl z-0 px-4 mt-8">
           {rankings.map((entry, i) => (
@@ -463,7 +653,6 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
         </div>
       )}
 
-      {/* ボタン群 */}
       {!isDisplay && (onReplay || onCloseGame) && (
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}

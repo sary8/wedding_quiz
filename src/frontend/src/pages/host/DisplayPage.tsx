@@ -42,6 +42,7 @@ export function DisplayPage() {
   const [error, setError] = useState<string | null>(null);
   const [countdownValue, setCountdownValue] = useState(5);
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
+  const [revealTrigger, setRevealTrigger] = useState(0);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -119,6 +120,9 @@ export function DisplayPage() {
       on("gameClosed", (data) => {
         setClosedParticipants(data.participants);
         setPhase("closed");
+      }),
+      on("revealNextRank", () => {
+        setRevealTrigger((prev) => prev + 1);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -252,7 +256,7 @@ export function DisplayPage() {
         return (
           <>
             {errorBanner}
-            <FinalPage data={finalData} isDisplay={true} onSpotlight={playFanfare} />
+            <FinalPage data={finalData} isDisplay={true} revealTrigger={revealTrigger} onDrumRoll={playDrumRoll} onSpotlight={playFanfare} />
           </>
         );
       case "closed":
