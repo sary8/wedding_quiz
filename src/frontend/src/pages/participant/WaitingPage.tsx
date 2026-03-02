@@ -26,7 +26,7 @@ export function WaitingPage({ message = "まもなく開始します…", roomCo
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
       </div>
 
-      <p className="text-rose-text text-base" aria-live="polite">{message}</p>
+      <p className="text-sage-text text-base" aria-live="polite">{message}</p>
 
       {roomCode && (
         <p className="mt-4 text-xs text-gray-500">

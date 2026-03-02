@@ -37,11 +37,11 @@ export function JoinPage() {
           <span className="inline-block w-2 h-2 rotate-45 bg-accent" aria-hidden="true" />
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
         </div>
-        <p className="font-serif-wedding text-rose-text/70 tracking-widest text-sm uppercase">Celebration Game</p>
+        <p className="font-serif-wedding text-sage-text/70 tracking-widest text-sm uppercase">Celebration Game</p>
       </header>
 
       {/* カード */}
-      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_32px_rgba(219,39,119,0.12)] border border-primary/10 p-8">
+      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_32px_rgba(107,143,113,0.12)] border border-primary/10 p-8">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
             type="text"

@@ -52,13 +52,13 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
       </header>
 
       {/* カード */}
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_4px_32px_rgba(219,39,119,0.12)] border border-primary/10 p-6 flex flex-col items-center gap-5">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_4px_32px_rgba(107,143,113,0.12)] border border-primary/10 p-6 flex flex-col items-center gap-5">
 
         {/* ニックネーム */}
         <div className="w-full">
           <label
             htmlFor="nickname"
-            className="block text-sm font-semibold text-rose-text mb-1.5"
+            className="block text-sm font-semibold text-sage-text mb-1.5"
           >
             ニックネーム（20文字以内）
           </label>
@@ -72,7 +72,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
             onChange={(e) => setNickname(e.target.value.slice(0, 20))}
             placeholder="例：花子…"
             maxLength={20}
-            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-rose-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[border-color,box-shadow] duration-200"
+            className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-sage-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[border-color,box-shadow] duration-200"
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSubmit()}
           />
         </div>
@@ -80,7 +80,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
         {/* チーム選択 */}
         {hasTeams && (
           <div className="w-full">
-            <p className="text-sm font-semibold text-rose-text mb-2">チームを選択</p>
+            <p className="text-sm font-semibold text-sage-text mb-2">チームを選択</p>
             <div className="flex flex-wrap gap-2">
               {teams.map((team) => (
                 <button
@@ -104,7 +104,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-rose-text/80 mb-3">自撮り（必須）</p>
+          <p className="text-sm text-sage-text/80 mb-3">自撮り（必須）</p>
 
           {cameraError !== null ? (
             <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
@@ -180,7 +180,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             nickname.trim() && capturedImage && !isJoining && (!hasTeams || selectedTeamId != null)
-              ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
+              ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(107,143,113,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}
         >

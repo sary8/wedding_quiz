@@ -116,7 +116,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 </span>
 
                 {/* スコアバー */}
-                <div className="flex-1 h-12 lg:h-14 bg-pink-100 rounded-lg overflow-hidden relative">
+                <div className="flex-1 h-12 lg:h-14 bg-primary-light rounded-lg overflow-hidden relative">
                   <motion.div
                     initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${barWidth}%` }}
@@ -164,7 +164,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             次の問題
           </button>

@@ -285,7 +285,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
                 <button
                   type="button"
                   onClick={onCloseGame}
-                  className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+                  className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
                   ゲーム終了
                 </button>
@@ -487,7 +487,7 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
             <button
               type="button"
               onClick={onCloseGame}
-              className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+              className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               ゲーム終了
             </button>

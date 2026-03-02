@@ -19,12 +19,12 @@ export function ResultPage({ result, question }: Props) {
   if (!result?.yourAnswer) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush p-6">
-        <p className="text-2xl text-rose-text">未回答</p>
-        <p className="text-base text-rose-text/70 mt-2">次の問題をお待ちください</p>
+        <p className="text-2xl text-sage-text">未回答</p>
+        <p className="text-base text-sage-text/70 mt-2">次の問題をお待ちください</p>
 
         {correctAnswerText !== null ? (
-          <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-6">
-            <p className="text-sm text-rose-text/60 mb-1">正解</p>
+          <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(107,143,113,0.10)] border border-primary/10 p-5 text-center mt-6">
+            <p className="text-sm text-sage-text/60 mb-1">正解</p>
             {safeCorrectImageUrl && (
               <img
                 src={safeCorrectImageUrl}
@@ -64,8 +64,8 @@ export function ResultPage({ result, question }: Props) {
       </p>
 
       {/* スコアカード */}
-      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-6 text-center">
-        <p className="text-4xl font-bold text-rose-text mb-1 [font-variant-numeric:tabular-nums]">+{yourAnswer.scoreAwarded}<span className="text-lg">点</span></p>
+      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(107,143,113,0.10)] border border-primary/10 p-6 text-center">
+        <p className="text-4xl font-bold text-sage-text mb-1 [font-variant-numeric:tabular-nums]">+{yourAnswer.scoreAwarded}<span className="text-lg">点</span></p>
 
         <div className="flex items-center gap-3 my-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/30" />
@@ -73,17 +73,17 @@ export function ResultPage({ result, question }: Props) {
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/30" />
         </div>
 
-        <div className="flex flex-col gap-1.5 text-sm text-rose-text/70 [font-variant-numeric:tabular-nums]">
+        <div className="flex flex-col gap-1.5 text-sm text-sage-text/70 [font-variant-numeric:tabular-nums]">
           <p>回答速度: {(yourAnswer.responseTimeMs / 1000).toFixed(2)}秒</p>
           <p>累計スコア: {yourAnswer.totalScore.toLocaleString()}点</p>
-          <p className="text-base font-bold text-rose-text mt-1">現在 第{yourAnswer.currentRank}位</p>
+          <p className="text-base font-bold text-sage-text mt-1">現在 第{yourAnswer.currentRank}位</p>
         </div>
       </div>
 
       {/* 正解表示 */}
       {correctAnswerText !== null ? (
-        <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(219,39,119,0.10)] border border-primary/10 p-5 text-center mt-4">
-          <p className="text-sm text-rose-text/60 mb-1">正解</p>
+        <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_24px_rgba(107,143,113,0.10)] border border-primary/10 p-5 text-center mt-4">
+          <p className="text-sm text-sage-text/60 mb-1">正解</p>
           {safeCorrectImageUrl && (
             <img
               src={safeCorrectImageUrl}

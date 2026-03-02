@@ -13,14 +13,14 @@ export function NotFoundPage() {
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
       </div>
 
-      <p className="font-serif-wedding text-rose-text/70 text-lg mb-8">
+      <p className="font-serif-wedding text-sage-text/70 text-lg mb-8">
         お探しのページは見つかりませんでした
       </p>
 
       <button
         type="button"
         onClick={() => navigate("/play")}
-        className="px-8 py-4 rounded-xl bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] shadow-[0_4px_16px_rgba(219,39,119,0.3)]"
+        className="px-8 py-4 rounded-xl bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] shadow-[0_4px_16px_rgba(107,143,113,0.3)]"
       >
         トップへ戻る
       </button>

@@ -63,7 +63,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
             <button
               type="button"
               onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-lg font-bold min-h-[44px] hover:bg-pink-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+              className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               次の問題
             </button>
@@ -141,7 +141,7 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-pink-200/80 text-pink-900 text-xl font-bold hover:bg-pink-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+            className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-xl font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             次の問題
           </button>

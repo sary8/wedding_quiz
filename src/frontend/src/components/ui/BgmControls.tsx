@@ -52,7 +52,7 @@ export function BgmControls({ volume, isMuted, onVolumeChange, onToggleMute }: P
               onVolumeChange(v);
               if (isMuted && v > 0) onToggleMute();
             }}
-            className="flex-1 h-2 accent-pink-500"
+            className="flex-1 h-2 accent-primary"
             aria-label="BGM音量"
           />
         </div>

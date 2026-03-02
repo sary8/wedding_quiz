@@ -2,13 +2,14 @@
 
 /* Tailwind v4: テーマのカスタマイズはCSSで定義 */
 @theme {
-  /* Wedding Elegance カラーパレット */
-  --color-primary: #DB2777;
-  --color-primary-dark: #9D174D;
+  /* Wedding Elegance カラーパレット — Sage Green + Gold */
+  --color-primary: #6B8F71;
+  --color-primary-dark: #4A6B50;
+  --color-primary-light: #D4E5D6;
   --color-accent: #CA8A04;
   --color-accent-light: #FEF3C7;
-  --color-blush: #FDF2F8;
-  --color-rose-text: #831843;
+  --color-blush: #EFF5F0;
+  --color-sage-text: #2D4A33;
   --color-dark: #1a1a2e;
 
   /* ゲーム選択肢カラー（管理画面用） */
@@ -49,8 +50,8 @@
 
   body {
     min-height: 100dvh;
-    background-color: #FDF2F8;
-    color: #831843;
+    background-color: #EFF5F0;
+    color: #2D4A33;
   }
 
   #root {

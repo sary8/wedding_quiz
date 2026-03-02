@@ -77,7 +77,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
               <li
                 key={entry.participantId}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-                  isMe ? "bg-pink-100 ring-2 ring-pink-300" : "bg-white/80"
+                  isMe ? "bg-primary-light ring-2 ring-primary/40" : "bg-white/80"
                 }`}
               >
                 <span className="text-lg font-bold text-accent w-8 text-center shrink-0">
@@ -92,7 +92,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
                 )}
-                <span className={`flex-1 text-sm font-medium truncate ${isMe ? "text-pink-900 font-bold" : "text-gray-800"}`}>
+                <span className={`flex-1 text-sm font-medium truncate ${isMe ? "text-primary-dark font-bold" : "text-gray-800"}`}>
                   {entry.nickname}{isMe ? "（あなた）" : ""}
                 </span>
                 <span className="text-sm text-gray-600 shrink-0">{entry.totalScore}点</span>
