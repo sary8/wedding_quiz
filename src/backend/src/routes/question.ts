@@ -40,7 +40,10 @@ questionRoutes.put("/reorder", async (c) => {
   const body = await c.req.json<{
     quizId: number;
     questionIds: number[];
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const check = await verifyQuizExists(body.quizId);
   if ("error" in check) return c.json({ error: check.error }, check.status);
@@ -113,7 +116,10 @@ questionRoutes.post("/", async (c) => {
     timeLimitSeconds?: number;
     points?: number;
     pointMultiplier?: number;
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const check = await verifyQuizExists(body.quizId);
   if ("error" in check) return c.json({ error: check.error }, check.status);
@@ -228,7 +234,10 @@ questionRoutes.put("/:id", async (c) => {
     timeLimitSeconds?: number;
     points?: number;
     pointMultiplier?: number;
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const question = await db.query.questions.findFirst({
     where: eq(schema.questions.id, id),
