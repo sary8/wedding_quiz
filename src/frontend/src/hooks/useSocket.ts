@@ -22,7 +22,7 @@ type ServerToClientEvents = {
   rankingUpdate: (data: RankingData) => void;
   gameEnded: (data: FinalResultData) => void;
   error: (data: { message: string }) => void;
-  reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null }) => void;
+  reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null; finalData?: FinalResultData | null }) => void;
   quizReset: () => void;
   hostReconnected: (data: {
     quizStatus: QuizStatus;
@@ -31,6 +31,7 @@ type ServerToClientEvents = {
     currentQuestionData?: QuestionData | null;
     answerCount?: number;
     timerRemaining?: number;
+    finalData?: FinalResultData | null;
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
 };

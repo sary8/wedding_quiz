@@ -138,7 +138,12 @@ export function HostPage() {
       }),
       on("hostReconnected", (data) => {
         setParticipants(data.participants);
-        if (data.quizStatus === "in_progress") {
+        if (data.quizStatus === "finished") {
+          if (data.finalData) {
+            setFinalData(data.finalData);
+          }
+          setPhase("final");
+        } else if (data.quizStatus === "in_progress") {
           if (data.currentQuestionData && data.timerRemaining && data.timerRemaining > 0) {
             // 出題中: question フェーズを復元
             setCurrentQuestion(data.currentQuestionData);

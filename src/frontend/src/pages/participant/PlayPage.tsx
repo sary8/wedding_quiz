@@ -118,6 +118,9 @@ export function PlayPage() {
         } else if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
           setPhase("waiting");
         } else if (data.quizStatus === "finished") {
+          if (data.finalData) {
+            setFinalData(data.finalData);
+          }
           setPhase("final");
         }
       }),
