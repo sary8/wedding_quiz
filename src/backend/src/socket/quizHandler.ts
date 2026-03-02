@@ -13,8 +13,8 @@ const socketMeta = new Map<string, { participantId: number; roomCode: string }>(
 // roomCode → 現在の問題ID
 const activeQuestions = new Map<string, number>();
 
-// roomCode バリデーション: 4桁数字のみ許可
-const ROOM_CODE_RE = /^\d{4}$/;
+// roomCode バリデーション: 6桁数字のみ許可
+const ROOM_CODE_RE = /^\d{6}$/;
 
 // nicknameサニタイズ: 制御文字・特殊Unicode除去
 function sanitizeNickname(raw: string): string {
@@ -181,10 +181,17 @@ export function setupQuizSocket(io: QuizIO) {
             }
           }
 
+          // finished中の再接続: 最終結果データを送信
+          let finalData = null;
+          if (quizStatus === "finished") {
+            finalData = await quizService.getFinalResult(data.roomCode);
+          }
+
           socket.emit("reconnected", {
             participantId: participant.id,
             quizStatus,
             currentQuestionData,
+            finalData,
           });
         } else {
           // 新規参加を全員に通知
@@ -348,14 +355,24 @@ export function setupQuizSocket(io: QuizIO) {
             }
           }
 
-          socket.emit("hostReconnected", {
-            quizStatus: quiz.status as QuizStatus,
-            currentQuestionIndex: quiz.current_question_index,
-            participants,
-            currentQuestionData,
-            answerCount,
-            timerRemaining,
-          });
+          if (quiz.status === "finished") {
+            const finalData = await quizService.getFinalResult(roomCode);
+            socket.emit("hostReconnected", {
+              quizStatus: quiz.status as QuizStatus,
+              currentQuestionIndex: quiz.current_question_index,
+              participants,
+              finalData,
+            });
+          } else {
+            socket.emit("hostReconnected", {
+              quizStatus: quiz.status as QuizStatus,
+              currentQuestionIndex: quiz.current_question_index,
+              participants,
+              currentQuestionData,
+              answerCount,
+              timerRemaining,
+            });
+          }
         }
       } catch (e) {
         const err = e instanceof Error ? e.message : String(e);

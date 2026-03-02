@@ -56,8 +56,8 @@ describe("quiz routes", () => {
       const data = await res.json();
       expect(data.title).toBe("結婚式クイズ");
       expect(data.room_code).toBeTruthy();
-      expect(data.room_code).toHaveLength(4);
-      expect(data.room_code).toMatch(/^\d{4}$/);
+      expect(data.room_code).toHaveLength(6);
+      expect(data.room_code).toMatch(/^\d{6}$/);
       expect(data.host_secret).toBeTruthy();
       expect(data.status).toBe("draft");
     });
@@ -69,6 +69,17 @@ describe("quiz routes", () => {
         body: JSON.stringify({ title: "" }),
       });
       expect(res.status).toBe(400);
+    });
+
+    it("不正なJSON → 400", async () => {
+      const res = await quizRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "not-json",
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("リクエストの形式が不正です");
     });
 
     it("タイトルなし → 400", async () => {
@@ -257,7 +268,7 @@ describe("quiz routes", () => {
 
     it("別クイズの参加者 → 404", async () => {
       const quiz1 = await createTestQuiz();
-      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const quiz2 = await createTestQuiz({ roomCode: "567890" });
       const p = await createTestParticipant(quiz2.id);
 
       const res = await quizRoutes.request(`/${quiz1.id}/participants/${p.id}?key=test-secret-123`, {
@@ -305,8 +316,8 @@ describe("quiz routes", () => {
     });
 
     it("ids指定に他クイズの参加者IDを含めても他クイズの回答は削除されない", async () => {
-      const quizA = await createTestQuiz({ roomCode: "1111" });
-      const quizB = await createTestQuiz({ roomCode: "2222" });
+      const quizA = await createTestQuiz({ roomCode: "111111" });
+      const quizB = await createTestQuiz({ roomCode: "222222" });
       const questionA = await createTestQuestion(quizA.id, { text: "クイズA問題" });
       const questionB = await createTestQuestion(quizB.id, { text: "クイズB問題" });
       const pA = await createTestParticipant(quizA.id, { nickname: "A太郎" });
@@ -507,7 +518,7 @@ describe("participant routes", () => {
   describe("GET /", () => {
     it("全クイズの参加者を横断取得", async () => {
       const quiz1 = await createTestQuiz({ title: "クイズ1" });
-      const quiz2 = await createTestQuiz({ title: "クイズ2", roomCode: "5678" });
+      const quiz2 = await createTestQuiz({ title: "クイズ2", roomCode: "567890" });
       await createTestParticipant(quiz1.id, { nickname: "太郎" });
       await createTestParticipant(quiz2.id, { nickname: "花子" });
 
@@ -533,7 +544,7 @@ describe("participant routes", () => {
   describe("DELETE /", () => {
     it("全参加者を削除できる", async () => {
       const quiz1 = await createTestQuiz({ title: "クイズ1" });
-      const quiz2 = await createTestQuiz({ title: "クイズ2", roomCode: "5678", hostSecret: "secret-2" });
+      const quiz2 = await createTestQuiz({ title: "クイズ2", roomCode: "567890", hostSecret: "secret-2" });
       await createTestParticipant(quiz1.id, { nickname: "太郎" });
       await createTestParticipant(quiz2.id, { nickname: "花子" });
 
@@ -727,9 +738,9 @@ describe("team routes", () => {
 
   describe("GET /room/:roomCode/info", () => {
     it("team_mode OFF → teamMode=false, teams空配列", async () => {
-      await createTestQuiz({ roomCode: "1234" });
+      await createTestQuiz({ roomCode: "123456" });
 
-      const res = await quizRoutes.request("/room/1234/info", { method: "GET" });
+      const res = await quizRoutes.request("/room/123456/info", { method: "GET" });
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.teamMode).toBe(false);
@@ -737,13 +748,13 @@ describe("team routes", () => {
     });
 
     it("team_mode ON → teamMode=true, teams含む", async () => {
-      const quiz = await createTestQuiz({ roomCode: "1234" });
+      const quiz = await createTestQuiz({ roomCode: "123456" });
       // team_modeをONにする
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
       await createTestTeam(quiz.id, { name: "チームA", orderIndex: 0 });
       await createTestTeam(quiz.id, { name: "チームB", orderIndex: 1 });
 
-      const res = await quizRoutes.request("/room/1234/info", { method: "GET" });
+      const res = await quizRoutes.request("/room/123456/info", { method: "GET" });
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.teamMode).toBe(true);
@@ -753,7 +764,7 @@ describe("team routes", () => {
     });
 
     it("存在しないroomCode → 404", async () => {
-      const res = await quizRoutes.request("/room/9999/info", { method: "GET" });
+      const res = await quizRoutes.request("/room/999999/info", { method: "GET" });
       expect(res.status).toBe(404);
     });
   });
@@ -935,7 +946,7 @@ describe("team routes", () => {
 
     it("別クイズのチーム → 404", async () => {
       const quiz1 = await createTestQuiz();
-      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const quiz2 = await createTestQuiz({ roomCode: "567890" });
       const team = await createTestTeam(quiz2.id, { name: "別クイズ" });
 
       const res = await quizRoutes.request(`/${quiz1.id}/teams/${team.id}`, {
@@ -1155,8 +1166,8 @@ describe("adminAuth ミドルウェア", () => {
   });
 
   it("公開ルート: /api/quizzes/room/:roomCode/info → 認証不要", async () => {
-    await createTestQuiz({ roomCode: "1234" });
-    const res = await app.request("/api/quizzes/room/1234/info", { method: "GET" });
+    await createTestQuiz({ roomCode: "123456" });
+    const res = await app.request("/api/quizzes/room/123456/info", { method: "GET" });
     expect(res.status).toBe(200);
   });
 });

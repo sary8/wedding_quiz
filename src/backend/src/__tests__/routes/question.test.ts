@@ -702,7 +702,7 @@ describe("question routes", () => {
 
     it("他クイズのquestionId → 400", async () => {
       const quiz1 = await createTestQuiz();
-      const quiz2 = await createTestQuiz({ roomCode: "5678" });
+      const quiz2 = await createTestQuiz({ roomCode: "567890" });
       const q1 = await createTestQuestion(quiz1.id, { orderIndex: 0 });
       const q2 = await createTestQuestion(quiz2.id, { orderIndex: 0 });
 

@@ -10,7 +10,7 @@ export async function createTestQuiz(overrides: Partial<{
   const result = await db
     .insert(schema.quizzes)
     .values({
-      room_code: overrides.roomCode ?? "1234",
+      room_code: overrides.roomCode ?? "123456",
       host_secret: overrides.hostSecret ?? "test-secret-123",
       title: overrides.title ?? "テストクイズ",
       status: (overrides.status as "draft" | "lobby" | "in_progress" | "finished") ?? "draft",

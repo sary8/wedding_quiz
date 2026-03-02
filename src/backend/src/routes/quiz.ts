@@ -9,7 +9,7 @@ export const quizRoutes = new Hono();
 function generateRoomCode(): string {
   const chars = "0123456789";
   let code = "";
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
@@ -17,7 +17,10 @@ function generateRoomCode(): string {
 
 // クイズ作成（room code衝突時はリトライ）
 quizRoutes.post("/", async (c) => {
-  const body = await c.req.json<{ title: string }>();
+  const body = await c.req.json<{ title: string }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
   if (!body.title?.trim()) {
     return c.json({ error: "タイトルは必須です" }, 400);
   }
@@ -93,7 +96,10 @@ quizRoutes.get("/:id", async (c) => {
 // クイズ更新
 quizRoutes.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const body = await c.req.json<{ title?: string }>();
+  const body = await c.req.json<{ title?: string }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -260,7 +266,10 @@ quizRoutes.get("/room/:roomCode/info", async (c) => {
 // チームモード切替
 quizRoutes.put("/:id/team-mode", async (c) => {
   const id = Number(c.req.param("id"));
-  const body = await c.req.json<{ enabled: boolean }>();
+  const body = await c.req.json<{ enabled: boolean }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -300,7 +309,10 @@ quizRoutes.get("/:id/teams", async (c) => {
 // チーム一括設定
 quizRoutes.put("/:id/teams", async (c) => {
   const id = Number(c.req.param("id"));
-  const body = await c.req.json<{ teams: { name: string }[] }>();
+  const body = await c.req.json<{ teams: { name: string }[] }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),

@@ -44,14 +44,14 @@ describe("quizService", () => {
   describe("verifyHostSecret", () => {
     it("正しいroomCode+secret → quiz返却", async () => {
       const quiz = await createTestQuiz();
-      const result = await verifyHostSecret("1234", "test-secret-123");
+      const result = await verifyHostSecret("123456", "test-secret-123");
       expect(result).not.toBeNull();
       expect(result!.id).toBe(quiz.id);
     });
 
     it("間違ったsecret → null", async () => {
       await createTestQuiz();
-      const result = await verifyHostSecret("1234", "wrong-secret");
+      const result = await verifyHostSecret("123456", "wrong-secret");
       expect(result).toBeNull();
     });
 
@@ -65,7 +65,7 @@ describe("quizService", () => {
     it("draft状態 → lobby遷移、roomCode返却", async () => {
       const quiz = await createTestQuiz({ status: "draft" });
       const roomCode = await openRoom(quiz.id, "test-secret-123");
-      expect(roomCode).toBe("1234");
+      expect(roomCode).toBe("123456");
 
       const updated = await db.query.quizzes.findFirst({
         where: eq(schema.quizzes.id, quiz.id),
@@ -76,13 +76,13 @@ describe("quizService", () => {
     it("finished状態 → lobby遷移、roomCode返却", async () => {
       const quiz = await createTestQuiz({ status: "finished" });
       const roomCode = await openRoom(quiz.id, "test-secret-123");
-      expect(roomCode).toBe("1234");
+      expect(roomCode).toBe("123456");
     });
 
     it("lobby状態 → roomCode返却、ステータス変更なし", async () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       const result = await openRoom(quiz.id, "test-secret-123");
-      expect(result).toBe("1234");
+      expect(result).toBe("123456");
 
       const updated = await db.query.quizzes.findFirst({
         where: eq(schema.quizzes.id, quiz.id),
@@ -93,7 +93,7 @@ describe("quizService", () => {
     it("in_progress状態 → roomCode返却、ステータス変更なし", async () => {
       const quiz = await createTestQuiz({ status: "in_progress" });
       const result = await openRoom(quiz.id, "test-secret-123");
-      expect(result).toBe("1234");
+      expect(result).toBe("123456");
 
       const updated = await db.query.quizzes.findFirst({
         where: eq(schema.quizzes.id, quiz.id),
@@ -111,7 +111,7 @@ describe("quizService", () => {
   describe("joinRoom", () => {
     it("新規参加 → participant作成、token返却、reconnect=false", async () => {
       await createTestQuiz({ status: "lobby" });
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-1");
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-1");
       expect(result).not.toHaveProperty("error");
       expect(result).toHaveProperty("participant");
       expect(result).toHaveProperty("reconnect", false);
@@ -128,7 +128,7 @@ describe("quizService", () => {
       });
 
       const result = await joinRoom(
-        "1234",
+        "123456",
         "ゲスト1",
         null,
         "new-conn",
@@ -146,13 +146,13 @@ describe("quizService", () => {
 
     it("lobby/in_progress以外 → error", async () => {
       await createTestQuiz({ status: "draft" });
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-1");
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-1");
       expect(result).toHaveProperty("error");
     });
 
     it("in_progress状態でも参加可能", async () => {
       await createTestQuiz({ status: "in_progress" });
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-1");
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-1");
       expect(result).not.toHaveProperty("error");
       expect(result).toHaveProperty("reconnect", false);
     });
@@ -160,7 +160,7 @@ describe("quizService", () => {
     it("存在しないtoken → 新規参加として処理", async () => {
       await createTestQuiz({ status: "lobby" });
       const result = await joinRoom(
-        "1234",
+        "123456",
         "ゲスト1",
         null,
         "conn-new",
@@ -172,8 +172,8 @@ describe("quizService", () => {
 
     it("同一クイズ内のニックネーム重複 → error", async () => {
       await createTestQuiz({ status: "lobby" });
-      await joinRoom("1234", "ゲスト1", null, "conn-1");
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-2");
+      await joinRoom("123456", "ゲスト1", null, "conn-1");
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-2");
       expect(result).toHaveProperty("error", "このニックネームはすでに使われています");
     });
 
@@ -186,7 +186,7 @@ describe("quizService", () => {
       });
 
       const result = await joinRoom(
-        "1234",
+        "123456",
         "ゲスト1",
         null,
         "new-conn",
@@ -241,7 +241,7 @@ describe("quizService", () => {
         token: "token-2-unique",
       });
 
-      const list = await getLobbyParticipants("1234");
+      const list = await getLobbyParticipants("123456");
       expect(list).toHaveLength(2);
 
       const hanako = list.find((p) => p.nickname === "花子");
@@ -260,7 +260,7 @@ describe("quizService", () => {
   describe("startGame", () => {
     it("lobby状態 → in_progress、current_question_index=-1", async () => {
       const quiz = await createTestQuiz({ status: "lobby" });
-      const result = await startGame("1234");
+      const result = await startGame("123456");
       expect(result).toBe(quiz.id);
 
       const updated = await db.query.quizzes.findFirst({
@@ -272,7 +272,7 @@ describe("quizService", () => {
 
     it("lobby以外 → null", async () => {
       await createTestQuiz({ status: "draft" });
-      expect(await startGame("1234")).toBeNull();
+      expect(await startGame("123456")).toBeNull();
     });
   });
 
@@ -290,7 +290,7 @@ describe("quizService", () => {
       });
       await createTestQuestion(quiz.id, { orderIndex: 1, text: "問題2" });
 
-      const result = await getNextQuestion("1234");
+      const result = await getNextQuestion("123456");
       expect(result).not.toBeNull();
       expect(result!.questionId).toBe(q1.id);
       expect(result!.questionIndex).toBe(0);
@@ -312,14 +312,14 @@ describe("quizService", () => {
       });
       await createTestQuestion(quiz.id, { orderIndex: 0 });
 
-      const result = await getNextQuestion("1234");
+      const result = await getNextQuestion("123456");
       expect(result).toBeNull();
     });
 
     it("in_progress以外 → null", async () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       await createTestQuestion(quiz.id, { orderIndex: 0 });
-      expect(await getNextQuestion("1234")).toBeNull();
+      expect(await getNextQuestion("123456")).toBeNull();
     });
   });
 
@@ -547,7 +547,7 @@ describe("quizService", () => {
         responseTimeMs: 3000,
       });
 
-      const result = await calculateRanking("1234");
+      const result = await calculateRanking("123456");
       expect(result.rankings).toHaveLength(2);
 
       // スコア降順
@@ -579,7 +579,7 @@ describe("quizService", () => {
         token: "rank-no-question-token",
       });
 
-      const result = await calculateRanking("1234");
+      const result = await calculateRanking("123456");
       expect(result.rankings).toHaveLength(1);
       expect(result.rankings[0].lastResponseTimeMs).toBeNull();
       // currentRank=0はfalsyなので || rank でrankが使われる
@@ -615,7 +615,7 @@ describe("quizService", () => {
       });
       // p2は未回答
 
-      const result = await calculateRanking("1234");
+      const result = await calculateRanking("123456");
       expect(result.rankings[0].selfieUrl).toBe("/api/media/selfie_test.jpg");
       expect(result.rankings[0].lastResponseTimeMs).toBe(2000);
       expect(result.rankings[1].selfieUrl).toBeNull();
@@ -667,7 +667,7 @@ describe("quizService", () => {
       expect(beforeResult.yourAnswer!.currentRank).toBe(0);
 
       // calculateRanking実行 → current_rankがDBに反映される
-      await calculateRanking("1234");
+      await calculateRanking("123456");
 
       // calculateRanking後: current_rankが正しい値になる
       const afterResult = await getQuestionResult(question.id, p1.id);
@@ -736,7 +736,7 @@ describe("quizService", () => {
         scoreAwarded: 0,
       });
 
-      const result = await getFinalResult("1234");
+      const result = await getFinalResult("123456");
       expect(result.rankings).toHaveLength(2);
 
       // 1位: p1
@@ -771,7 +771,7 @@ describe("quizService", () => {
 
     it("参加者がいない場合 → 空ランキング（allAnswers空配列パス）", async () => {
       await createTestQuiz({ status: "in_progress" });
-      const result = await getFinalResult("1234");
+      const result = await getFinalResult("123456");
       expect(result.rankings).toEqual([]);
     });
 
@@ -784,7 +784,7 @@ describe("quizService", () => {
         token: "no-answer-token",
       });
 
-      const result = await getFinalResult("1234");
+      const result = await getFinalResult("123456");
       expect(result.rankings).toHaveLength(1);
       expect(result.rankings[0].correctCount).toBe(0);
       expect(result.rankings[0].averageResponseTimeMs).toBe(0);
@@ -813,7 +813,7 @@ describe("quizService", () => {
       });
 
       // まずfinishedにする
-      await getFinalResult("1234");
+      await getFinalResult("123456");
       const beforeReplay = await db.query.quizzes.findFirst({
         where: eq(schema.quizzes.id, quiz.id),
       });
@@ -857,7 +857,7 @@ describe("quizService", () => {
   describe("getQuizByRoom / getParticipant", () => {
     it("getQuizByRoom: roomCodeでクイズ取得", async () => {
       const quiz = await createTestQuiz();
-      const result = await getQuizByRoom("1234");
+      const result = await getQuizByRoom("123456");
       expect(result).not.toBeUndefined();
       expect(result!.id).toBe(quiz.id);
     });
@@ -884,7 +884,7 @@ describe("quizService", () => {
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
       const team = await createTestTeam(quiz.id, { name: "チームA" });
 
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-team-1", undefined, team.id);
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-team-1", undefined, team.id);
       expect(result).not.toHaveProperty("error");
       expect(result).toHaveProperty("reconnect", false);
 
@@ -898,7 +898,7 @@ describe("quizService", () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
 
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-team-2", undefined, 9999);
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-team-2", undefined, 9999);
       expect(result).toHaveProperty("error", "指定されたチームが見つかりません");
     });
 
@@ -917,7 +917,7 @@ describe("quizService", () => {
       // team_mode OFFのまま
       const team = await createTestTeam(quiz.id, { name: "チーム" });
 
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-team-4", undefined, team.id);
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-team-4", undefined, team.id);
       expect(result).not.toHaveProperty("error");
 
       const { participant } = result as { participant: { id: number; token: string }; reconnect: boolean };
@@ -929,7 +929,7 @@ describe("quizService", () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
 
-      const result = await joinRoom("1234", "ゲスト1", null, "conn-team-5");
+      const result = await joinRoom("123456", "ゲスト1", null, "conn-team-5");
       expect(result).toHaveProperty("error", "チームモードではチームの選択が必須です");
     });
 
@@ -939,12 +939,12 @@ describe("quizService", () => {
       const team = await createTestTeam(quiz.id, { name: "紅組" });
 
       // 初回参加（teamId指定）
-      const first = await joinRoom("1234", "再接続テスト", null, "conn-rc-1", undefined, team.id);
+      const first = await joinRoom("123456", "再接続テスト", null, "conn-rc-1", undefined, team.id);
       expect(first).not.toHaveProperty("error");
       const { participant } = first as { participant: { id: number; token: string }; reconnect: boolean };
 
       // 再接続（teamId未指定でも既存トークンがあれば成功する）
-      const reconnect = await joinRoom("1234", "再接続テスト", null, "conn-rc-2", participant.token);
+      const reconnect = await joinRoom("123456", "再接続テスト", null, "conn-rc-2", participant.token);
       expect(reconnect).not.toHaveProperty("error");
       expect((reconnect as { reconnect: boolean }).reconnect).toBe(true);
     });
@@ -964,7 +964,7 @@ describe("quizService", () => {
         token: "lobby-team-token-2",
       });
 
-      const list = await getLobbyParticipants("1234");
+      const list = await getLobbyParticipants("123456");
       expect(list).toHaveLength(2);
 
       const taro = list.find((p) => p.nickname === "太郎");
@@ -1057,7 +1057,7 @@ describe("quizService", () => {
         responseTimeMs: 1500,
       });
 
-      const result = await calculateRanking("1234");
+      const result = await calculateRanking("123456");
       expect(result.rankings).toHaveLength(1);
       expect(result.teamRankings).toBeDefined();
       expect(result.teamRankings).toHaveLength(1);
@@ -1081,7 +1081,7 @@ describe("quizService", () => {
         responseTimeMs: 2000,
       });
 
-      const result = await calculateRanking("1234");
+      const result = await calculateRanking("123456");
       expect(result.rankings).toHaveLength(1);
       expect(result.teamRankings).toBeUndefined();
     });
@@ -1124,7 +1124,7 @@ describe("quizService", () => {
         scoreAwarded: 500,
       });
 
-      const result = await getFinalResult("1234");
+      const result = await getFinalResult("123456");
       expect(result.rankings).toHaveLength(2);
       expect(result.teamRankings).toBeDefined();
       expect(result.teamRankings).toHaveLength(2);
@@ -1141,7 +1141,7 @@ describe("quizService", () => {
         token: "final-no-team",
       });
 
-      const result = await getFinalResult("1234");
+      const result = await getFinalResult("123456");
       expect(result.teamRankings).toBeUndefined();
     });
   });
@@ -1169,7 +1169,7 @@ describe("quizService", () => {
       });
 
       // finishedにしてreplay
-      await getFinalResult("1234");
+      await getFinalResult("123456");
       const result = await replayQuiz(quiz.id, "test-secret-123");
       expect(result).toHaveProperty("success", true);
 

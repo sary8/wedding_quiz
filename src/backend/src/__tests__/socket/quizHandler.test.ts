@@ -131,11 +131,11 @@ describe("watchRoom", () => {
     const client = await connectClient();
     try {
       const res = await emitWithCallback<{ success: boolean; error?: string }>(
-        client, "watchRoom", { roomCode: "9999" },
+        client, "watchRoom", { roomCode: "999999" },
       );
       expect(res.success).toBe(false);
       expect(res.error).toBe("ルームが見つかりません");
-      expect(quizService.getQuizByRoom).toHaveBeenCalledWith("9999");
+      expect(quizService.getQuizByRoom).toHaveBeenCalledWith("999999");
     } finally {
       client.disconnect();
     }
@@ -144,7 +144,7 @@ describe("watchRoom", () => {
   it("正常なviewerのwatchRoom → 成功 + lobbyUpdate受信", async () => {
     vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
       id: 1,
-      room_code: "1234",
+      room_code: "123456",
       host_secret: "secret",
       title: "テスト",
       status: "lobby",
@@ -161,7 +161,7 @@ describe("watchRoom", () => {
       });
 
       const res = await emitWithCallback<{ success: boolean }>(
-        client, "watchRoom", { roomCode: "1234" },
+        client, "watchRoom", { roomCode: "123456" },
       );
       expect(res.success).toBe(true);
 
@@ -174,10 +174,10 @@ describe("watchRoom", () => {
 
   it("hostがopenRoom後にwatchRoom → metaが上書きされない（handleDisconnect非呼出）", async () => {
     // openRoom モック
-    vi.mocked(quizService.openRoom).mockResolvedValue("5555");
+    vi.mocked(quizService.openRoom).mockResolvedValue("555555");
     vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
       id: 10,
-      room_code: "5555",
+      room_code: "555555",
       host_secret: "host-secret",
       title: "ホストテスト",
       status: "lobby",
@@ -195,11 +195,11 @@ describe("watchRoom", () => {
         client, "openRoom", { quizId: 10, hostSecret: "host-secret" },
       );
       expect(openRes.success).toBe(true);
-      expect(openRes.roomCode).toBe("5555");
+      expect(openRes.roomCode).toBe("555555");
 
       // 2. watchRoomを呼んでもmetaが上書きされないことを確認
       const watchRes = await emitWithCallback<{ success: boolean }>(
-        client, "watchRoom", { roomCode: "5555" },
+        client, "watchRoom", { roomCode: "555555" },
       );
       expect(watchRes.success).toBe(true);
 
@@ -230,7 +230,7 @@ describe("watchRoom", () => {
     });
     vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
       id: 10,
-      room_code: "3333",
+      room_code: "333333",
       host_secret: "secret",
       title: "テスト",
       status: "lobby",
@@ -258,14 +258,14 @@ describe("watchRoom", () => {
     try {
       // 1. joinRoomで参加者として登録
       const joinRes = await emitWithCallback<{ success: boolean; participantId?: number }>(
-        client, "joinRoom", { roomCode: "3333", nickname: "テスト" },
+        client, "joinRoom", { roomCode: "333333", nickname: "テスト" },
       );
       expect(joinRes.success).toBe(true);
       expect(joinRes.participantId).toBe(42);
 
       // 2. watchRoomを呼ぶ（meta上書きされないはず）
       const watchRes = await emitWithCallback<{ success: boolean }>(
-        client, "watchRoom", { roomCode: "3333" },
+        client, "watchRoom", { roomCode: "333333" },
       );
       expect(watchRes.success).toBe(true);
 
@@ -284,7 +284,7 @@ describe("watchRoom", () => {
   it("team_mode ONのルーム → lobbyUpdateにteams含む", async () => {
     vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
       id: 2,
-      room_code: "7777",
+      room_code: "777777",
       host_secret: "secret",
       title: "チームクイズ",
       status: "lobby",
@@ -305,7 +305,7 @@ describe("watchRoom", () => {
       });
 
       const res = await emitWithCallback<{ success: boolean }>(
-        client, "watchRoom", { roomCode: "7777" },
+        client, "watchRoom", { roomCode: "777777" },
       );
       expect(res.success).toBe(true);
 

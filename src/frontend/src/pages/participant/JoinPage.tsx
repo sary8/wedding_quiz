@@ -13,8 +13,8 @@ export function JoinPage() {
     e.preventDefault();
     const code = normalizeRoomCode(roomCode);
 
-    if (code.length !== 4) {
-      setError("4桁のルームコードを入力してください");
+    if (code.length !== 6) {
+      setError("6桁のルームコードを入力してください");
       return;
     }
 
@@ -23,7 +23,7 @@ export function JoinPage() {
   }
 
   function handleChange(value: string) {
-    setRoomCode(normalizeRoomCode(value).slice(0, 4));
+    setRoomCode(normalizeRoomCode(value).slice(0, 6));
     if (error) setError("");
   }
 
@@ -48,9 +48,9 @@ export function JoinPage() {
             value={roomCode}
             onChange={(e) => handleChange(e.target.value)}
             onCompositionEnd={(e) => handleChange((e.target as HTMLInputElement).value)}
-            placeholder="XXXX"
-            maxLength={4}
-            label="ルームコード（4桁）"
+            placeholder="XXXXXX"
+            maxLength={6}
+            label="ルームコード（6桁）"
             error={error}
             className="text-3xl tracking-widest text-center"
             autoComplete="off"
@@ -64,7 +64,7 @@ export function JoinPage() {
             variant="accent"
             size="lg"
             fullWidth
-            disabled={roomCode.length !== 4}
+            disabled={roomCode.length !== 6}
           >
             参加する
           </Button>
