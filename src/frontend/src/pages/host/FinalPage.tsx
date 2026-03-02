@@ -595,26 +595,23 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
           {rankings.map((entry, i) => {
             const config = floatConfigs[i];
             return (
-              <motion.div
+              <div
                 key={entry.participantId}
                 className="absolute"
-                initial={{
+                style={{
                   left: `${config.startX}%`,
                   top: `${config.startY}%`,
-                }}
-                animate={{
-                  left: [`${config.startX}%`, `${config.endX}%`],
-                  top: [`${config.startY}%`, `${config.endY}%`],
-                }}
-                transition={{
-                  duration: config.duration,
-                  repeat: Infinity,
-                  repeatType: "mirror",
-                  ease: "easeInOut",
-                }}
+                  "--dx": `${config.endX - config.startX}vw`,
+                  "--dy": `${config.endY - config.startY}vh`,
+                  animationName: "float-avatar",
+                  animationDuration: `${config.duration}s`,
+                  animationTimingFunction: "ease-in-out",
+                  animationIterationCount: "infinite",
+                  animationDirection: "alternate",
+                } as React.CSSProperties}
               >
                 <GroupAvatarBubble entry={entry} index={i} />
-              </motion.div>
+              </div>
             );
           })}
         </div>

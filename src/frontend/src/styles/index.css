@@ -55,6 +55,11 @@
   100% { opacity: 0; }
 }
 
+@keyframes float-avatar {
+  from { transform: translate(0, 0); }
+  to { transform: translate(var(--dx), var(--dy)); }
+}
+
 @layer base {
   html {
     font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
