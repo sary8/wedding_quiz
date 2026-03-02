@@ -75,7 +75,11 @@ export function validateSession(token: string): boolean {
 
 export function verifyAdminPin(pin: string): boolean {
   const adminPin = process.env.ADMIN_PIN;
-  if (!adminPin) return true; // PIN未設定の場合は常に成功
+  if (!adminPin) {
+    // production: fail-closed（PIN未設定なら拒否）
+    // 開発環境: 従来通り許可
+    return process.env.NODE_ENV !== "production";
+  }
   return pin === adminPin;
 }
 

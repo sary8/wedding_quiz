@@ -95,6 +95,11 @@ app.route("/api/question-bank", questionBankRoutes);
 // Health check
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
+// ADMIN_PIN未設定警告（production）
+if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PIN) {
+  logger.warn("ADMIN_PIN が未設定です。管理画面へのログインが拒否されます");
+}
+
 // Start HTTP server
 const PORT = Number(process.env.PORT) || 3001;
 const server = serve({ fetch: app.fetch, port: PORT }, (info) => {

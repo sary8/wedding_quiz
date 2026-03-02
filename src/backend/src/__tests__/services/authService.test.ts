@@ -89,10 +89,17 @@ describe("authService", () => {
   });
 
   describe("verifyAdminPin", () => {
-    it("ADMIN_PIN未設定 → 常にtrue", () => {
+    it("ADMIN_PIN未設定（開発環境）→ 常にtrue", () => {
       delete process.env.ADMIN_PIN;
       expect(verifyAdminPin("")).toBe(true);
       expect(verifyAdminPin("anything")).toBe(true);
+    });
+
+    it("ADMIN_PIN未設定 + production → 常にfalse（fail-closed）", () => {
+      delete process.env.ADMIN_PIN;
+      vi.stubEnv("NODE_ENV", "production");
+      expect(verifyAdminPin("")).toBe(false);
+      expect(verifyAdminPin("anything")).toBe(false);
     });
 
     it("ADMIN_PIN設定 → 正しいPINでtrue", () => {
