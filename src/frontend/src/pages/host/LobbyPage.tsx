@@ -92,9 +92,9 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
           <button
             type="button"
             onClick={() => window.open(`${window.location.origin}/host/${roomCode}/screen`, '_blank', 'noopener')}
-            className="mt-3 px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs hover:bg-gray-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 min-h-[44px] flex items-center gap-1.5 mx-auto"
+            className="mt-2 text-gray-500 text-xs hover:text-gray-700 hover:underline transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded inline-flex items-center gap-1 py-1 px-2"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />

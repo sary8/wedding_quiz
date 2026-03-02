@@ -212,25 +212,32 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, onSpotlight 
         <h2 className="font-script text-5xl lg:text-7xl text-amber-800 mb-8 [text-wrap:balance]">チーム結果発表</h2>
         <div className="flex flex-col gap-4 max-w-2xl w-full">
           <AnimatePresence>
-            {sortedTeams.slice(0, teamRevealIndex + 1).map((team) => (
-              <motion.div
-                key={team.teamId}
-                initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
-                className={[
-                  "flex items-center gap-4 px-8 py-5 rounded-2xl",
-                  team.rank === 1
-                    ? "bg-amber-200/80 ring-4 ring-amber-400 text-amber-900"
-                    : "bg-white/80 text-gray-800",
-                ].join(" ")}
-              >
-                <span className="text-4xl font-bold w-16 text-center">{team.rank}位</span>
-                <span className="flex-1 text-2xl font-bold">{team.teamName}</span>
-                <span className="text-2xl font-bold [font-variant-numeric:tabular-nums]">{team.totalScore.toLocaleString()}点</span>
-                <span className="text-sm text-gray-600">{team.memberCount}人</span>
-              </motion.div>
-            ))}
+            {sortedTeams
+              .slice(0, teamRevealIndex + 1)
+              .sort((a, b) => a.rank - b.rank)
+              .map((team) => {
+                const isWinner = team.rank === 1;
+                return (
+                  <motion.div
+                    key={team.teamId}
+                    layout={!prefersReducedMotion}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
+                    className={[
+                      "flex items-center gap-4 rounded-2xl",
+                      isWinner
+                        ? "px-10 py-7 bg-gradient-to-r from-amber-200 to-yellow-200 ring-4 ring-amber-400 text-amber-900 shadow-lg"
+                        : "px-8 py-5 bg-white/80 text-gray-800",
+                    ].join(" ")}
+                  >
+                    <span className={isWinner ? "text-6xl font-extrabold w-20 text-center" : "text-4xl font-bold w-16 text-center"}>{team.rank}位</span>
+                    <span className={isWinner ? "flex-1 text-4xl font-extrabold" : "flex-1 text-2xl font-bold"}>{team.teamName}</span>
+                    <span className={isWinner ? "text-4xl font-extrabold [font-variant-numeric:tabular-nums]" : "text-2xl font-bold [font-variant-numeric:tabular-nums]"}>{team.totalScore.toLocaleString()}点</span>
+                    <span className={isWinner ? "text-base text-amber-700" : "text-sm text-gray-600"}>{team.memberCount}人</span>
+                  </motion.div>
+                );
+              })}
           </AnimatePresence>
         </div>
       </div>
