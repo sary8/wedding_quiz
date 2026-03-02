@@ -50,6 +50,13 @@
       "when": 1772204454868,
       "tag": "0006_chunky_ikaris",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1772441136619,
+      "tag": "0007_shocking_rhodey",
+      "breakpoints": true
     }
   ]
 }
