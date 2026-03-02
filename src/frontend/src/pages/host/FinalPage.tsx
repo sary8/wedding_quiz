@@ -81,6 +81,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(0);
   const [batchFading, setBatchFading] = useState(false);
+  const [flashVisible, setFlashVisible] = useState(false);
 
   // finalReveal: 表示済みの数（末尾=10位から表示していく）
   const [finalVisibleCount, setFinalVisibleCount] = useState(0);
@@ -238,11 +239,8 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       // 1位の追加演出: 画面フラッシュ
       if (entry.rank === 1 && !prefersReducedMotion) {
-        const flash = document.createElement("div");
-        flash.className = "fixed inset-0 bg-white z-[9999] pointer-events-none opacity-80 transition-opacity duration-200";
-        document.body.appendChild(flash);
-        setTimeout(() => { flash.style.opacity = "0"; }, 50);
-        setTimeout(() => { flash.remove(); }, 300);
+        setFlashVisible(true);
+        setTimeout(() => setFlashVisible(false), 300);
       }
     }
 
@@ -331,6 +329,9 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
     return (
       <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0">
+        {flashVisible && (
+          <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
+        )}
         <h2 className="font-script text-4xl text-amber-800 text-center shrink-0">最終結果発表</h2>
 
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
@@ -346,20 +347,20 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           {isAutoPhase ? (
             <span className="text-gray-400 text-sm" />
           ) : allRevealed ? (
-            <span className="text-gray-500 text-sm">— 全員発表済み —</span>
+            <span className="text-gray-600 text-sm">— 全員発表済み —</span>
           ) : (
             <>
               {!isDisplay && (
                 <button
                   type="button"
                   onClick={handleRevealClick}
-                  className="px-10 py-4 rounded-2xl bg-amber-500 text-gray-900 text-xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-safe:animate-pulse"
+                  className="px-10 py-4 rounded-2xl bg-amber-500 text-gray-900 text-xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                 >
                   第{nextEntry?.rank}位を発表
                 </button>
               )}
               {isDisplay && (
-                <p className="text-lg text-gray-400">ホストの操作を待っています…</p>
+                <p className="text-lg text-gray-600">ホストの操作を待っています…</p>
               )}
             </>
           )}
@@ -475,7 +476,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
         </div>
       )}
 
-      <div className="text-center text-gray-500 text-xs shrink-0 h-6 flex items-center justify-center">
+      <div className="text-center text-gray-600 text-xs shrink-0 h-6 flex items-center justify-center">
         {visibleCount >= currentBatch.entries.length && !batchFading && (
           <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
         )}
@@ -514,7 +515,7 @@ function BatchRow({ entry, highlight }: BatchRowProps) {
       <span className="text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
         {entry.totalScore.toLocaleString()}点
       </span>
-      <span className="text-sm text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0">
+      <span className="text-sm text-gray-600 text-right [font-variant-numeric:tabular-nums] shrink-0">
         {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
       </span>
     </div>

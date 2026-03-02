@@ -31,6 +31,7 @@
   /* アニメーション */
   --animate-scale-pulse: scale-pulse 2s ease-in-out infinite;
   --animate-batch-row-in: batch-row-in 0.15s ease-out both;
+  --animate-screen-flash: screen-flash 0.25s ease-out forwards;
 }
 
 @keyframes scale-pulse {
@@ -47,6 +48,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes screen-flash {
+  0% { opacity: 0.8; }
+  100% { opacity: 0; }
 }
 
 @layer base {
