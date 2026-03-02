@@ -122,10 +122,10 @@ describe("ProfilePage", () => {
     expect(button).toBeDisabled();
   });
 
-  it("自撮りを撮るボタンが表示される", () => {
+  it("アイコンを撮るボタンが表示される", () => {
     mockCapturedImage = null;
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
 
-    expect(screen.getByText("自撮りを撮る")).toBeInTheDocument();
+    expect(screen.getByText("アイコンを撮る")).toBeInTheDocument();
   });
 });
