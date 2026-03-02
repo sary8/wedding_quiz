@@ -332,7 +332,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
         {flashVisible && (
           <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
         )}
-        <h2 className="font-script text-4xl text-amber-800 text-center shrink-0">最終結果発表</h2>
+        <h2 className="font-script text-4xl text-amber-800 text-center shrink-0 [text-wrap:balance]">最終結果発表</h2>
 
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
           <div style={{ flex: finalEntries.length - finalVisibleCount }} />
@@ -444,7 +444,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
   return (
     <div className={`h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
-      <h2 className="font-script text-4xl text-amber-800 text-center shrink-0">最終結果発表</h2>
+      <h2 className="font-script text-4xl text-amber-800 text-center shrink-0 [text-wrap:balance]">最終結果発表</h2>
 
       {isTwoColumn ? (
         <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full min-h-0">
