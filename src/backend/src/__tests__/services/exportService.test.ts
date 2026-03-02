@@ -131,6 +131,27 @@ describe("exportService", () => {
       expect(csv).toContain('"テスト,クイズ"');
     });
 
+    it("先頭が=+\\-@の値に'が前置される（CSV式インジェクション防止）", async () => {
+      const quiz = await createTestQuiz({ title: "=cmd", status: "finished" });
+      await createTestQuestion(quiz.id, { orderIndex: 0, text: "+1+1", correctChoice: 1 });
+      await createTestParticipant(quiz.id, { nickname: "-name", totalScore: 0 });
+
+      const data = await getExportData(quiz.id);
+      const csv = buildCsv(data!);
+
+      // 先頭が危険文字の値に ' が前置される
+      expect(csv).toContain("'=cmd");
+      expect(csv).toContain("'+1+1");
+      expect(csv).toContain("'-name");
+    });
+
+    it("@から始まる値にも'が前置される", async () => {
+      const quiz = await createTestQuiz({ title: "@sum", status: "finished" });
+      const data = await getExportData(quiz.id);
+      const csv = buildCsv(data!);
+      expect(csv).toContain("'@sum");
+    });
+
     it("チームモードON時にチーム列が含まれる", async () => {
       const quiz = await createTestQuiz({ status: "finished" });
       const { db, testSchema } = await import("../helpers/testDb.js");
