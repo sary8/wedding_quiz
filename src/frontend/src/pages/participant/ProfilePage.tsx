@@ -104,7 +104,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-sage-text/80 mb-3">自撮り（必須）</p>
+          <p className="text-sm text-sage-text/80 mb-3">アイコン</p>
 
           {cameraError !== null ? (
             <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
@@ -165,7 +165,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                 <circle cx="12" cy="13" r="3"/>
               </svg>
-              <span className="text-sm">自撮りを撮る</span>
+              <span className="text-sm">アイコンを撮る</span>
             </button>
           )}
         </div>

@@ -26,13 +26,6 @@ export function useCamera() {
       });
       streamRef.current = stream;
       setIsActive(true);
-      // video要素へストリームを接続
-      requestAnimationFrame(() => {
-        if (videoRef.current && streamRef.current) {
-          videoRef.current.srcObject = streamRef.current;
-          videoRef.current.play()?.catch(() => {});
-        }
-      });
     } catch (e) {
       const err = e as DOMException;
       if (err.name === "NotAllowedError") {
@@ -51,11 +44,20 @@ export function useCamera() {
     setIsActive(false);
   }, []);
 
+  // isActive変更後のDOM更新を待ってからストリームを接続（iOS Safari対応）
+  useEffect(() => {
+    if (!isActive || !streamRef.current) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = streamRef.current;
+    video.play()?.catch(() => {});
+  }, [isActive]);
+
   const capture = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
-    if (video.readyState < video.HAVE_CURRENT_DATA) return null;
+    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
 
     const size = 400;
     canvas.width = size;

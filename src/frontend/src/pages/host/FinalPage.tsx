@@ -419,16 +419,6 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
-      {/* タイトル */}
-      <motion.h2
-        initial={prefersReducedMotion ? false : { opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 [text-wrap:balance]"
-      >
-        みんなで記念撮影！
-      </motion.h2>
-
       {/* 浮遊アバター or 静的グリッド */}
       {prefersReducedMotion ? (
         <div className="flex flex-wrap justify-center gap-3 max-w-5xl z-0 px-4 mt-8">
