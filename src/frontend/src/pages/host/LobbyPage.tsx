@@ -89,9 +89,18 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
               ゲーム開始
             </Button>
           </div>
-          <p className="mt-3 text-gray-600 text-xs">
-            プロジェクター: {window.location.origin}/host/{roomCode}/screen
-          </p>
+          <button
+            type="button"
+            onClick={() => window.open(`${window.location.origin}/host/${roomCode}/screen`, '_blank', 'noopener')}
+            className="mt-3 px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs hover:bg-gray-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 min-h-[44px] flex items-center gap-1.5 mx-auto"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            プロジェクター画面を開く
+          </button>
         </>
       )}
     </div>
