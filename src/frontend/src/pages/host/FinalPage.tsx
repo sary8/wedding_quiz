@@ -324,35 +324,25 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
   // ========== finalReveal: 10位〜1位を同一画面で発表 ==========
   if (phase === "finalReveal") {
-    // 末尾（10位）からfinalVisibleCount個を表示
     const visibleFinal = finalEntries.slice(finalEntries.length - finalVisibleCount);
     const isAutoPhase = finalVisibleCount < autoCount;
     const allRevealed = finalVisibleCount >= finalEntries.length;
-    // 次にめくるエントリ（表示されるのは末尾からなので、先頭方向に進む）
     const nextEntry = !allRevealed ? finalEntries[finalEntries.length - finalVisibleCount - 1] : null;
 
     return (
-      <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 py-2">
-        <h2 className="font-script text-2xl text-amber-800 text-center mb-1 shrink-0">最終結果発表</h2>
+      <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0">
+        <h2 className="font-script text-xl text-amber-800 text-center shrink-0">最終結果発表</h2>
 
-        <div className="flex-1 flex flex-col justify-end gap-0.5 max-w-4xl mx-auto w-full overflow-hidden min-h-0">
-          <AnimatePresence>
-            {visibleFinal.map((entry) => {
-              const medalClass = MEDAL_CLASSES[entry.rank];
-              return (
-                <BatchRow
-                  key={entry.participantId}
-                  entry={entry}
-                  prefersReducedMotion={prefersReducedMotion}
-                  highlight={medalClass}
-                />
-              );
-            })}
-          </AnimatePresence>
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
+          <div style={{ flex: finalEntries.length - finalVisibleCount }} />
+          {visibleFinal.map((entry) => (
+            <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+              <BatchRow entry={entry} highlight={MEDAL_CLASSES[entry.rank]} />
+            </div>
+          ))}
         </div>
 
-        {/* ホスト操作ボタン（自動スクロール完了後に表示） */}
-        <div className="text-center mt-2 h-14 flex items-center justify-center shrink-0">
+        <div className="text-center h-14 flex items-center justify-center shrink-0">
           {isAutoPhase ? (
             <span className="text-gray-400 text-sm" />
           ) : allRevealed ? (
@@ -441,11 +431,9 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
   const isTwoColumn = currentBatch.entries.length > 10;
   const halfSize = Math.ceil(currentBatch.entries.length / 2);
-  // 左列: 上位（例: 81〜90位）、右列: 下位（例: 91〜100位）
   const leftCol = isTwoColumn ? currentBatch.entries.slice(0, halfSize) : currentBatch.entries;
   const rightCol = isTwoColumn ? currentBatch.entries.slice(halfSize) : [];
 
-  // 右列を先に下から埋め、右が全部出たら左列を下から埋める
   const visibleRightCount = isTwoColumn ? Math.min(visibleCount, rightCol.length) : 0;
   const visibleLeftCount = isTwoColumn
     ? Math.max(0, visibleCount - rightCol.length)
@@ -454,50 +442,45 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const visibleLeftEntries = leftCol.slice(leftCol.length - visibleLeftCount);
 
   return (
-    <motion.div
-      animate={{ opacity: batchFading ? 0 : 1 }}
-      transition={{ duration: 0.3 }}
-      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 py-2"
-    >
-      <h2 className="font-script text-2xl text-amber-800 text-center mb-1 shrink-0">最終結果発表</h2>
+    <div className={`h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+      <h2 className="font-script text-xl text-amber-800 text-center shrink-0">最終結果発表</h2>
 
-      {/* バッチ内容 */}
       {isTwoColumn ? (
-        <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full overflow-hidden min-h-0">
-          {/* 左列（上位） */}
-          <div className="flex-1 flex flex-col justify-end gap-0.5 overflow-hidden min-w-0">
-            <AnimatePresence>
-              {visibleLeftEntries.map((entry) => (
-                <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
-              ))}
-            </AnimatePresence>
+        <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 min-w-0">
+            <div style={{ flex: leftCol.length - visibleLeftCount }} />
+            {visibleLeftEntries.map((entry) => (
+              <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+                <BatchRow entry={entry} />
+              </div>
+            ))}
           </div>
-          {/* 右列（下位） */}
-          <div className="flex-1 flex flex-col justify-end gap-0.5 overflow-hidden min-w-0">
-            <AnimatePresence>
-              {visibleRightEntries.map((entry) => (
-                <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
-              ))}
-            </AnimatePresence>
+          <div className="flex-1 flex flex-col min-h-0 min-w-0">
+            <div style={{ flex: rightCol.length - visibleRightCount }} />
+            {visibleRightEntries.map((entry) => (
+              <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+                <BatchRow entry={entry} />
+              </div>
+            ))}
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col justify-end gap-0.5 max-w-4xl mx-auto w-full overflow-hidden">
-          <AnimatePresence>
-            {visibleLeftEntries.map((entry) => (
-              <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
-            ))}
-          </AnimatePresence>
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
+          <div style={{ flex: leftCol.length - visibleLeftCount }} />
+          {visibleLeftEntries.map((entry) => (
+            <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+              <BatchRow entry={entry} />
+            </div>
+          ))}
         </div>
       )}
 
-      {/* バッチラベル */}
-      <div className="text-center mt-1 text-gray-500 text-sm">
+      <div className="text-center text-gray-500 text-xs shrink-0 h-6 flex items-center justify-center">
         {visibleCount >= currentBatch.entries.length && !batchFading && (
           <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -505,41 +488,36 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
 type BatchRowProps = {
   entry: FinalRankingEntry;
-  prefersReducedMotion: boolean | null;
   highlight?: string;
 };
 
-function BatchRow({ entry, prefersReducedMotion, highlight }: BatchRowProps) {
+function BatchRow({ entry, highlight }: BatchRowProps) {
+  const bg = highlight ?? (entry.rank % 2 === 0 ? "bg-white/40" : "");
   return (
-    <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
-      className={`flex items-center gap-2 px-2 py-1 rounded-lg will-change-transform ${highlight ?? "even:bg-white/40"}`}
-    >
-      <span className="w-12 text-base font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
+    <div className={`flex items-center gap-3 px-3 w-full rounded-lg motion-safe:animate-batch-row-in ${bg}`}>
+      <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
       {entry.selfieUrl ? (
         <img
           src={entry.selfieUrl}
           alt={`${entry.nickname}のアバター`}
-          width={32}
-          height={32}
-          className={`w-8 h-8 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+          width={40}
+          height={40}
+          className={`w-10 h-10 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
           loading="lazy"
         />
       ) : (
-        <div className={`w-8 h-8 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-sm font-bold text-gray-900 shrink-0`}>
+        <div className={`w-10 h-10 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-base font-bold text-gray-900 shrink-0`}>
           {entry.nickname?.[0] || "?"}
         </div>
       )}
-      <span className="flex-1 text-sm md:text-base font-bold truncate min-w-0">{entry.nickname}</span>
-      <span className="text-sm font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
+      <span className="flex-1 text-lg font-bold truncate min-w-0">{entry.nickname}</span>
+      <span className="text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
         {entry.totalScore.toLocaleString()}点
       </span>
-      <span className="text-xs text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0">
+      <span className="text-sm text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0">
         {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
       </span>
-    </motion.div>
+    </div>
   );
 }
 
