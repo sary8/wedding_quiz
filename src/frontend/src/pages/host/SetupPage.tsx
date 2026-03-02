@@ -48,14 +48,17 @@ export function SetupPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isPinRequired, setIsPinRequired] = useState(false);
 
-  // 初回マウント時にセッション状態を確認
+  // 初回マウント時にセッション状態を確認（PIN要否を並列フェッチ）
   useEffect(() => {
     async function checkAuth() {
       if (isAdminAuthenticated()) {
-        const valid = await checkAuthStatus();
+        const [valid, pinRequired] = await Promise.all([
+          checkAuthStatus(),
+          checkPinRequired(),
+        ]);
         setIsAuthenticated(valid);
         if (!valid) {
-          setIsPinRequired(await checkPinRequired());
+          setIsPinRequired(pinRequired);
         }
       } else {
         setIsPinRequired(await checkPinRequired());
@@ -69,7 +72,7 @@ export function SetupPage() {
   const editQuizId = searchParams.get("quizId");
   const activeTab = parseTab(searchParams.get("tab"));
 
-  function setView(view: SetupView, quizId?: number) {
+  const setView = useCallback((view: SetupView, quizId?: number) => {
     setSearchParams(() => {
       const next = new URLSearchParams();
       if (view !== "dashboard") {
@@ -80,28 +83,40 @@ export function SetupPage() {
       }
       return next;
     }, { replace: true });
-  }
+  }, [setSearchParams]);
 
-  function setActiveTab(tab: "config" | "questions") {
+  const setActiveTab = useCallback((tab: "config" | "questions") => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (tab === "config") next.delete("tab");
       else next.set("tab", tab);
       return next;
     }, { replace: true });
-  }
+  }, [setSearchParams]);
 
-  function goToDashboard() {
+  const goToDashboard = useCallback(() => {
     setSelectedQuiz(null);
     setView("dashboard");
-  }
+  }, [setView]);
+
+  const loadQuizzes = useCallback(async () => {
+    setIsLoadingQuizList(true);
+    try {
+      const data = await listQuizzes();
+      setQuizList(data);
+    } catch {
+      setError("クイズ一覧の取得に失敗しました");
+    } finally {
+      setIsLoadingQuizList(false);
+    }
+  }, []);
 
   // 認証済みの場合のみクイズ一覧をロード
   useEffect(() => {
     if (isAuthenticated) {
       loadQuizzes();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadQuizzes]);
 
   // view=edit でquizIdがある場合、認証済みなら自動でクイズをロード
   useEffect(() => {
@@ -113,19 +128,7 @@ export function SetupPage() {
     }
   }, [isAuthenticated, currentView, editQuizId, selectedQuiz]);
 
-  async function loadQuizzes() {
-    setIsLoadingQuizList(true);
-    try {
-      const data = await listQuizzes();
-      setQuizList(data);
-    } catch {
-      setError("クイズ一覧の取得に失敗しました");
-    } finally {
-      setIsLoadingQuizList(false);
-    }
-  }
-
-  async function handleCreateQuiz(title: string) {
+  const handleCreateQuiz = useCallback(async (title: string) => {
     setError("");
     try {
       const quiz = await createQuiz(title);
@@ -143,9 +146,9 @@ export function SetupPage() {
     } catch {
       setError("クイズの作成に失敗しました");
     }
-  }
+  }, [loadQuizzes, setView, setSearchParams]);
 
-  function handleNavigate(view: "history" | "participants" | "questions" | "stats" | "edit" | "host", quizId?: number) {
+  const handleNavigate = useCallback((view: "history" | "participants" | "questions" | "stats" | "edit" | "host", quizId?: number) => {
     if (view === "host" && quizId) {
       getQuiz(quizId)
         .then((quiz) => {
@@ -165,18 +168,18 @@ export function SetupPage() {
     } else {
       setView(view as SetupView);
     }
-  }
+  }, [navigate, setView]);
 
-  function handleChangeQuiz() {
+  const handleChangeQuiz = useCallback(() => {
     setSelectedQuiz(null);
     setView("dashboard");
-  }
+  }, [setView]);
 
-  async function handleQuizDeleted() {
+  const handleQuizDeleted = useCallback(async () => {
     setSelectedQuiz(null);
     await loadQuizzes();
     setView("dashboard");
-  }
+  }, [loadQuizzes, setView]);
 
   const selectedQuizId = selectedQuiz?.id;
   const selectedQuizRoomCode = selectedQuiz?.room_code;
@@ -207,7 +210,7 @@ export function SetupPage() {
     } catch {
       setError("問題の更新に失敗しました");
     }
-  }, [selectedQuizId]);
+  }, [selectedQuizId, loadQuizzes]);
 
   const handleTitleSaved = useCallback(async () => {
     try {
@@ -220,7 +223,7 @@ export function SetupPage() {
     } catch {
       setError("クイズの更新に失敗しました");
     }
-  }, [selectedQuizId]);
+  }, [selectedQuizId, loadQuizzes]);
 
   const headerSubtext = currentView === "dashboard"
     ? "ホスト管理"

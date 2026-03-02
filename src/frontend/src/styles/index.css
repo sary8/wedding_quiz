@@ -100,6 +100,12 @@
     border-width: 0;
   }
 
+  /* 大量リスト項目のレンダーコスト削減（100+参加者対応） */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 40px;
+  }
+
   .font-script {
     font-family: var(--font-script);
   }

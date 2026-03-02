@@ -34,15 +34,17 @@ export function PlayPage() {
   // ルーム情報取得（チームモード判定用）
   useEffect(() => {
     if (!roomCode) return;
+    let ignore = false;
     getRoomInfo(roomCode)
       .then((info) => {
-        if (info.teamMode && info.teams.length > 0) {
+        if (!ignore && info.teamMode && info.teams.length > 0) {
           setRoomTeams(info.teams);
         }
       })
       .catch(() => {
         // エラー時はチームなしで進行
       });
+    return () => { ignore = true; };
   }, [roomCode]);
 
   // useRefで最新値を追跡し、useEffectの依存配列からhasAnsweredを除外

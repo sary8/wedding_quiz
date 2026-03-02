@@ -56,7 +56,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
           ) : (
             <ul className="flex flex-wrap gap-3 justify-center" aria-label="参加者一覧">
               {participants.map((p) => (
-                <li key={p.id}>
+                <li key={p.id} className="cv-auto">
                   <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
                 </li>
               ))}
@@ -128,7 +128,7 @@ function TeamGroupedParticipants({ participants, teams }: TeamGroupedProps) {
             {members.length > 0 ? (
               <ul className="flex flex-wrap gap-2" aria-label={`${team.name}の参加者`}>
                 {members.map((p) => (
-                  <li key={p.id}>
+                  <li key={p.id} className="cv-auto">
                     <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
                   </li>
                 ))}
