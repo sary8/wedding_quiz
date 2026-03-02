@@ -77,7 +77,21 @@ questionRoutes.put("/reorder", async (c) => {
     }
   }
 
-  const reorderUpdates = body.questionIds.map((id, i) =>
+  // 2パスでリオーダー（ユニークインデックス制約対応）
+  // パス1: 全問題を負のインデックスに退避
+  const clearUpdates = body.questionIds.map((id, i) =>
+    db
+      .update(schema.questions)
+      .set({ order_index: -(i + 1) })
+      .where(
+        and(
+          eq(schema.questions.id, id),
+          eq(schema.questions.quiz_id, body.quizId)
+        )
+      )
+  );
+  // パス2: 正しいインデックスに設定
+  const setUpdates = body.questionIds.map((id, i) =>
     db
       .update(schema.questions)
       .set({ order_index: i })
@@ -88,8 +102,9 @@ questionRoutes.put("/reorder", async (c) => {
         )
       )
   );
-  if (reorderUpdates.length > 0) {
-    await db.batch(reorderUpdates as [typeof reorderUpdates[0], ...typeof reorderUpdates]);
+  const allUpdates = [...clearUpdates, ...setUpdates];
+  if (allUpdates.length > 0) {
+    await db.batch(allUpdates as [typeof allUpdates[0], ...typeof allUpdates]);
   }
 
   return c.json({ success: true });
@@ -177,19 +192,12 @@ questionRoutes.post("/", async (c) => {
     return c.json({ error: "ポイント倍率は1〜3の整数で指定してください" }, 400);
   }
 
-  // 末尾に追加するためにorder_indexの最大値を取得（トランザクションで保護）
-  const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${schema.questions.order_index}), -1)` })
-    .from(schema.questions)
-    .where(eq(schema.questions.quiz_id, body.quizId));
-
-  const nextIndex = (maxOrder[0]?.max ?? -1) + 1;
-
+  // 末尾に追加: サブクエリでMAX(order_index)+1をアトミックに計算
   const result = await db
     .insert(schema.questions)
     .values({
       quiz_id: body.quizId,
-      order_index: nextIndex,
+      order_index: sql`(SELECT COALESCE(MAX(${schema.questions.order_index}), -1) + 1 FROM ${schema.questions} WHERE ${schema.questions.quiz_id} = ${body.quizId})`,
       text: body.text,
       question_type: questionType,
       media_type: body.mediaType ?? "none",

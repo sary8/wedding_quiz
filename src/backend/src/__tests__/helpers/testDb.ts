@@ -64,6 +64,7 @@ const CREATE_TABLES_SQL = [
     score_awarded INTEGER NOT NULL DEFAULT 0,
     answered_at TEXT NOT NULL DEFAULT ''
   )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS questions_quiz_order_idx ON questions(quiz_id, order_index)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS answers_question_participant_idx ON answers(question_id, participant_id)`,
   `CREATE TABLE IF NOT EXISTS question_bank (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

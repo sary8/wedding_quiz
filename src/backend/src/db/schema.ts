@@ -45,7 +45,9 @@ export const questions = sqliteTable("questions", {
   time_limit_seconds: integer("time_limit_seconds").notNull().default(20),
   points: integer("points").notNull().default(1000),
   point_multiplier: integer("point_multiplier").notNull().default(1),
-});
+}, (table) => [
+  uniqueIndex("questions_quiz_order_idx").on(table.quiz_id, table.order_index),
+]);
 
 export const teams = sqliteTable("teams", {
   id: integer("id").primaryKey({ autoIncrement: true }),
