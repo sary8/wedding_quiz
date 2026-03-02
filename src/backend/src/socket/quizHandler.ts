@@ -16,6 +16,31 @@ const activeQuestions = new Map<string, number>();
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
+// IP単位のソケットイベントレート制限
+const SOCKET_RATE_LIMIT_WINDOW_MS = 60_000; // 1分
+const SOCKET_RATE_LIMIT_MAX = 20; // 1分あたり最大20回
+const socketRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkSocketRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = socketRateMap.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    socketRateMap.set(ip, { count: 1, resetAt: now + SOCKET_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= SOCKET_RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+// 定期クリーンアップ（期限切れレート制限エントリ削除）
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of socketRateMap) {
+    if (now >= entry.resetAt) socketRateMap.delete(ip);
+  }
+}, 60_000);
+
 // nicknameサニタイズ: 制御文字・特殊Unicode除去
 function sanitizeNickname(raw: string): string {
   // 制御文字 (C0/C1), ZWJ/ZWNJ, 方向制御文字, オブジェクト置換文字を除去
@@ -103,6 +128,11 @@ async function distributeQuestionResult(
   }
 }
 
+/** テスト用: ソケットレート制限をリセット */
+export function _resetSocketRateLimit() {
+  socketRateMap.clear();
+}
+
 export function setupQuizSocket(io: QuizIO) {
   startMetaCleanup(io);
 
@@ -112,6 +142,13 @@ export function setupQuizSocket(io: QuizIO) {
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
+        const joinIp = socket.handshake.address;
+        if (!checkSocketRateLimit(joinIp)) {
+          logger.warn("joinRoom rate limited", { ip: joinIp });
+          callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
+          return;
+        }
+
         if (!data.roomCode || typeof data.roomCode !== "string" || !ROOM_CODE_RE.test(data.roomCode)) {
           logger.warn("joinRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });
@@ -602,6 +639,13 @@ export function setupQuizSocket(io: QuizIO) {
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {
+        const watchIp = socket.handshake.address;
+        if (!checkSocketRateLimit(watchIp)) {
+          logger.warn("watchRoom rate limited", { ip: watchIp });
+          callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
+          return;
+        }
+
         if (!data.roomCode || typeof data.roomCode !== "string" || !ROOM_CODE_RE.test(data.roomCode)) {
           logger.warn("watchRoom validation failed: invalid roomCode", { socketId: socket.id });
           callback({ success: false, error: "ルームコードが不正です" });

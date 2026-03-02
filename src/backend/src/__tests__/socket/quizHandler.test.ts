@@ -34,7 +34,7 @@ vi.mock("../../utils/logger.js", () => ({
 }));
 
 const quizService = await import("../../services/quizService.js");
-const { setupQuizSocket } = await import("../../socket/quizHandler.js");
+const { setupQuizSocket, _resetSocketRateLimit } = await import("../../socket/quizHandler.js");
 
 type TypedClientSocket = ClientSocket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -83,6 +83,7 @@ afterAll(async () => {
 
 afterEach(() => {
   vi.resetAllMocks();
+  _resetSocketRateLimit();
 });
 
 describe("watchRoom", () => {
@@ -312,6 +313,48 @@ describe("watchRoom", () => {
       const lobby = await lobbyPromise;
       expect(lobby.participants).toEqual([]);
       expect(lobby.teams).toHaveLength(2);
+    } finally {
+      client.disconnect();
+    }
+  });
+});
+
+describe("socket rate limiting", () => {
+  it("joinRoom 21回目でレート制限エラー", async () => {
+    // joinRoom は roomCode バリデーション前にレート制限チェック
+    const client = await connectClient();
+    try {
+      // 20回は通過（バリデーションエラーだがレート制限ではない）
+      for (let i = 0; i < 20; i++) {
+        const res = await emitWithCallback<{ success: boolean; error?: string }>(
+          client, "joinRoom", { roomCode: "abcd", nickname: "test" },
+        );
+        expect(res.error).not.toBe("リクエストが多すぎます。しばらくしてから再試行してください");
+      }
+      // 21回目はレート制限
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "joinRoom", { roomCode: "abcd", nickname: "test" },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("リクエストが多すぎます。しばらくしてから再試行してください");
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("watchRoom もレート制限が適用される", async () => {
+    const client = await connectClient();
+    try {
+      for (let i = 0; i < 20; i++) {
+        await emitWithCallback<{ success: boolean }>(
+          client, "watchRoom", { roomCode: "abcd" },
+        );
+      }
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "watchRoom", { roomCode: "abcd" },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("リクエストが多すぎます。しばらくしてから再試行してください");
     } finally {
       client.disconnect();
     }
