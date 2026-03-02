@@ -32,7 +32,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
       {data.teamRankings && data.teamRankings.length > 0 && (
         <div className="flex-shrink-0 flex flex-col items-center pt-6 pb-2 px-4">
           <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-200">
-            {data.teamRankings.map((t) => (
+            {data.teamRankings.slice(0, 5).map((t) => (
               <p key={t.teamId} className="text-sm font-bold text-amber-800 text-center">
                 {t.teamName}: 第{t.rank}位（{t.totalScore.toLocaleString()}点）
               </p>
@@ -69,7 +69,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
 
       {/* 上位5名ミニランキング */}
       <div className="flex-1 overflow-y-auto px-4 pb-6">
-        <h2 className="text-sm font-semibold text-gray-600 mb-3 text-center">上位ランキング</h2>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3 text-center">個人ランキング</h2>
         <ul className="space-y-2 max-w-sm mx-auto">
           {top5.map((entry) => {
             const isMe = entry.participantId === participantId;

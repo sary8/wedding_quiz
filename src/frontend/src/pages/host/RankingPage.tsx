@@ -40,12 +40,12 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
     <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col text-gray-900 p-6">
       <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-4 [text-wrap:balance]">Ranking</h2>
 
-      {/* チームランキング */}
+      {/* チームランキング（上位5チーム） */}
       {teamRankings && teamRankings.length > 0 && (
         <div className="mb-4 max-w-4xl mx-auto w-full" role="region" aria-label="チームランキング">
           <h3 className="text-lg font-bold text-amber-700 mb-2 text-center">チームランキング</h3>
           <div className="flex flex-col gap-1.5">
-            {teamRankings.map((team) => {
+            {teamRankings.slice(0, 5).map((team) => {
               const barWidth = (team.totalScore / teamMaxScore) * 100;
               return (
                 <motion.div
@@ -76,7 +76,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
         </div>
       )}
 
-      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="ランキング">
+      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="個人ランキング">
+        <h3 className="text-lg font-bold text-primary-dark mb-1 text-center">個人ランキング</h3>
         <AnimatePresence>
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
