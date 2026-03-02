@@ -9,10 +9,11 @@ type Props = {
   participants: ParticipantInfo[];
   teams?: TeamInfo[];
   onStartGame: () => void;
+  onBack?: () => void;
   isDisplay?: boolean;
 };
 
-export function LobbyPage({ roomCode, participants, teams, onStartGame, isDisplay = false }: Props) {
+export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, isDisplay = false }: Props) {
   const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin;
   const joinUrl = `${appOrigin}/play/${roomCode}`;
 
@@ -68,15 +69,26 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, isDispla
 
       {!isDisplay && (
         <>
-          <Button
-            onClick={onStartGame}
-            disabled={participants.length === 0}
-            variant="accent"
-            size="lg"
-            aria-disabled={participants.length === 0}
-          >
-            ゲーム開始
-          </Button>
+          <div className="flex gap-4 items-center">
+            {onBack && (
+              <Button
+                onClick={onBack}
+                size="lg"
+                className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                戻る
+              </Button>
+            )}
+            <Button
+              onClick={onStartGame}
+              disabled={participants.length === 0}
+              variant="accent"
+              size="lg"
+              aria-disabled={participants.length === 0}
+            >
+              ゲーム開始
+            </Button>
+          </div>
           <p className="mt-3 text-gray-600 text-xs">
             プロジェクター: {window.location.origin}/host/{roomCode}/screen
           </p>

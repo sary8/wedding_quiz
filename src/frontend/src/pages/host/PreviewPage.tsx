@@ -37,6 +37,7 @@ export function PreviewPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showAnswers, setShowAnswers] = useState(false);
 
   useEffect(() => {
     if (!quizId) return;
@@ -96,8 +97,19 @@ export function PreviewPage() {
   return (
     <div className="h-[100dvh] flex flex-col bg-blush">
       {/* プレビューバナー */}
-      <div className="bg-amber-100 text-amber-800 text-center py-2 text-sm font-bold">
-        プレビューモード（参加者視点）
+      <div className="bg-amber-100 text-amber-800 flex items-center justify-between px-4 py-2 text-sm font-bold">
+        <span>プレビューモード（参加者視点）</span>
+        <button
+          type="button"
+          onClick={() => setShowAnswers((v) => !v)}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors duration-200 cursor-pointer ${
+            showAnswers
+              ? "bg-amber-600 text-white"
+              : "bg-amber-200 text-amber-800 hover:bg-amber-300"
+          }`}
+        >
+          {showAnswers ? "正解を隠す" : "正解を表示"}
+        </button>
       </div>
 
       {/* ボーナスバナー */}
@@ -136,14 +148,15 @@ export function PreviewPage() {
             const choiceIndex = i + 1;
             const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
             const bgClass = i === 0 ? "bg-green-500" : "bg-rose-500";
+            const highlight = showAnswers && isCorrect;
             return (
               <div
                 key={`preview-${currentIndex}-${i}`}
-                className={`flex flex-col items-center justify-center rounded-2xl text-white font-bold ${bgClass} ${isCorrect ? "ring-4 ring-yellow-400" : "opacity-50"}`}
-                aria-label={`${choice}${isCorrect ? "（正解）" : ""}`}
+                className={`flex flex-col items-center justify-center rounded-2xl text-white font-bold ${bgClass} ${highlight ? "ring-4 ring-yellow-400" : showAnswers ? "opacity-50" : ""}`}
+                aria-label={`${choice}${highlight ? "（正解）" : ""}`}
               >
                 <span className="text-7xl">{choice}</span>
-                {isCorrect && <span className="text-sm mt-1">正解</span>}
+                {highlight && <span className="text-sm mt-1">正解</span>}
               </div>
             );
           })}
@@ -159,12 +172,12 @@ export function PreviewPage() {
                 key={`preview-${currentIndex}-${i}`}
                 choice={choice}
                 color={CHOICE_COLORS[i]}
-                isSelected={isCorrect}
+                isSelected={showAnswers && isCorrect}
                 disabled={true}
                 choiceIndex={choiceIndex}
                 choiceImageUrl={question.choiceImageUrls?.[i]}
                 onClick={NOOP}
-                aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${isCorrect ? "（正解）" : ""}`}
+                aria-label={`選択肢${choiceIndex}: ${choice || `画像${choiceIndex}`}${showAnswers && isCorrect ? "（正解）" : ""}`}
               />
             );
           })}

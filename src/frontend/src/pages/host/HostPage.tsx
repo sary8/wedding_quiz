@@ -335,6 +335,7 @@ export function HostPage() {
               participants={participants}
               teams={lobbyTeams}
               onStartGame={handleStartGame}
+              onBack={isRehearsal ? handleBackToSetup : undefined}
             />
           </>
         );
