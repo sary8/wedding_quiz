@@ -35,6 +35,12 @@ const MEDAL_CLASSES: Record<number, string> = {
   3: "bg-medal-bronze",
 };
 
+const FINAL_MEDAL_CLASSES: Record<number, string> = {
+  1: "bg-medal-gold border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]",
+  2: "bg-medal-silver border-2 border-gray-400 shadow-[0_0_8px_rgba(156,163,175,0.3)]",
+  3: "bg-medal-bronze border-2 border-amber-700 shadow-[0_0_8px_rgba(180,83,9,0.3)]",
+};
+
 const PASTEL_BORDER_CLASSES = [
   "border-choice-pastel-rose",
   "border-choice-pastel-sky",
@@ -403,15 +409,16 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       {flashVisible && (
         <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
       )}
-      <h2 className="font-script text-4xl text-amber-800 text-center shrink-0 [text-wrap:balance]">最終結果発表</h2>
+      <h2 className="title-final-reveal text-5xl lg:text-6xl text-center shrink-0 [text-wrap:balance] tracking-wider">最終結果発表</h2>
+      <div className="w-24 h-0.5 mx-auto bg-gradient-to-r from-transparent via-accent to-transparent shrink-0" aria-hidden="true" />
 
       {phase === "finalReveal" ? (
         <>
           <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
             <div style={{ flex: finalEntries.length - finalVisibleCount }} />
             {visibleFinal.map((entry) => (
-              <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                <BatchRow entry={entry} highlight={MEDAL_CLASSES[entry.rank]} />
+              <div key={entry.participantId} className="flex-1 flex items-center min-h-0 py-0.5">
+                <BatchRow entry={entry} highlight={FINAL_MEDAL_CLASSES[entry.rank]} variant="final" />
               </div>
             ))}
           </div>
@@ -487,10 +494,16 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 type BatchRowProps = {
   entry: FinalRankingEntry;
   highlight?: string;
+  variant?: "batch" | "final";
 };
 
-function BatchRow({ entry, highlight }: BatchRowProps) {
-  const bg = highlight ?? (entry.rank % 2 === 0 ? "bg-white/40" : "");
+function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
+  const isFinal = variant === "final";
+  const bg = highlight
+    ? highlight
+    : isFinal
+      ? "bg-white/60 border border-amber-200/50 shadow-sm"
+      : (entry.rank % 2 === 0 ? "bg-white/40" : "");
   return (
     <div className={`flex items-center gap-3 px-3 w-full rounded-lg motion-safe:animate-batch-row-in ${bg}`}>
       <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>

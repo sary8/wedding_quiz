@@ -109,6 +109,17 @@
   }
 }
 
+/* 最終結果発表タイトル: ゴールドメタリックグラデーション */
+  .title-final-reveal {
+    font-weight: 700;
+    background: linear-gradient(135deg, #CA8A04 0%, #FDE68A 40%, #CA8A04 60%, #FEF3C7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(120, 53, 15, 0.3));
+  }
+}
+
 /* Utility: visually hidden but accessible to screen readers */
 @layer utilities {
   .visually-hidden,
