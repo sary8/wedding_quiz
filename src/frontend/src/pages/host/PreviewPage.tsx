@@ -95,7 +95,7 @@ export function PreviewPage() {
   const isLast = currentIndex === questions.length - 1;
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-blush">
+    <div className="h-[100dvh] flex flex-col bg-blush overflow-hidden">
       {/* プレビューバナー */}
       <div className="bg-amber-100 text-amber-800 flex items-center justify-between px-4 py-2 text-sm font-bold">
         <span>プレビューモード（参加者視点）</span>
@@ -130,20 +130,20 @@ export function PreviewPage() {
       </header>
 
       {/* 問題文 */}
-      <div className="px-4 py-2 text-gray-900 text-center">
+      <div className="px-4 py-2 text-gray-900 text-center shrink overflow-hidden min-h-0">
         {safeMediaUrl && question.mediaType === "image" ? (
           <img
             src={safeMediaUrl}
             alt="問題の画像"
-            className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-cover mx-auto"
+            className="max-w-[80%] max-h-[20vh] rounded-lg mb-2 object-cover mx-auto"
           />
         ) : null}
-        <p className="text-xl font-bold">{question.text}</p>
+        <p className="text-xl font-bold line-clamp-2">{question.text}</p>
       </div>
 
       {/* 回答ボタン（プレビュー：正解をハイライト） */}
       {question.questionType === "true_false" ? (
-        <div className="flex-1 grid grid-cols-2 gap-3 p-3" role="group" aria-label="回答選択肢プレビュー">
+        <div className="flex-1 min-h-0 grid grid-cols-2 gap-3 p-3" role="group" aria-label="回答選択肢プレビュー">
           {question.choices.map((choice, i) => {
             const choiceIndex = i + 1;
             const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
@@ -162,7 +162,7 @@ export function PreviewPage() {
           })}
         </div>
       ) : (
-        <div className="flex-1 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢プレビュー">
+        <div className="flex-1 min-h-0 grid grid-cols-2 gap-2 p-2" role="group" aria-label="回答選択肢プレビュー">
           {question.choices.map((choice, i) => {
             const choiceIndex = i + 1;
             const isCorrect = questions[currentIndex].correct_choice === choiceIndex;
@@ -185,7 +185,7 @@ export function PreviewPage() {
       )}
 
       {/* ナビゲーション */}
-      <nav className="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-white/80">
+      <nav className="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-white/80 shrink-0">
         <button
           type="button"
           onClick={() => setCurrentIndex((i) => i - 1)}
