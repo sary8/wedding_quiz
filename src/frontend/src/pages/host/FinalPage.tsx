@@ -320,55 +320,6 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     return <GroupPhotoView rankings={rankings} onReplay={onReplay} onCloseGame={onCloseGame} isDisplay={isDisplay} prefersReducedMotion={prefersReducedMotion} />;
   }
 
-  // ========== finalReveal: 10位〜1位を同一画面で発表 ==========
-  if (phase === "finalReveal") {
-    const visibleFinal = finalEntries.slice(finalEntries.length - finalVisibleCount);
-    const isAutoPhase = finalVisibleCount < autoCount;
-    const allRevealed = finalVisibleCount >= finalEntries.length;
-    const nextEntry = !allRevealed ? finalEntries[finalEntries.length - finalVisibleCount - 1] : null;
-
-    return (
-      <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0">
-        {flashVisible && (
-          <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
-        )}
-        <h2 className="font-script text-4xl text-amber-800 text-center shrink-0 [text-wrap:balance]">最終結果発表</h2>
-
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
-          <div style={{ flex: finalEntries.length - finalVisibleCount }} />
-          {visibleFinal.map((entry) => (
-            <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-              <BatchRow entry={entry} highlight={MEDAL_CLASSES[entry.rank]} />
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center h-14 flex items-center justify-center shrink-0">
-          {isAutoPhase ? (
-            <span className="text-gray-400 text-sm" />
-          ) : allRevealed ? (
-            <span className="text-gray-600 text-sm">— 全員発表済み —</span>
-          ) : (
-            <>
-              {!isDisplay && (
-                <button
-                  type="button"
-                  onClick={handleRevealClick}
-                  className="px-10 py-4 rounded-2xl bg-amber-500 text-gray-900 text-xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                >
-                  第{nextEntry?.rank}位を発表
-                </button>
-              )}
-              {isDisplay && (
-                <p className="text-lg text-gray-600">ホストの操作を待っています…</p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // ========== done フェーズ（最後のスポットライト後） ==========
   if (phase === "done") {
     const winner = finalEntries.find((e) => e.rank === 1) ?? rankings[0];
@@ -426,14 +377,19 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     );
   }
 
-  // ========== バッチスクロール表示 ==========
-  const currentBatch = batches[currentBatchIndex];
-  if (!currentBatch) return null;
+  // ========== batchScroll / finalReveal 共通レイアウト ==========
+  const visibleFinal = finalEntries.slice(finalEntries.length - finalVisibleCount);
+  const isAutoPhase = finalVisibleCount < autoCount;
+  const allRevealed = finalVisibleCount >= finalEntries.length;
+  const nextEntry = !allRevealed ? finalEntries[finalEntries.length - finalVisibleCount - 1] : null;
 
-  const isTwoColumn = currentBatch.entries.length > 10;
-  const halfSize = Math.ceil(currentBatch.entries.length / 2);
-  const leftCol = isTwoColumn ? currentBatch.entries.slice(0, halfSize) : currentBatch.entries;
-  const rightCol = isTwoColumn ? currentBatch.entries.slice(halfSize) : [];
+  const currentBatch = batches[currentBatchIndex];
+  if (phase === "batchScroll" && !currentBatch) return null;
+
+  const isTwoColumn = currentBatch ? currentBatch.entries.length > 10 : false;
+  const halfSize = currentBatch ? Math.ceil(currentBatch.entries.length / 2) : 0;
+  const leftCol = isTwoColumn && currentBatch ? currentBatch.entries.slice(0, halfSize) : (currentBatch?.entries ?? []);
+  const rightCol = isTwoColumn && currentBatch ? currentBatch.entries.slice(halfSize) : [];
 
   const visibleRightCount = isTwoColumn ? Math.min(visibleCount, rightCol.length) : 0;
   const visibleLeftCount = isTwoColumn
@@ -443,44 +399,85 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const visibleLeftEntries = leftCol.slice(leftCol.length - visibleLeftCount);
 
   return (
-    <div className={`h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+    <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0">
+      {flashVisible && (
+        <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
+      )}
       <h2 className="font-script text-4xl text-amber-800 text-center shrink-0 [text-wrap:balance]">最終結果発表</h2>
 
-      {isTwoColumn ? (
-        <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full min-h-0">
-          <div className="flex-1 flex flex-col min-h-0 min-w-0">
-            <div style={{ flex: leftCol.length - visibleLeftCount }} />
-            {visibleLeftEntries.map((entry) => (
+      {phase === "finalReveal" ? (
+        <>
+          <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
+            <div style={{ flex: finalEntries.length - finalVisibleCount }} />
+            {visibleFinal.map((entry) => (
               <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                <BatchRow entry={entry} />
+                <BatchRow entry={entry} highlight={MEDAL_CLASSES[entry.rank]} />
               </div>
             ))}
           </div>
-          <div className="flex-1 flex flex-col min-h-0 min-w-0">
-            <div style={{ flex: rightCol.length - visibleRightCount }} />
-            {visibleRightEntries.map((entry) => (
-              <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                <BatchRow entry={entry} />
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
-          <div style={{ flex: leftCol.length - visibleLeftCount }} />
-          {visibleLeftEntries.map((entry) => (
-            <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-              <BatchRow entry={entry} />
-            </div>
-          ))}
-        </div>
-      )}
 
-      <div className="text-center text-gray-600 text-xs shrink-0 h-6 flex items-center justify-center">
-        {visibleCount >= currentBatch.entries.length && !batchFading && (
-          <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
-        )}
-      </div>
+          <div className="text-center h-14 flex items-center justify-center shrink-0">
+            {isAutoPhase ? (
+              <span className="text-gray-400 text-sm" />
+            ) : allRevealed ? (
+              <span className="text-gray-600 text-sm">— 全員発表済み —</span>
+            ) : (
+              <>
+                {!isDisplay && (
+                  <button
+                    type="button"
+                    onClick={handleRevealClick}
+                    className="px-10 py-4 rounded-2xl bg-amber-500 text-gray-900 text-xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  >
+                    第{nextEntry?.rank}位を発表
+                  </button>
+                )}
+                {isDisplay && (
+                  <p className="text-lg text-gray-600">ホストの操作を待っています…</p>
+                )}
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {isTwoColumn ? (
+            <div className={`flex-1 flex gap-3 max-w-6xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+              <div className="flex-1 flex flex-col min-h-0 min-w-0">
+                <div style={{ flex: leftCol.length - visibleLeftCount }} />
+                {visibleLeftEntries.map((entry) => (
+                  <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+                    <BatchRow entry={entry} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex-1 flex flex-col min-h-0 min-w-0">
+                <div style={{ flex: rightCol.length - visibleRightCount }} />
+                {visibleRightEntries.map((entry) => (
+                  <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+                    <BatchRow entry={entry} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={`flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+              <div style={{ flex: leftCol.length - visibleLeftCount }} />
+              {visibleLeftEntries.map((entry) => (
+                <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
+                  <BatchRow entry={entry} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className={`text-center text-gray-600 text-xs shrink-0 h-6 flex items-center justify-center transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+            {currentBatch && visibleCount >= currentBatch.entries.length && !batchFading && (
+              <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
