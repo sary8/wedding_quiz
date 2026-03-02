@@ -141,7 +141,10 @@ mediaRoutes.post("/selfie", async (c) => {
     return c.json({ error: "アップロードが多すぎます。しばらくしてから再試行してください" }, 429);
   }
 
-  const body = await c.req.json<{ data: string }>();
+  const body = await c.req.json<{ data: string }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   if (!body.data) {
     return c.json({ error: "画像データが見つかりません" }, 400);
@@ -186,7 +189,12 @@ mediaRoutes.post("/selfie", async (c) => {
 // メディア配信
 mediaRoutes.get("/:filename", async (c) => {
   const rawFilename = c.req.param("filename");
-  const decoded = decodeURIComponent(rawFilename);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(rawFilename);
+  } catch {
+    return c.json({ error: "不正なファイル名です" }, 400);
+  }
 
   // パストラバーサル防止: basename + バックスラッシュ明示チェック（Linuxのbasenameは\を無視するため）
   const safe = basename(decoded);

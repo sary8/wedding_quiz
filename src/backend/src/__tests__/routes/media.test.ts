@@ -155,6 +155,15 @@ describe("media routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("不正なURIエンコード → 400", async () => {
+      const res = await mediaRoutes.request("/%FF", {
+        method: "GET",
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("不正なファイル名");
+    });
+
     it("存在しないファイル → 404", async () => {
       const res = await mediaRoutes.request("/nonexistent_file.jpg", {
         method: "GET",
