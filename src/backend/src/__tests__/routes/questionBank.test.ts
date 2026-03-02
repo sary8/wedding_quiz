@@ -307,6 +307,41 @@ describe("questionBank routes", () => {
     });
   });
 
+  describe("不正なJSON", () => {
+    it("POST / に不正JSON → 400", async () => {
+      const res = await questionBankRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "not-json",
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe("リクエストの形式が不正です");
+    });
+
+    it("PUT /:id に不正JSON → 400", async () => {
+      const res = await questionBankRoutes.request("/1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: "{invalid",
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe("リクエストの形式が不正です");
+    });
+
+    it("POST /import-to-quiz に不正JSON → 400", async () => {
+      const res = await questionBankRoutes.request("/import-to-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "broken",
+      });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe("リクエストの形式が不正です");
+    });
+  });
+
   describe("○×問題 (true_false)", () => {
     it("POST: ○×問題を追加 → choice1=○, choice2=×固定", async () => {
       const res = await jsonRequest("/", "POST", {

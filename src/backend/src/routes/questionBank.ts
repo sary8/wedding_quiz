@@ -126,7 +126,10 @@ questionBankRoutes.post("/", async (c) => {
     pointMultiplier?: number;
     mediaType?: string;
     mediaUrl?: string;
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const error = validateQuestionFields(body, true);
   if (error) return c.json({ error }, 400);
@@ -181,7 +184,10 @@ questionBankRoutes.put("/:id", async (c) => {
     pointMultiplier?: number;
     mediaType?: string;
     mediaUrl?: string;
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const existing = await db.query.questionBank.findFirst({
     where: eq(schema.questionBank.id, id),
@@ -239,7 +245,10 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
   const body = await c.req.json<{
     quizId: number;
     bankQuestionIds: number[];
-  }>();
+  }>().catch(() => null);
+  if (!body) {
+    return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, body.quizId),
@@ -250,13 +259,7 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
     return c.json({ error: "インポートする問題を選択してください" }, 400);
   }
 
-  // 現在のorder_index最大値を取得
-  const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${schema.questions.order_index}), -1)` })
-    .from(schema.questions)
-    .where(eq(schema.questions.quiz_id, body.quizId));
-  let nextOrder = (maxOrder[0]?.max ?? -1) + 1;
-
+  // サブクエリでMAX(order_index)+1をアトミックに計算
   const imported: number[] = [];
 
   for (const bankId of body.bankQuestionIds) {
@@ -269,7 +272,7 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
       .insert(schema.questions)
       .values({
         quiz_id: body.quizId,
-        order_index: nextOrder,
+        order_index: sql`(SELECT COALESCE(MAX(${schema.questions.order_index}), -1) + 1 FROM ${schema.questions} WHERE ${schema.questions.quiz_id} = ${body.quizId})`,
         text: bankQ.text,
         question_type: bankQ.question_type,
         media_type: bankQ.media_type,
@@ -291,7 +294,6 @@ questionBankRoutes.post("/import-to-quiz", async (c) => {
       .returning();
 
     imported.push(result[0].id);
-    nextOrder++;
   }
 
   return c.json({ imported, count: imported.length }, 201);
