@@ -260,14 +260,14 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     revealNextFinal();
   }, [phase, onRevealNext, revealNextFinal]);
 
-  // --- finalReveal: Display側の外部トリガー ---
+  // --- finalReveal: Display側の外部トリガー（ホスト側は直接呼ぶので反応しない） ---
   useEffect(() => {
     const current = revealTrigger ?? 0;
-    if (current > prevRevealTriggerRef.current && phase === "finalReveal") {
+    if (current > prevRevealTriggerRef.current && phase === "finalReveal" && isDisplay) {
       revealNextFinal();
     }
     prevRevealTriggerRef.current = current;
-  }, [revealTrigger, phase, revealNextFinal]);
+  }, [revealTrigger, phase, revealNextFinal, isDisplay]);
 
   // --- done → 5秒後に group フェーズへ自動遷移 ---
   useEffect(() => {
@@ -332,10 +332,10 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     const nextEntry = !allRevealed ? finalEntries[finalEntries.length - finalVisibleCount - 1] : null;
 
     return (
-      <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col p-6">
-        <h2 className="font-script text-4xl lg:text-6xl text-amber-800 text-center mb-4 [text-wrap:balance]">最終結果発表</h2>
+      <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 py-2">
+        <h2 className="font-script text-2xl text-amber-800 text-center mb-1 shrink-0">最終結果発表</h2>
 
-        <div className="flex-1 flex flex-col justify-end gap-1 max-w-4xl mx-auto w-full overflow-hidden">
+        <div className="flex-1 flex flex-col justify-end gap-0.5 max-w-4xl mx-auto w-full overflow-hidden min-h-0">
           <AnimatePresence>
             {visibleFinal.map((entry) => {
               const medalClass = MEDAL_CLASSES[entry.rank];
@@ -352,7 +352,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
         </div>
 
         {/* ホスト操作ボタン（自動スクロール完了後に表示） */}
-        <div className="text-center mt-4 h-16 flex items-center justify-center">
+        <div className="text-center mt-2 h-14 flex items-center justify-center shrink-0">
           {isAutoPhase ? (
             <span className="text-gray-400 text-sm" />
           ) : allRevealed ? (
@@ -456,16 +456,16 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   return (
     <motion.div
       animate={{ opacity: batchFading ? 0 : 1 }}
-      transition={{ duration: 0.5 }}
-      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col p-6"
+      transition={{ duration: 0.3 }}
+      className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 py-2"
     >
-      <h2 className="font-script text-4xl lg:text-6xl text-amber-800 text-center mb-4 [text-wrap:balance]">最終結果発表</h2>
+      <h2 className="font-script text-2xl text-amber-800 text-center mb-1 shrink-0">最終結果発表</h2>
 
       {/* バッチ内容 */}
       {isTwoColumn ? (
         <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full overflow-hidden min-h-0">
           {/* 左列（上位） */}
-          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden min-w-0">
+          <div className="flex-1 flex flex-col justify-end gap-0.5 overflow-hidden min-w-0">
             <AnimatePresence>
               {visibleLeftEntries.map((entry) => (
                 <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
@@ -473,7 +473,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
             </AnimatePresence>
           </div>
           {/* 右列（下位） */}
-          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden min-w-0">
+          <div className="flex-1 flex flex-col justify-end gap-0.5 overflow-hidden min-w-0">
             <AnimatePresence>
               {visibleRightEntries.map((entry) => (
                 <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
@@ -482,7 +482,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col justify-end gap-1 max-w-4xl mx-auto w-full overflow-hidden">
+        <div className="flex-1 flex flex-col justify-end gap-0.5 max-w-4xl mx-auto w-full overflow-hidden">
           <AnimatePresence>
             {visibleLeftEntries.map((entry) => (
               <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
@@ -492,7 +492,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       )}
 
       {/* バッチラベル */}
-      <div className="text-center mt-3 text-gray-500 text-sm">
+      <div className="text-center mt-1 text-gray-500 text-sm">
         {visibleCount >= currentBatch.entries.length && !batchFading && (
           <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
         )}
@@ -512,10 +512,10 @@ type BatchRowProps = {
 function BatchRow({ entry, prefersReducedMotion, highlight }: BatchRowProps) {
   return (
     <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
-      className={`flex items-center gap-2 px-2 py-1 rounded-lg ${highlight ?? "even:bg-white/40"}`}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
+      className={`flex items-center gap-2 px-2 py-1 rounded-lg will-change-transform ${highlight ?? "even:bg-white/40"}`}
     >
       <span className="w-12 text-base font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
       {entry.selfieUrl ? (
@@ -535,6 +535,9 @@ function BatchRow({ entry, prefersReducedMotion, highlight }: BatchRowProps) {
       <span className="flex-1 text-sm md:text-base font-bold truncate min-w-0">{entry.nickname}</span>
       <span className="text-sm font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
         {entry.totalScore.toLocaleString()}点
+      </span>
+      <span className="text-xs text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0">
+        {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
       </span>
     </motion.div>
   );
