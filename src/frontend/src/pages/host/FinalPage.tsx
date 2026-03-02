@@ -79,11 +79,12 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
   // バッチスクロール状態
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
-  const [visibleRowCount, setVisibleRowCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(0);
   const [batchFading, setBatchFading] = useState(false);
 
   // finalReveal: 表示済みの数（末尾=10位から表示していく）
   const [finalVisibleCount, setFinalVisibleCount] = useState(0);
+  const finalAutoStartedRef = useRef(false);
 
   // チーム発表状態
   const [teamRevealIndex, setTeamRevealIndex] = useState(-1);
@@ -140,7 +141,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   useEffect(() => {
     if (phase !== "batchScroll") return;
 
-    // バッチがない（全員Top5内）→ 即座にTop5へ
+    // バッチがない → 即座にfinalRevealへ
     if (batches.length === 0) {
       setPhase(finalEntries.length > 0 ? "finalReveal" : "done");
       return;
@@ -153,17 +154,17 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       return;
     }
 
-    const isTwoCol = batch.entries.length > 10;
-    const rowTotal = isTwoCol ? Math.ceil(batch.entries.length / 2) : batch.entries.length;
-    let rowIdx = 0;
-    setVisibleRowCount(0);
+    // 1人ずつめくる（2列でも1人ずつ）
+    const total = batch.entries.length;
+    let idx = 0;
+    setVisibleCount(0);
     setBatchFading(false);
 
-    function showNextRow() {
+    function showNextPerson() {
       if (cancelled) return;
 
-      if (rowIdx >= rowTotal) {
-        // 全行表示完了 → 2秒停止 → フェードアウト → 次のバッチ
+      if (idx >= total) {
+        // 全員表示完了 → 2秒停止 → フェードアウト → 次のバッチ
         setTimeout(() => {
           if (cancelled) return;
           setBatchFading(true);
@@ -172,22 +173,22 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
             const nextIdx = currentBatchIndex + 1;
             if (nextIdx < batches.length) {
               setCurrentBatchIndex(nextIdx);
-              setVisibleRowCount(0);
+              setVisibleCount(0);
               setBatchFading(false);
             } else {
               setPhase(finalEntries.length > 0 ? "finalReveal" : "done");
             }
-          }, 500); // フェードアウト時間
-        }, 2000); // 停止時間
+          }, 500);
+        }, 2000);
         return;
       }
 
-      rowIdx++;
-      setVisibleRowCount(rowIdx);
-      setTimeout(showNextRow, batch.speed);
+      idx++;
+      setVisibleCount(idx);
+      setTimeout(showNextPerson, batch.speed);
     }
 
-    const initTimer = setTimeout(showNextRow, 300);
+    const initTimer = setTimeout(showNextPerson, 300);
     return () => { cancelled = true; clearTimeout(initTimer); };
   }, [phase, currentBatchIndex, batches, finalEntries.length]);
 
@@ -200,15 +201,16 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   // --- finalReveal: 6〜10位を自動スクロール ---
   useEffect(() => {
     if (phase !== "finalReveal") return;
-    if (autoCount === 0) return; // 自動部分なし
-    if (finalVisibleCount > 0) return; // 既に開始済み
+    if (autoCount === 0) return;
+    if (finalAutoStartedRef.current) return;
+    finalAutoStartedRef.current = true;
 
     let cancelled = false;
     let count = 0;
 
     function showNext() {
       if (cancelled) return;
-      if (count >= autoCount) return; // 自動部分完了、ホスト操作待ち
+      if (count >= autoCount) return;
       count++;
       setFinalVisibleCount(count);
       setTimeout(showNext, 800);
@@ -216,7 +218,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
     const initTimer = setTimeout(showNext, 300);
     return () => { cancelled = true; clearTimeout(initTimer); };
-  }, [phase, autoCount, finalVisibleCount]);
+  }, [phase, autoCount]);
 
   // --- finalReveal: ホストクリックで1個めくる ---
   const revealNextFinal = useCallback(() => {
@@ -443,10 +445,13 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const leftCol = isTwoColumn ? currentBatch.entries.slice(0, halfSize) : currentBatch.entries;
   const rightCol = isTwoColumn ? currentBatch.entries.slice(halfSize) : [];
 
-  // visibleRowCountは「行」単位（2列の場合、1行=左右1個ずつ）
-  // 最下位行から表示するため、末尾からvisibleRowCount個
-  const visibleLeftEntries = leftCol.slice(leftCol.length - visibleRowCount);
-  const visibleRightEntries = isTwoColumn ? rightCol.slice(rightCol.length - visibleRowCount) : [];
+  // 右列を先に下から埋め、右が全部出たら左列を下から埋める
+  const visibleRightCount = isTwoColumn ? Math.min(visibleCount, rightCol.length) : 0;
+  const visibleLeftCount = isTwoColumn
+    ? Math.max(0, visibleCount - rightCol.length)
+    : visibleCount;
+  const visibleRightEntries = rightCol.slice(rightCol.length - visibleRightCount);
+  const visibleLeftEntries = leftCol.slice(leftCol.length - visibleLeftCount);
 
   return (
     <motion.div
@@ -458,9 +463,9 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       {/* バッチ内容 */}
       {isTwoColumn ? (
-        <div className="flex-1 flex gap-4 max-w-6xl mx-auto w-full overflow-hidden">
+        <div className="flex-1 flex gap-3 max-w-6xl mx-auto w-full overflow-hidden min-h-0">
           {/* 左列（上位） */}
-          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
+          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden min-w-0">
             <AnimatePresence>
               {visibleLeftEntries.map((entry) => (
                 <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
@@ -468,7 +473,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
             </AnimatePresence>
           </div>
           {/* 右列（下位） */}
-          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
+          <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden min-w-0">
             <AnimatePresence>
               {visibleRightEntries.map((entry) => (
                 <BatchRow key={entry.participantId} entry={entry} prefersReducedMotion={prefersReducedMotion} />
@@ -488,7 +493,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       {/* バッチラベル */}
       <div className="text-center mt-3 text-gray-500 text-sm">
-        {visibleRowCount >= (isTwoColumn ? Math.max(leftCol.length, rightCol.length) : currentBatch.entries.length) && !batchFading && (
+        {visibleCount >= currentBatch.entries.length && !batchFading && (
           <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
         )}
       </div>
@@ -507,33 +512,29 @@ type BatchRowProps = {
 function BatchRow({ entry, prefersReducedMotion, highlight }: BatchRowProps) {
   return (
     <motion.div
-      key={entry.participantId}
       initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
-      className={`flex items-center gap-2 md:gap-3 px-3 py-1.5 rounded-lg ${highlight ?? "even:bg-white/40"}`}
+      className={`flex items-center gap-2 px-2 py-1 rounded-lg ${highlight ?? "even:bg-white/40"}`}
     >
-      <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
+      <span className="w-12 text-base font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
       {entry.selfieUrl ? (
         <img
           src={entry.selfieUrl}
           alt={`${entry.nickname}のアバター`}
-          width={36}
-          height={36}
-          className={`w-9 h-9 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+          width={32}
+          height={32}
+          className={`w-8 h-8 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
           loading="lazy"
         />
       ) : (
-        <div className={`w-9 h-9 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-sm font-bold text-gray-900 shrink-0`}>
+        <div className={`w-8 h-8 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-sm font-bold text-gray-900 shrink-0`}>
           {entry.nickname?.[0] || "?"}
         </div>
       )}
-      <span className="flex-1 text-lg md:text-xl font-bold truncate">{entry.nickname}</span>
-      <span className="w-24 text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
+      <span className="flex-1 text-sm md:text-base font-bold truncate min-w-0">{entry.nickname}</span>
+      <span className="text-sm font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
         {entry.totalScore.toLocaleString()}点
-      </span>
-      <span className="w-28 text-sm text-gray-600 text-right [font-variant-numeric:tabular-nums] shrink-0">
-        avg {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
       </span>
     </motion.div>
   );
