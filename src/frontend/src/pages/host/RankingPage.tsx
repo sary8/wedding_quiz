@@ -137,7 +137,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             animate={{ opacity: 1 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="flex-1 flex flex-col gap-2.5 justify-center"
+            className="flex-1 flex flex-col gap-3 justify-center"
           >
             {currentMode === "individual" ? (
               /* === 個人ランキング === */
@@ -145,26 +145,26 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 const barWidth = (entry.totalScore / individualMaxScore) * 100;
                 const rankChange = entry.previousRank - entry.rank;
                 return (
-                  <div key={entry.participantId} className="flex items-center gap-2.5">
-                    <span className={`w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
+                  <div key={entry.participantId} className="flex items-center gap-3">
+                    <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
                     {entry.selfieUrl ? (
                       <img
                         src={entry.selfieUrl}
                         alt={`${entry.nickname}のアバター`}
-                        width={48}
-                        height={48}
-                        className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+                        width={64}
+                        height={64}
+                        className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
                         loading="lazy"
                       />
                     ) : (
-                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-base lg:text-lg font-bold text-gray-900 shrink-0`}>
+                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-lg lg:text-xl font-bold text-gray-900 shrink-0`}>
                         {entry.nickname?.[0] || "?"}
                       </div>
                     )}
-                    <span className="w-[8.5em] text-xl lg:text-3xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
+                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
-                    <div className="flex-1 h-12 lg:h-14 bg-primary-light rounded-lg overflow-hidden">
+                    <div className="flex-1 h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
@@ -172,27 +172,27 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                         className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                       />
                     </div>
-                    <span className="whitespace-nowrap text-lg lg:text-2xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
-                      {entry.totalScore.toLocaleString()} <span className="text-sm lg:text-base">pts</span>
+                    <span className="whitespace-nowrap text-xl lg:text-3xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {entry.totalScore.toLocaleString()} <span className="text-base lg:text-lg">pts</span>
                     </span>
-                    <span className="w-14 text-lg lg:text-xl font-bold flex items-center justify-center gap-0.5 shrink-0">
+                    <span className="w-16 text-xl lg:text-2xl font-bold flex items-center justify-center gap-0.5 shrink-0">
                       {rankChange > 0 ? (
                         <span className="flex items-center gap-0.5 text-green-500">
-                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-6 h-6 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 2L11 8H1z" />
                           </svg>
                           {rankChange}
                         </span>
                       ) : rankChange < 0 ? (
                         <span className="flex items-center gap-0.5 text-red-500">
-                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-6 h-6 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 10L1 4h10z" />
                           </svg>
                           {Math.abs(rankChange)}
                         </span>
                       ) : null}
                     </span>
-                    <span className="w-[70px] text-sm lg:text-base font-semibold text-gray-600 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                    <span className="w-[80px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0 [font-variant-numeric:tabular-nums]">
                       {entry.lastResponseTimeMs != null
                         ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}s`
                         : "---"}
@@ -206,10 +206,10 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 const barWidth = (team.totalScore / teamMaxScore) * 100;
                 const rankChange = (team.previousRank ?? team.rank) - team.rank;
                 return (
-                  <div key={team.teamId} className="flex items-center gap-2.5">
-                    <span className={`w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
-                    <span className="w-[8.5em] text-xl lg:text-3xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
-                    <div className="flex-1 h-12 lg:h-14 bg-amber-100 rounded-lg overflow-hidden">
+                  <div key={team.teamId} className="flex items-center gap-3">
+                    <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
+                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
+                    <div className="flex-1 h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
@@ -217,27 +217,27 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                         className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
                       />
                     </div>
-                    <span className="whitespace-nowrap text-lg lg:text-2xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
-                      {team.totalScore.toLocaleString()} <span className="text-sm lg:text-base">pts</span>
+                    <span className="whitespace-nowrap text-xl lg:text-3xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {team.totalScore.toLocaleString()} <span className="text-base lg:text-lg">pts</span>
                     </span>
-                    <span className="w-14 text-lg lg:text-xl font-bold flex items-center justify-center gap-0.5 shrink-0">
+                    <span className="w-16 text-xl lg:text-2xl font-bold flex items-center justify-center gap-0.5 shrink-0">
                       {rankChange > 0 ? (
                         <span className="flex items-center gap-0.5 text-green-500">
-                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-6 h-6 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 2L11 8H1z" />
                           </svg>
                           {rankChange}
                         </span>
                       ) : rankChange < 0 ? (
                         <span className="flex items-center gap-0.5 text-red-500">
-                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-6 h-6 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 10L1 4h10z" />
                           </svg>
                           {Math.abs(rankChange)}
                         </span>
                       ) : null}
                     </span>
-                    <span className="w-[50px] text-sm lg:text-base font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
+                    <span className="w-[60px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
                   </div>
                 );
               })
