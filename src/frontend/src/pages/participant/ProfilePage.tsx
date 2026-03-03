@@ -34,9 +34,10 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
   const hasTeams = teams && teams.length > 0;
 
   function handleSubmit() {
-    if (!nickname.trim() || !capturedImage || isJoining) return;
+    const trimmed = nickname.trim();
+    if (!trimmed || trimmed.length > 8 || !capturedImage || isJoining) return;
     if (hasTeams && selectedTeamId == null) return;
-    onJoin(nickname.trim(), capturedImage, selectedTeamId);
+    onJoin(trimmed, capturedImage, selectedTeamId);
   }
 
   return (
@@ -69,9 +70,9 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
             autoComplete="nickname"
             spellCheck={false}
             value={nickname}
-            onChange={(e) => setNickname(e.target.value.slice(0, 20))}
-            placeholder="例：花子…"
-            maxLength={20}
+            onChange={(e) => setNickname(e.target.value.slice(0, 8))}
+            placeholder="例：花子"
+            maxLength={8}
             className="w-full px-4 py-3 rounded-xl border-2 border-primary/20 text-xl text-center text-sage-text focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[border-color,box-shadow] duration-200"
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSubmit()}
           />

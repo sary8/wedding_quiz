@@ -104,6 +104,10 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
       setError("チーム名を入力してください");
       return;
     }
+    if (toSave.some((n) => n.trim().length > 8)) {
+      setError("チーム名は8文字以内で入力してください");
+      return;
+    }
     setIsSavingTeams(true);
     setError("");
     try {
@@ -219,8 +223,8 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => handleTeamNameChange(i, e.target.value.slice(0, 30))}
-                  maxLength={30}
+                  onChange={(e) => handleTeamNameChange(i, e.target.value.slice(0, 8))}
+                  maxLength={8}
                   placeholder={`チーム${i + 1}`}
                   autoComplete="off"
                   className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent"

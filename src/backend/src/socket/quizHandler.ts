@@ -165,9 +165,9 @@ export function setupQuizSocket(io: QuizIO) {
           callback({ success: false, error: "ニックネームを入力してください" });
           return;
         }
-        if (nickname.length > 30) {
+        if (nickname.length > 8) {
           logger.warn("joinRoom validation failed: nickname too long", { roomCode: data.roomCode });
-          callback({ success: false, error: "ニックネームが長すぎます" });
+          callback({ success: false, error: "ニックネームは8文字以内で入力してください" });
           return;
         }
 

@@ -329,6 +329,9 @@ quizRoutes.put("/:id/teams", async (c) => {
     if (!t.name?.trim()) {
       return c.json({ error: "チーム名は必須です" }, 400);
     }
+    if (t.name.trim().length > 8) {
+      return c.json({ error: "チーム名は8文字以内で入力してください" }, 400);
+    }
   }
 
   // 既存チームを削除して再作成
