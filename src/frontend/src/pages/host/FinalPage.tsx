@@ -471,7 +471,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       ) : (
         <>
           {isTwoColumn ? (
-            <div className={`flex-1 flex gap-3 max-w-6xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+            <div className={`flex-1 flex gap-3 max-w-5xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
               <div className="flex-1 flex flex-col min-h-0 min-w-0">
                 <div style={{ flex: leftCol.length - visibleLeftCount }} />
                 {visibleLeftEntries.map((entry) => (
@@ -521,7 +521,7 @@ type BatchRowProps = {
 
 const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
   const isFinal = variant === "final";
-  const pastelBorder = `border-l-4 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
+  const pastelBorder = `border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
   const bg = highlight
     ? highlight
     : isFinal
