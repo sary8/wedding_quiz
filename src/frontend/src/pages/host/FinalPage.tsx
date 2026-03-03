@@ -420,7 +420,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const visibleLeftEntries = leftCol.slice(leftCol.length - visibleLeftCount);
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-1 pb-0">
+    <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-blush to-white text-gray-900 flex flex-col px-4 pt-6 pb-2">
       {flashVisible && (
         <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
       )}

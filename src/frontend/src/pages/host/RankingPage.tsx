@@ -35,9 +35,10 @@ const MOTION_ENTRY_TRANSITION = { type: "spring", stiffness: 80, damping: 15, du
 const MOTION_INSTANT = { duration: 0 } as const;
 
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
-  const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data]);
-  const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
   const teamRankings = data?.teamRankings;
+  const hasTeams = (teamRankings?.length ?? 0) > 0;
+  const individualEntries = useMemo(() => data?.rankings.slice(0, hasTeams ? 5 : 10) ?? [], [data, hasTeams]);
+  const maxScore = useMemo(() => individualEntries.reduce((max, r) => Math.max(max, r.totalScore), 1), [individualEntries]);
   const teamMaxScore = useMemo(
     () => teamRankings?.reduce((max, t) => Math.max(max, t.totalScore), 1) ?? 1,
     [teamRankings]
@@ -48,14 +49,14 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
-    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col text-gray-900 p-6">
-      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-4 [text-wrap:balance]">Ranking</h2>
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col text-gray-900 px-6 py-6">
+      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-4 shrink-0 [text-wrap:balance]">Ranking</h2>
 
       {/* チームランキング（上位5チーム） */}
       {teamRankings && teamRankings.length > 0 && (
-        <div className="mb-4 max-w-4xl mx-auto w-full" role="region" aria-label="Team Ranking">
-          <h3 className="text-lg font-bold text-amber-700 mb-2 text-center">Team Ranking</h3>
-          <div className="flex flex-col gap-1.5">
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0" role="region" aria-label="Team Ranking">
+          <h3 className="text-lg font-bold text-amber-700 mb-2 text-center shrink-0">Team Ranking</h3>
+          <div className="flex-1 flex flex-col gap-2 justify-center">
             {teamRankings.slice(0, 5).map((team) => {
               const barWidth = (team.totalScore / teamMaxScore) * 100;
               return (
@@ -87,10 +88,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
         </div>
       )}
 
-      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="Individual Ranking">
-        <h3 className="text-lg font-bold text-primary-dark mb-1 text-center">Individual Ranking</h3>
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0" role="region" aria-label="Individual Ranking">
+        {hasTeams && <h3 className="text-lg font-bold text-primary-dark mb-2 text-center shrink-0">Individual Ranking</h3>}
+        <div className="flex-1 flex flex-col gap-2 justify-center">
         <AnimatePresence>
-          {top10.map((entry) => {
+          {individualEntries.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
             const rankChange = entry.previousRank - entry.rank;
 
@@ -169,6 +171,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             );
           })}
         </AnimatePresence>
+        </div>
       </div>
 
       {!isDisplay && (

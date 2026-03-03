@@ -659,6 +659,28 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ホスト: ランキングページ切り替え（Display画面へリレー） ===
+    socket.on("setRankingPage", async (data, callback) => {
+      try {
+        const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
+        if (!quiz) {
+          logger.warn("setRankingPage auth failed", { roomCode: data.roomCode });
+          callback({ success: false, error: "認証エラー" });
+          return;
+        }
+
+        socket.to(data.roomCode).emit("rankingPageChanged", { page: data.page });
+
+        logger.info("setRankingPage relayed", { roomCode: data.roomCode, page: data.page });
+
+        callback({ success: true });
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("setRankingPage error", { error: err, roomCode: data.roomCode });
+        callback({ success: false, error: "ランキングページ変更に失敗しました" });
+      }
+    });
+
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {
