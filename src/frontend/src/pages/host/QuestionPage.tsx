@@ -42,7 +42,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           </span>
           {question.pointMultiplier > 1 && (
             <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-lg lg:text-2xl font-bold motion-safe:animate-pulse">
-              {question.pointMultiplier}倍
+              {question.pointMultiplier}x
             </span>
           )}
         </div>
@@ -56,7 +56,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <span className="sr-only">秒</span>
         </span>
         <span className="text-2xl lg:text-4xl font-semibold">
-          回答: {answerCount} / {totalParticipants}
+          Answers: {answerCount} / {totalParticipants}
         </span>
       </div>
 

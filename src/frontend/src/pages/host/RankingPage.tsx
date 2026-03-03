@@ -53,8 +53,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
 
       {/* チームランキング（上位5チーム） */}
       {teamRankings && teamRankings.length > 0 && (
-        <div className="mb-4 max-w-4xl mx-auto w-full" role="region" aria-label="チームランキング">
-          <h3 className="text-lg font-bold text-amber-700 mb-2 text-center">チームランキング</h3>
+        <div className="mb-4 max-w-4xl mx-auto w-full" role="region" aria-label="Team Ranking">
+          <h3 className="text-lg font-bold text-amber-700 mb-2 text-center">Team Ranking</h3>
           <div className="flex flex-col gap-1.5">
             {teamRankings.slice(0, 5).map((team) => {
               const barWidth = (team.totalScore / teamMaxScore) * 100;
@@ -76,10 +76,10 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                       className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">
-                      {team.totalScore.toLocaleString()}点
+                      {team.totalScore.toLocaleString()} pts
                     </span>
                   </div>
-                  <span className="w-16 text-sm text-gray-700 text-right">{team.memberCount}人</span>
+                  <span className="w-16 text-sm text-gray-700 text-right">{team.memberCount} members</span>
                 </motion.div>
               );
             })}
@@ -87,8 +87,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
         </div>
       )}
 
-      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="個人ランキング">
-        <h3 className="text-lg font-bold text-primary-dark mb-1 text-center">個人ランキング</h3>
+      <div className="flex-1 flex flex-col gap-2 justify-center max-w-4xl mx-auto w-full" role="region" aria-label="Individual Ranking">
+        <h3 className="text-lg font-bold text-primary-dark mb-1 text-center">Individual Ranking</h3>
         <AnimatePresence>
           {top10.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
@@ -136,7 +136,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-2xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">
-                    {entry.totalScore.toLocaleString()}点
+                    {entry.totalScore.toLocaleString()} pts
                   </span>
                 </div>
 
@@ -162,7 +162,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 {/* 回答速度 */}
                 <span className="w-[90px] text-sm lg:text-base text-gray-700 text-right [font-variant-numeric:tabular-nums]">
                   {entry.lastResponseTimeMs != null
-                    ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}秒`
+                    ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}s`
                     : "---"}
                 </span>
               </motion.div>

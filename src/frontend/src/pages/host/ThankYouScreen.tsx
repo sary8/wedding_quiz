@@ -64,7 +64,7 @@ export function ThankYouScreen({ participants, onBackToSetup, isDisplay }: Props
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
       {/* タイトル */}
       <h2 className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 mb-4 [text-wrap:balance]">
-        ご参加ありがとうございました！
+        Thank You for Playing!
       </h2>
 
       {/* 浮遊アバター or 静的グリッド */}

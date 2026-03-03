@@ -34,7 +34,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
         {/* QRコード */}
-        <QRCodeDisplay value={joinUrl} size={200} label="QRコードで参加" />
+        <QRCodeDisplay value={joinUrl} size={200} label="Scan to Join" />
 
         {/* ルームコード */}
         <div className="text-center">
@@ -42,14 +42,14 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
           <p className="text-7xl font-bold tracking-widest text-amber-800" aria-label={`ルームコード: ${roomCode.split('').join(' ')}`}>
             {roomCode}
           </p>
-          <p className="text-gray-600 text-sm mt-2">スマホで参加しよう！</p>
+          <p className="text-gray-600 text-sm mt-2">Join with your phone!</p>
         </div>
       </div>
 
       {/* 参加者一覧 */}
       <section className="mb-8 text-center w-full max-w-4xl">
         <h2 className="text-xl font-bold mb-4 text-gray-700 [text-wrap:balance]">
-          参加者: <span className="text-amber-800">{participants.length}</span>人
+          Players: <span className="text-amber-800">{participants.length}</span>
         </h2>
         {participants.length > 0 ? (
           teams && teams.length > 0 ? (
@@ -64,7 +64,7 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
             </ul>
           )
         ) : (
-          <p className="text-gray-600 text-base">参加者を待っています…</p>
+          <p className="text-gray-600 text-base">Waiting for players…</p>
         )}
       </section>
 
@@ -134,7 +134,7 @@ function TeamGroupedParticipants({ participants, teams }: TeamGroupedProps) {
         const members = grouped.get(team.id) ?? [];
         return (
           <div key={team.id}>
-            <h3 className="text-sm font-bold text-amber-700 mb-2">{team.name}（{members.length}人）</h3>
+            <h3 className="text-sm font-bold text-amber-700 mb-2">{team.name} ({members.length})</h3>
             {members.length > 0 ? (
               <ul className="flex flex-wrap gap-2" aria-label={`${team.name}の参加者`}>
                 {members.map((p) => (
@@ -144,14 +144,14 @@ function TeamGroupedParticipants({ participants, teams }: TeamGroupedProps) {
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500 text-sm">メンバーなし</p>
+              <p className="text-gray-500 text-sm">No members</p>
             )}
           </div>
         );
       })}
       {unassigned.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-gray-500 mb-2">未所属（{unassigned.length}人）</h3>
+          <h3 className="text-sm font-bold text-gray-500 mb-2">Unassigned ({unassigned.length})</h3>
           <ul className="flex flex-wrap gap-2" aria-label="未所属の参加者">
             {unassigned.map((p) => (
               <li key={p.id}>

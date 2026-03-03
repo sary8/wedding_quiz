@@ -298,7 +298,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   if (phase === "teamReveal" && data.teamRankings) {
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-amber-50 to-amber-100 flex flex-col items-center justify-center text-gray-900 p-6">
-        <h2 className="font-script text-5xl lg:text-7xl text-amber-800 mb-8 [text-wrap:balance]">チーム結果発表</h2>
+        <h2 className="font-script text-5xl lg:text-7xl text-amber-800 mb-8 [text-wrap:balance]">Team Results</h2>
         <div className="flex flex-col gap-4 max-w-2xl w-full">
           <AnimatePresence>
             {sortedTeams
@@ -320,10 +320,10 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
                         : "px-8 py-5 bg-white/80 text-gray-800",
                     ].join(" ")}
                   >
-                    <span className={isWinner ? "text-6xl font-extrabold w-20 text-center" : "text-4xl font-bold w-16 text-center"}>{team.rank}位</span>
+                    <span className={isWinner ? "text-6xl font-extrabold w-20 text-center" : "text-4xl font-bold w-16 text-center"}>#{team.rank}</span>
                     <span className={isWinner ? "flex-1 text-4xl font-extrabold" : "flex-1 text-2xl font-bold"}>{team.teamName}</span>
-                    <span className={isWinner ? "text-4xl font-extrabold [font-variant-numeric:tabular-nums]" : "text-2xl font-bold [font-variant-numeric:tabular-nums]"}>{team.totalScore.toLocaleString()}点</span>
-                    <span className={isWinner ? "text-base text-amber-700" : "text-sm text-gray-600"}>{team.memberCount}人</span>
+                    <span className={isWinner ? "text-4xl font-extrabold [font-variant-numeric:tabular-nums]" : "text-2xl font-bold [font-variant-numeric:tabular-nums]"}>{team.totalScore.toLocaleString()} pts</span>
+                    <span className={isWinner ? "text-base text-amber-700" : "text-sm text-gray-600"}>{team.memberCount} members</span>
                   </motion.div>
                 );
               })}
@@ -351,7 +351,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_DONE_TRANSITION}
           className="text-5xl md:text-8xl font-extrabold mb-4"
         >
-          第1位
+          1st Place
         </motion.div>
         {winner.selfieUrl ? (
           <img
@@ -367,7 +367,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           </div>
         )}
         <div className="text-3xl md:text-5xl font-bold mb-2">{winner.nickname}</div>
-        <div className="text-2xl md:text-4xl mb-6">{winner.totalScore.toLocaleString()}点</div>
+        <div className="text-2xl md:text-4xl mb-6">{winner.totalScore.toLocaleString()} pts</div>
 
         {!isDisplay && (
           <div className="absolute bottom-8 flex gap-4">
@@ -421,7 +421,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       {flashVisible && (
         <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
       )}
-      <h2 className="title-final-reveal text-5xl lg:text-6xl text-center shrink-0 [text-wrap:balance] tracking-wider">最終結果発表</h2>
+      <h2 className="title-final-reveal text-5xl lg:text-6xl text-center shrink-0 [text-wrap:balance] tracking-wider">Final Results</h2>
       <div className="w-24 h-0.5 mx-auto bg-gradient-to-r from-transparent via-accent to-transparent shrink-0" aria-hidden="true" />
 
       {phase === "finalReveal" ? (
@@ -439,7 +439,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
             {isAutoPhase ? (
               <span className="text-gray-400 text-sm" />
             ) : allRevealed ? (
-              <span className="text-gray-600 text-sm">— 全員発表済み —</span>
+              <span className="text-gray-600 text-sm">— All Revealed —</span>
             ) : (
               <>
                 {!isDisplay && (
@@ -452,7 +452,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
                   </button>
                 )}
                 {isDisplay && (
-                  <p className="text-lg text-gray-600">ホストの操作を待っています…</p>
+                  <p className="text-lg text-gray-600">Waiting for host…</p>
                 )}
               </>
             )}
@@ -492,7 +492,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
           <div className={`text-center text-gray-600 text-xs shrink-0 h-6 flex items-center justify-center transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
             {currentBatch && visibleCount >= currentBatch.entries.length && !batchFading && (
-              <span>— {currentBatch.entries[0].rank}位〜{currentBatch.entries[currentBatch.entries.length - 1].rank}位 —</span>
+              <span>— #{currentBatch.entries[0].rank} to #{currentBatch.entries[currentBatch.entries.length - 1].rank} —</span>
             )}
           </div>
         </>
@@ -511,14 +511,15 @@ type BatchRowProps = {
 
 const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
   const isFinal = variant === "final";
+  const pastelBorder = `border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
   const bg = highlight
     ? highlight
     : isFinal
-      ? "bg-white/60 border border-amber-200/50 shadow-sm"
-      : (entry.rank % 2 === 0 ? "bg-white/40" : "");
+      ? `bg-white/60 ${pastelBorder} shadow-sm`
+      : `bg-white/40 ${pastelBorder}`;
   return (
     <div className={`flex items-center gap-3 px-3 w-full rounded-lg motion-safe:animate-batch-row-in ${bg}`}>
-      <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">{entry.rank}位</span>
+      <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">#{entry.rank}</span>
       {entry.selfieUrl ? (
         <img
           src={entry.selfieUrl}
@@ -535,10 +536,10 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       )}
       <span className="flex-1 text-lg font-bold truncate min-w-0">{entry.nickname}</span>
       <span className="text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
-        {entry.totalScore.toLocaleString()}点
+        {entry.totalScore.toLocaleString()} pts
       </span>
       <span className="text-sm text-gray-600 text-right [font-variant-numeric:tabular-nums] shrink-0">
-        {(entry.averageResponseTimeMs / 1000).toFixed(2)}秒
+        {(entry.averageResponseTimeMs / 1000).toFixed(2)}s
       </span>
     </div>
   );
