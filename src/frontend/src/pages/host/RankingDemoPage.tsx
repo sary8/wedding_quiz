@@ -33,7 +33,7 @@ function generateMockRanking(teamMode: boolean): RankingData {
     });
   }
 
-  const result: RankingData = { rankings };
+  const result: RankingData = { rankings, maxPossibleScore: 5000 };
 
   if (teamMode) {
     const teamRankings: TeamRankingEntry[] = TEAM_NAMES.map((name, i) => ({

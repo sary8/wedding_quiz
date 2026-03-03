@@ -91,6 +91,7 @@ export type RankingEntry = {
 export type RankingData = {
   rankings: RankingEntry[];
   teamRankings?: TeamRankingEntry[];
+  maxPossibleScore?: number;
 };
 
 export type FinalRankingEntry = RankingEntry & {

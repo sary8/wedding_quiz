@@ -1,5 +1,5 @@
 import { db, schema } from "../db/index.js";
-import { eq, and, asc, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, sql, inArray, lte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { calculateScore } from "./scoringService.js";
 import type {
@@ -361,15 +361,25 @@ export async function calculateRanking(roomCode: string): Promise<RankingData> {
   });
   if (!quiz) return { rankings: [] };
 
-  // participants と currentQuestionId を並列取得
-  const [participants, currentQuestionId] = await Promise.all([
+  // participants, currentQuestionId, 満点スコアを並列取得
+  const [participants, currentQuestionId, maxScoreRows] = await Promise.all([
     db
       .select()
       .from(schema.participants)
       .where(eq(schema.participants.quiz_id, quiz.id))
       .orderBy(desc(schema.participants.total_score)),
     getCurrentQuestionId(quiz.id, quiz.current_question_index),
+    db
+      .select({ total: sql<number>`COALESCE(SUM(points * point_multiplier), 0)` })
+      .from(schema.questions)
+      .where(
+        and(
+          eq(schema.questions.quiz_id, quiz.id),
+          lte(schema.questions.order_index, quiz.current_question_index)
+        )
+      ),
   ]);
+  const maxPossibleScore = maxScoreRows[0]?.total ?? 0;
 
   // 前回のランクを保持して比較用に
   const previousRanks = new Map(participants.map((p) => [p.id, p.current_rank]));
@@ -410,7 +420,7 @@ export async function calculateRanking(roomCode: string): Promise<RankingData> {
     };
   });
 
-  const result: RankingData = { rankings };
+  const result: RankingData = { rankings, maxPossibleScore };
 
   // チームモードの場合はチームランキングも計算
   if (quiz.team_mode) {

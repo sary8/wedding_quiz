@@ -68,13 +68,16 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
     return teamRankings.slice(start, start + ITEMS_PER_PAGE);
   }, [teamRankings, currentPage]);
 
-  // バーの基準スコア（全体max で統一）
-  const individualMaxScore = useMemo(
-    () => allRankings.reduce((max, r) => Math.max(max, r.totalScore), 1),
-    [allRankings]
-  );
+  // バーの基準スコア: maxPossibleScore（満点）があればそれを使う。なければ全体maxにフォールバック
+  const maxPossible = data?.maxPossibleScore;
+  const individualMaxScore = maxPossible && maxPossible > 0
+    ? maxPossible
+    : allRankings.reduce((max, r) => Math.max(max, r.totalScore), 1);
   const teamMaxScore = useMemo(
-    () => teamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1),
+    () => {
+      // チームの満点 = 個人満点 × メンバー数（不明なので全体maxにフォールバック）
+      return teamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
+    },
     [teamRankings]
   );
 
