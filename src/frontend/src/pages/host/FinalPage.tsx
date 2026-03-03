@@ -476,7 +476,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
                 <div style={{ flex: leftCol.length - visibleLeftCount }} />
                 {visibleLeftEntries.map((entry) => (
                   <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                    <BatchRow entry={entry} />
+                    <BatchRow entry={entry} variant="final" />
                   </div>
                 ))}
               </div>
@@ -484,7 +484,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
                 <div style={{ flex: rightCol.length - visibleRightCount }} />
                 {visibleRightEntries.map((entry) => (
                   <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                    <BatchRow entry={entry} />
+                    <BatchRow entry={entry} variant="final" />
                   </div>
                 ))}
               </div>
@@ -494,7 +494,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
               <div style={{ flex: leftCol.length - visibleLeftCount }} />
               {visibleLeftEntries.map((entry) => (
                 <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
-                  <BatchRow entry={entry} />
+                  <BatchRow entry={entry} variant="final" />
                 </div>
               ))}
             </div>
@@ -528,7 +528,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       ? `bg-white/90 ${pastelBorder} shadow-sm`
       : `bg-white/70 ${pastelBorder}`;
   return (
-    <div className={`flex items-center w-full rounded-lg border-b border-gray-200/40 motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5" : "gap-2 px-3"}`}>
+    <div className={`flex items-center w-full rounded-lg border-b border-gray-200/40 motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5 py-2" : "gap-2 px-3 py-1"}`}>
       <span className={`${isFinal ? "w-10 text-xl" : "w-8 text-base"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.rank}
       </span>
@@ -542,7 +542,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
           loading="lazy"
         />
       ) : (
-        <div className={`${isFinal ? "w-12 h-12 mr-1 text-xl" : "w-9 h-9 text-base"} rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center font-bold text-gray-900 shrink-0`}>
+        <div className={`${isFinal ? "w-12 h-12 mr-1 text-xl" : "w-9 h-9 text-base"} rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} flex items-center justify-center font-bold text-gray-900 shrink-0`}>
           {entry.nickname?.[0] || "?"}
         </div>
       )}
