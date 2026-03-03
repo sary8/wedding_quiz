@@ -44,6 +44,7 @@ export function DisplayPage() {
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [revealTrigger, setRevealTrigger] = useState(0);
   const [rankingPage, setRankingPage] = useState(0);
+  const [rankingMode, setRankingMode] = useState<"individual" | "team">("individual");
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -101,6 +102,7 @@ export function DisplayPage() {
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setRankingPage(0);
+        setRankingMode("individual");
         setPhase("ranking");
         playRankingFanfare();
       }),
@@ -128,6 +130,7 @@ export function DisplayPage() {
       }),
       on("rankingPageChanged", (data) => {
         setRankingPage(data.page);
+        setRankingMode(data.mode);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -257,6 +260,7 @@ export function DisplayPage() {
               onEndGame={NOOP}
               isDisplay={true}
               rankingPage={rankingPage}
+              rankingMode={rankingMode}
             />
           </>
         );

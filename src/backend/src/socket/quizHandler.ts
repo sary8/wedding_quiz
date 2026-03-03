@@ -669,9 +669,9 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        socket.to(data.roomCode).emit("rankingPageChanged", { page: data.page });
+        socket.to(data.roomCode).emit("rankingPageChanged", { page: data.page, mode: data.mode });
 
-        logger.info("setRankingPage relayed", { roomCode: data.roomCode, page: data.page });
+        logger.info("setRankingPage relayed", { roomCode: data.roomCode, page: data.page, mode: data.mode });
 
         callback({ success: true });
       } catch (e) {

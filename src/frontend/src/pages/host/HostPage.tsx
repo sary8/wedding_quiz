@@ -289,9 +289,9 @@ export function HostPage() {
     emit("revealNextRank", { roomCode, hostSecret }, () => {});
   }, [roomCode, hostSecret, emit]);
 
-  const handleSetRankingPage = useCallback((page: number) => {
+  const handleRankingViewChange = useCallback((page: number, mode: "individual" | "team") => {
     if (!roomCode) return;
-    emit("setRankingPage", { roomCode, hostSecret, page }, () => {});
+    emit("setRankingPage", { roomCode, hostSecret, page, mode }, () => {});
   }, [roomCode, hostSecret, emit]);
 
   const handleCloseGame = useCallback(() => {
@@ -401,7 +401,7 @@ export function HostPage() {
               data={rankingData}
               onNextQuestion={handleNextQuestion}
               onEndGame={handleEndGame}
-              onSetRankingPage={handleSetRankingPage}
+              onRankingViewChange={handleRankingViewChange}
             />
           </>
         );

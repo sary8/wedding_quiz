@@ -10,12 +10,17 @@ const NAMES = [
   "かずま", "えみ", "たくみ", "さき", "けいた", "あいり", "しょう", "みく",
 ];
 
+const TEAM_NAMES = [
+  "チーム新郎", "チーム新婦", "チーム大学", "チーム会社", "チーム親族",
+  "チーム高校", "チーム地元", "チームバイト", "チームサークル", "チーム家族",
+  "チーム職場", "チーム同期",
+];
+
 const PARTICIPANT_COUNT = 35;
 
 function generateMockRanking(teamMode: boolean): RankingData {
-  const count = teamMode ? 10 : PARTICIPANT_COUNT;
   const rankings: RankingEntry[] = [];
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < PARTICIPANT_COUNT; i++) {
     const rank = i + 1;
     rankings.push({
       participantId: i + 1,
@@ -31,12 +36,11 @@ function generateMockRanking(teamMode: boolean): RankingData {
   const result: RankingData = { rankings };
 
   if (teamMode) {
-    const teamNames = ["チーム新郎", "チーム新婦", "チーム大学", "チーム会社", "チーム親族"];
-    const teamRankings: TeamRankingEntry[] = teamNames.map((name, i) => ({
+    const teamRankings: TeamRankingEntry[] = TEAM_NAMES.map((name, i) => ({
       teamId: i + 1,
       teamName: name,
-      totalScore: Math.max(1000, 15000 - i * 2500 + Math.floor(Math.random() * 500)),
-      memberCount: 15 + Math.floor(Math.random() * 10),
+      totalScore: Math.max(1000, 15000 - i * 1100 + Math.floor(Math.random() * 500)),
+      memberCount: 5 + Math.floor(Math.random() * 15),
       rank: i + 1,
     }));
     result.teamRankings = teamRankings;
@@ -52,6 +56,7 @@ export function RankingDemoPage() {
   const [viewMode, setViewMode] = useState<"host" | "display">("host");
   const [key, setKey] = useState(0);
   const [displayPage, setDisplayPage] = useState(0);
+  const [displayMode, setDisplayMode] = useState<"individual" | "team">("individual");
 
   const mockData = useMemo(() => generateMockRanking(teamMode), [teamMode, key]);
 
@@ -59,15 +64,18 @@ export function RankingDemoPage() {
     setTeamMode((prev) => !prev);
     setKey((prev) => prev + 1);
     setDisplayPage(0);
+    setDisplayMode("individual");
   }, []);
 
   const handleReset = useCallback(() => {
     setKey((prev) => prev + 1);
     setDisplayPage(0);
+    setDisplayMode("individual");
   }, []);
 
-  const handleSetRankingPage = useCallback((page: number) => {
+  const handleRankingViewChange = useCallback((page: number, mode: "individual" | "team") => {
     setDisplayPage(page);
+    setDisplayMode(mode);
   }, []);
 
   const isDisplay = viewMode === "display";
@@ -106,7 +114,8 @@ export function RankingDemoPage() {
         onEndGame={NOOP}
         isDisplay={isDisplay}
         rankingPage={isDisplay ? displayPage : undefined}
-        onSetRankingPage={isDisplay ? undefined : handleSetRankingPage}
+        rankingMode={isDisplay ? displayMode : undefined}
+        onRankingViewChange={isDisplay ? undefined : handleRankingViewChange}
       />
     </div>
   );
