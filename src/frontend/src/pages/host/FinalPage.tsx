@@ -471,7 +471,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       ) : (
         <>
           {isTwoColumn ? (
-            <div className={`flex-1 flex gap-3 max-w-5xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+            <div className={`flex-1 flex gap-3 max-w-7xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
               <div className="flex-1 flex flex-col min-h-0 min-w-0">
                 <div style={{ flex: leftCol.length - visibleLeftCount }} />
                 {visibleLeftEntries.map((entry) => (
@@ -528,7 +528,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       ? `bg-white/90 ${pastelBorder} shadow-sm`
       : `bg-white/70 ${pastelBorder}`;
   return (
-    <div className={`flex items-center w-full rounded-lg border-b border-gray-200/40 motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5 py-2" : "gap-2 px-3 py-1"}`}>
+    <div className={`flex items-center w-full rounded-lg motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5 py-2" : "gap-2 px-3 py-1"}`}>
       <span className={`${isFinal ? "w-10 text-xl" : "w-8 text-base"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.rank}
       </span>
