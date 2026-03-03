@@ -66,6 +66,9 @@ const MOTION_DONE_TRANSITION = { type: "spring", stiffness: 80 } as const;
 const MOTION_GROUP_INITIAL = { opacity: 0, y: 20 } as const;
 const MOTION_GROUP_ANIMATE = { opacity: 1, y: 0 } as const;
 const MOTION_GROUP_TRANSITION = { delay: 1 } as const;
+const MOTION_REVEAL_INITIAL = { opacity: 0, x: -30 } as const;
+const MOTION_REVEAL_ANIMATE = { opacity: 1, x: 0 } as const;
+const MOTION_REVEAL_TRANSITION = { type: "spring", stiffness: 120, damping: 20 } as const;
 
 function computeBatches(rankings: FinalRankingEntry[]): Batch[] {
   const fastEntries = rankings.filter((r) => r.rank > 10).sort((a, b) => a.rank - b.rank);
@@ -421,17 +424,24 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       {flashVisible && (
         <div className="fixed inset-0 bg-white z-[9999] pointer-events-none motion-safe:animate-screen-flash" />
       )}
-      <h2 className="title-final-reveal text-5xl lg:text-6xl text-center shrink-0 [text-wrap:balance] tracking-wider">Final Results</h2>
+      <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center shrink-0 [text-wrap:balance]">Final Results</h2>
       <div className="w-24 h-0.5 mx-auto bg-gradient-to-r from-transparent via-accent to-transparent shrink-0" aria-hidden="true" />
 
       {phase === "finalReveal" ? (
         <>
-          <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
-            <div style={{ flex: finalEntries.length - finalVisibleCount }} />
+          <div className="flex-1 flex flex-col justify-end max-w-4xl mx-auto w-full min-h-0">
             {visibleFinal.map((entry) => (
-              <div key={entry.participantId} className="flex-1 flex items-center min-h-0 py-0.5">
+              <motion.div
+                key={entry.participantId}
+                layout={!prefersReducedMotion}
+                initial={prefersReducedMotion ? false : MOTION_REVEAL_INITIAL}
+                animate={MOTION_REVEAL_ANIMATE}
+                transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_REVEAL_TRANSITION}
+                style={{ height: `${100 / finalEntries.length}%` }}
+                className="flex items-center min-h-0"
+              >
                 <BatchRow entry={entry} highlight={FINAL_MEDAL_CLASSES[entry.rank]} variant="final" />
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -511,35 +521,39 @@ type BatchRowProps = {
 
 const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
   const isFinal = variant === "final";
-  const pastelBorder = `border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
+  const pastelBorder = `border-l-4 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
   const bg = highlight
     ? highlight
     : isFinal
-      ? `bg-white/60 ${pastelBorder} shadow-sm`
-      : `bg-white/40 ${pastelBorder}`;
+      ? `bg-white/70 ${pastelBorder} shadow-sm`
+      : `bg-white/50 ${pastelBorder}`;
   return (
-    <div className={`flex items-center gap-3 px-3 w-full rounded-lg motion-safe:animate-batch-row-in ${bg}`}>
-      <span className="w-14 text-xl font-bold text-center [font-variant-numeric:tabular-nums] shrink-0">#{entry.rank}</span>
+    <div className={`flex items-center w-full rounded-lg motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5" : "gap-2 px-3"}`}>
+      <span className={`${isFinal ? "w-10 text-lg" : "w-8 text-sm"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
+        {entry.rank}
+      </span>
       {entry.selfieUrl ? (
         <img
           src={entry.selfieUrl}
           alt={`${entry.nickname}のアバター`}
-          width={40}
-          height={40}
-          className={`w-10 h-10 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+          width={isFinal ? 48 : 36}
+          height={isFinal ? 48 : 36}
+          className={`${isFinal ? "w-12 h-12 mr-1" : "w-9 h-9"} rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
           loading="lazy"
         />
       ) : (
-        <div className={`w-10 h-10 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-base font-bold text-gray-900 shrink-0`}>
+        <div className={`${isFinal ? "w-12 h-12 mr-1 text-lg" : "w-9 h-9 text-sm"} rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center font-bold text-gray-900 shrink-0`}>
           {entry.nickname?.[0] || "?"}
         </div>
       )}
-      <span className="flex-1 text-lg font-bold truncate min-w-0">{entry.nickname}</span>
-      <span className="text-lg font-bold text-right [font-variant-numeric:tabular-nums] shrink-0">
+      <span className={`flex-1 ${isFinal ? "text-2xl" : "text-lg"} font-bold text-gray-800 truncate min-w-0`}>
+        {entry.nickname}
+      </span>
+      <span className={`${isFinal ? "text-lg" : "text-sm"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.totalScore.toLocaleString()} pts
       </span>
-      <span className="text-sm text-gray-600 text-right [font-variant-numeric:tabular-nums] shrink-0">
-        {(entry.averageResponseTimeMs / 1000).toFixed(2)}s
+      <span className={`${isFinal ? "text-xs" : "text-[11px]"} text-gray-300 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
+        {(entry.averageResponseTimeMs / 1000).toFixed(1)}s
       </span>
     </div>
   );

@@ -9,6 +9,7 @@ const JoinPage = lazy(() => import("./pages/participant/JoinPage").then((m) => (
 const PlayPage = lazy(() => import("./pages/participant/PlayPage").then((m) => ({ default: m.PlayPage })));
 const PreviewPage = lazy(() => import("./pages/host/PreviewPage").then((m) => ({ default: m.PreviewPage })));
 const FinalDemoPage = lazy(() => import("./pages/host/FinalDemoPage").then((m) => ({ default: m.FinalDemoPage })));
+const RankingDemoPage = lazy(() => import("./pages/host/RankingDemoPage").then((m) => ({ default: m.RankingDemoPage })));
 
 function LoadingFallback() {
   return (
@@ -24,6 +25,7 @@ export function App() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/demo/final" element={<FinalDemoPage />} />
+          <Route path="/demo/ranking" element={<RankingDemoPage />} />
           <Route path="/host/setup" element={<SetupPage />} />
           <Route path="/host/:quizId/preview" element={<PreviewPage />} />
           <Route path="/host/:roomCode/screen" element={<DisplayPage />} />
