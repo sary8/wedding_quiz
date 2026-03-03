@@ -525,8 +525,8 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
   const bg = highlight
     ? highlight
     : isFinal
-      ? `bg-white/70 ${pastelBorder} shadow-sm`
-      : `bg-white/50 ${pastelBorder}`;
+      ? `bg-white/90 ${pastelBorder} shadow-sm`
+      : `bg-white/70 ${pastelBorder}`;
   return (
     <div className={`flex items-center w-full rounded-lg motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5" : "gap-2 px-3"}`}>
       <span className={`${isFinal ? "w-10 text-lg" : "w-8 text-sm"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
@@ -552,7 +552,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       <span className={`${isFinal ? "text-lg" : "text-sm"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.totalScore.toLocaleString()} pts
       </span>
-      <span className={`${isFinal ? "text-xs" : "text-[11px]"} text-gray-300 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
+      <span className={`${isFinal ? "text-xs" : "text-[11px]"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
         {(entry.averageResponseTimeMs / 1000).toFixed(1)}s
       </span>
     </div>
