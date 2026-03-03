@@ -78,7 +78,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
           )}
         </div>
         <div
-          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-red-600" : "text-gray-900"}`}
+          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-red-600 motion-safe:animate-scale-pulse" : "text-gray-900"}`}
           aria-live="polite"
           aria-atomic="true"
         >

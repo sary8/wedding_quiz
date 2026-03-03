@@ -47,7 +47,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           )}
         </div>
         <span
-          className={cn("font-bold transition-colors duration-300", isDisplay ? "text-6xl" : "text-7xl lg:text-9xl", isUrgent ? "text-red-600" : "text-gray-900")}
+          className={cn("font-bold transition-colors duration-300", isDisplay ? "text-6xl" : "text-7xl lg:text-9xl", isUrgent ? "text-red-600 motion-safe:animate-scale-pulse" : "text-gray-900")}
           aria-live="polite"
           aria-atomic="true"
         >

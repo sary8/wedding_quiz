@@ -11,9 +11,10 @@ type Props = {
   onStartGame: () => void;
   onBack?: () => void;
   isDisplay?: boolean;
+  isProcessing?: boolean;
 };
 
-export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, isDisplay = false }: Props) {
+export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, isDisplay = false, isProcessing = false }: Props) {
   const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin;
   const joinUrl = `${appOrigin}/play/${roomCode}`;
 
@@ -81,10 +82,10 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
             )}
             <Button
               onClick={onStartGame}
-              disabled={participants.length === 0}
+              disabled={participants.length === 0 || isProcessing}
               variant="accent"
               size="lg"
-              aria-disabled={participants.length === 0}
+              aria-disabled={participants.length === 0 || isProcessing}
             >
               ゲーム開始
             </Button>

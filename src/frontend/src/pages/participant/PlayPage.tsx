@@ -197,6 +197,7 @@ export function PlayPage() {
     <button
       type="button"
       onClick={() => setAnswerError(null)}
+      role="alert"
       aria-label="エラーを閉じる"
       className="fixed top-0 left-0 right-0 px-4 py-3 bg-red-500 text-white text-sm text-center z-50 w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
     >
