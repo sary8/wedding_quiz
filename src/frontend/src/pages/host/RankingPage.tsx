@@ -120,19 +120,22 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
 
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0" role="region" aria-label="Individual Ranking">
         {hasTeams && <h3 className="text-lg font-bold text-primary-dark mb-2 text-center shrink-0">Individual Ranking</h3>}
-        <div className="flex-1 flex flex-col gap-2 justify-center">
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPage}
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex-1 flex flex-col gap-2 justify-center"
+          >
           {individualEntries.map((entry) => {
             const barWidth = (entry.totalScore / maxScore) * 100;
             const rankChange = entry.previousRank - entry.rank;
 
             return (
-              <motion.div
+              <div
                 key={entry.participantId}
-                layout={!prefersReducedMotion}
-                initial={prefersReducedMotion ? false : MOTION_ENTRY_INITIAL}
-                animate={MOTION_ENTRY_ANIMATE}
-                transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_ENTRY_TRANSITION}
                 className="flex items-center gap-2 md:gap-3"
               >
                 {/* 順位 */}
@@ -197,11 +200,11 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     ? `${(entry.lastResponseTimeMs / 1000).toFixed(2)}s`
                     : "---"}
                 </span>
-              </motion.div>
+              </div>
             );
           })}
+          </motion.div>
         </AnimatePresence>
-        </div>
       </div>
 
       {/* Display用: ページ表示（チーム戦でなく複数ページの場合） */}
