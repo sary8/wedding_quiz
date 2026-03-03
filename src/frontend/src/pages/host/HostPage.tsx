@@ -201,7 +201,7 @@ export function HostPage() {
     });
 
     emit("watchRoom", { roomCode }, () => {});
-  }, [isConnected, roomCode, quizId, hostSecret, emit, on]);
+  }, [isConnected, roomCode, quizId, hostSecret, emit]);
 
   // ゲーム開始 → カウントダウンへ遷移
   const handleStartGame = useCallback(() => {

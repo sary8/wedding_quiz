@@ -61,7 +61,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
             htmlFor="nickname"
             className="block text-sm font-semibold text-sage-text mb-1.5"
           >
-            ニックネーム（20文字以内）
+            ニックネーム（8文字以内）
           </label>
           <input
             id="nickname"

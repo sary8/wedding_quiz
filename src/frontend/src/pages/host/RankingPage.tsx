@@ -73,13 +73,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   const individualMaxScore = maxPossible && maxPossible > 0
     ? maxPossible
     : allRankings.reduce((max, r) => Math.max(max, r.totalScore), 1);
-  const teamMaxScore = useMemo(
-    () => {
-      // チームの満点 = 個人満点 × メンバー数（不明なので全体maxにフォールバック）
-      return teamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
-    },
-    [teamRankings]
-  );
+  // チームの満点 = 個人満点 × メンバー数（不明なので全体maxにフォールバック）
+  const teamMaxScore = teamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
 
   const prefersReducedMotion = useReducedMotion();
 
