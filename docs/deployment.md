@@ -47,6 +47,7 @@ NODE_ENV=production
 PORT=8080
 DATABASE_URL=file:./data/quiz.db
 ALLOWED_ORIGINS=https://<your-static-web-app>.azurestaticapps.net
+ADMIN_PIN=<管理画面アクセス用PIN（任意）>
 ```
 
 ## CI/CDパイプライン
@@ -109,7 +110,7 @@ npm install
 npm run dev
 ```
 
-開発サーバー: http://localhost:5173
+開発サーバー: http://localhost:5174
 
 ### Backend
 

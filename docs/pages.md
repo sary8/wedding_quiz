@@ -18,6 +18,7 @@
 - `?view=history`: ゲーム履歴（過去クイズの結果・参加者一覧）
 - `?view=participants`: 参加者ギャラリー（自撮り一覧・個別/一括削除）
 - `?view=questions`: 問題ライブラリ（テンプレート管理・過去問題一覧）
+- `?view=stats&quizId=N`: 統計ダッシュボード（参加者数・正答率・平均スコア・データエクスポート）
 - プレビューボタン → `/host/:quizId/preview` へ遷移
 - リハーサルボタン → `?rehearsal=true` で開始
 - ロビーを開くボタン → `/host/:roomCode?key=...&quizId=...` へ遷移
@@ -42,7 +43,7 @@
 | countdown | 5秒カウントダウン | （自動進行） |
 | question | 問題文・選択肢・カウントダウン・回答数 | 回答を締め切るボタン |
 | results | 回答分布グラフ・正解表示 | ランキング表示 / 次の問題 |
-| ranking | Top10 スコアバーアニメーション | 次の問題 / 最終結果発表 |
+| ranking | スコアバーアニメーション（10名ずつページ切替） | ページ切替 / 次の問題 / 最終結果発表（チーム戦時はモード切替も） |
 | final | カウントダウン発表 → 集合写真（浮遊アバター） | もう一度プレイ / ゲーム終了 |
 | closed | サンキュースクリーン（浮遊アバター） | 管理画面に戻る |
 | recovering | ホスト復旧画面（ゲーム中に再接続時） | 次の問題を配信 / ランキング表示 |
@@ -69,7 +70,7 @@
 
 ### `/play`
 **ルームコード入力画面**
-- 4桁数字のルームコードを入力して参加
+- 6桁数字のルームコードを入力して参加
 
 ---
 
@@ -78,7 +79,7 @@
 
 | フェーズ | 表示内容 |
 |----------|----------|
-| profile | ニックネーム入力 + チーム選択（チーム戦時） + 自撮り撮影（任意） |
+| profile | ニックネーム入力（8文字以内）+ チーム選択（チーム戦時）+ 自撮り撮影（必須） |
 | waiting | 待機画面（ルームコード表示） |
 | answer | 4色ボタンで回答（制限時間カウントダウン・回答数表示） |
 | result | 正解/不正解 + 正解テキスト + 獲得ポイント + 現在順位 |
@@ -136,7 +137,7 @@
 | GET | `/api/quizzes/room/:roomCode/info` | ルーム情報（teamMode, teams）— 参加者がチーム選択用に取得 |
 | PUT | `/api/quizzes/:id/team-mode` | チームモード ON/OFF 切替 (`{ enabled: boolean }`) |
 | GET | `/api/quizzes/:id/teams` | チーム一覧（order_index順） |
-| PUT | `/api/quizzes/:id/teams` | チーム一括設定 (`{ teams: [{ name }] }`, 2〜10件、既存は削除して再作成) |
+| PUT | `/api/quizzes/:id/teams` | チーム一括設定 (`{ teams: [{ name }] }`, 2〜10件、チーム名8文字以内、既存は削除して再作成) |
 | DELETE | `/api/quizzes/:id/teams/:teamId` | チーム個別削除 |
 
 ### 参加者
@@ -146,6 +147,21 @@
 | GET | `/api/quizzes/:id/participants` | 参加者一覧 |
 | DELETE | `/api/quizzes/:id/participants/:participantId` | 参加者個別削除 |
 | DELETE | `/api/quizzes/:id/participants` | 参加者一括削除 |
+
+### 認証
+
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | `/api/auth/session` | PINでセッション作成（`ADMIN_PIN` 設定時のみ有効） |
+| GET | `/api/auth/pin-required` | PIN認証が必要かどうかを確認 |
+| GET | `/api/auth/status` | 現在のセッション状態を確認 |
+
+### 統計・エクスポート
+
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/api/quizzes/:id/stats` | クイズ統計（参加者数・正答率・平均スコア等） |
+| GET | `/api/quizzes/:id/export?format=json\|csv` | クイズ結果エクスポート（JSON / CSV） |
 
 ### ヘルスチェック
 
@@ -170,8 +186,10 @@
 | `replayQuiz` | ホスト | ゲームリプレイ（finished → lobby リセット） |
 | `closeGame` | ホスト | ゲーム完全終了（サンキュースクリーン表示） |
 | `watchRoom` | プロジェクター | 読み取り専用参加（既存参加者も取得） |
-| `joinRoom` | 参加者 | ニックネーム・自撮りで参加（同名重複は拒否、チーム戦時は `teamId` 指定可） |
+| `joinRoom` | 参加者 | ニックネーム（8文字以内）・自撮り（必須）で参加（同名重複は拒否、チーム戦時は `teamId` 指定可） |
 | `submitAnswer` | 参加者 | 回答送信（`questionId`, `choiceIndex: 1-4`） |
+| `revealNextRank` | ホスト | 次の順位を発表（最終発表フェーズ） |
+| `setRankingPage` | ホスト | ランキングページ切替（`{ page, mode }` を送信、Display画面に中継） |
 
 ### Server → Client
 
@@ -185,11 +203,13 @@
 | `answerCountUpdate` | 全員 | 現在の回答数 |
 | `questionClosed` | 全員 | 回答締め切り |
 | `questionResult` | 全員 | 正解・分布（参加者は個人結果 + 正解テキスト含む） |
-| `rankingUpdate` | 全員 | ランキングデータ（参加者は自分の順位 + Top5、チーム戦時は `teamRankings` を含む） |
+| `rankingUpdate` | 全員 | ランキングデータ（参加者は自分の順位 + Top5、チーム戦時は `teamRankings` を含む、`maxPossibleScore` でバー基準値を指定） |
 | `gameEnded` | 全員 | 最終結果データ（チーム戦時は `teamRankings` を含む） |
 | `quizReset` | 全員 | リプレイ時のゲームリセット通知 |
 | `gameClosed` | 全員 | ゲーム終了通知（サンキュースクリーン表示） |
 | `reconnected` | 参加者 | 再接続時のステータス通知 |
+| `revealNextRank` | 全員 | 次の順位発表データ（最終発表フェーズ） |
+| `rankingPageChanged` | プロジェクター | ランキングページ切替通知（`{ page, mode }` を受信） |
 | `hostReconnected` | ホスト | ホスト復旧時の状態復元（quizStatus, currentQuestionIndex, participants, currentQuestionData, answerCount, timerRemaining） |
 
 ---
@@ -208,8 +228,9 @@
 |------|------|-----------|
 | `PORT` | サーバーポート | 3001 |
 | `CORS_ORIGIN` | 許可オリジン（カンマ区切り） | localhost各ポート |
+| `ADMIN_PIN` | 管理画面アクセス用PIN（未設定時は認証なし） | — |
 | `NODE_ENV` | 実行環境 | development |
 
 ---
 
-*最終更新: 2026-02-27*
+*最終更新: 2026-03-04*
