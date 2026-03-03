@@ -1,12 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { RankingData } from "../../types";
+
+const ITEMS_PER_PAGE = 10;
 
 type Props = {
   data: RankingData | null;
   onNextQuestion: () => void;
   onEndGame: () => void;
   isDisplay?: boolean;
+  rankingPage?: number;
+  onSetRankingPage?: (page: number) => void;
 };
 
 const PASTEL_BORDER_CLASSES = [
@@ -34,11 +38,37 @@ const MOTION_ENTRY_ANIMATE = { opacity: 1, x: 0 } as const;
 const MOTION_ENTRY_TRANSITION = { type: "spring", stiffness: 80, damping: 15, duration: 1.5 } as const;
 const MOTION_INSTANT = { duration: 0 } as const;
 
-export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
+export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false, rankingPage: externalPage, onSetRankingPage }: Props) {
   const teamRankings = data?.teamRankings;
   const hasTeams = (teamRankings?.length ?? 0) > 0;
-  const individualEntries = useMemo(() => data?.rankings.slice(0, hasTeams ? 5 : 10) ?? [], [data, hasTeams]);
-  const maxScore = useMemo(() => individualEntries.reduce((max, r) => Math.max(max, r.totalScore), 1), [individualEntries]);
+
+  // ページ管理: ホストはローカルstate、Displayは外部propで制御
+  const [localPage, setLocalPage] = useState(0);
+  const currentPage = isDisplay ? (externalPage ?? 0) : localPage;
+
+  const totalRankings = data?.rankings.length ?? 0;
+  const totalPages = hasTeams ? 1 : Math.max(1, Math.ceil(totalRankings / ITEMS_PER_PAGE));
+
+  const individualEntries = useMemo(() => {
+    if (hasTeams) {
+      return data?.rankings.slice(0, 5) ?? [];
+    }
+    const start = currentPage * ITEMS_PER_PAGE;
+    return data?.rankings.slice(start, start + ITEMS_PER_PAGE) ?? [];
+  }, [data, hasTeams, currentPage]);
+
+  const maxScore = useMemo(() => {
+    // 全体の最高スコアを基準にする（ページ間でバーの比較が一貫するように）
+    if (hasTeams) {
+      return individualEntries.reduce((max, r) => Math.max(max, r.totalScore), 1);
+    }
+    return data?.rankings.reduce((max, r) => Math.max(max, r.totalScore), 1) ?? 1;
+  }, [data, individualEntries, hasTeams]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setLocalPage(page);
+    onSetRankingPage?.(page);
+  }, [onSetRankingPage]);
   const teamMaxScore = useMemo(
     () => teamRankings?.reduce((max, t) => Math.max(max, t.totalScore), 1) ?? 1,
     [teamRankings]
@@ -174,22 +204,56 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
         </div>
       </div>
 
+      {/* Display用: ページ表示（チーム戦でなく複数ページの場合） */}
+      {isDisplay && !hasTeams && totalPages > 1 && (
+        <p className="text-center text-base text-gray-500 mt-2 shrink-0">
+          {currentPage * ITEMS_PER_PAGE + 1}〜{Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalRankings)}位 / 全{totalRankings}人
+        </p>
+      )}
+
       {!isDisplay && (
-        <div className="flex gap-4 justify-center mt-6">
-          <button
-            type="button"
-            onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            次の問題
-          </button>
-          <button
-            type="button"
-            onClick={onEndGame}
-            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-          >
-            最終結果発表
-          </button>
+        <div className="flex flex-col gap-3 items-center mt-4 shrink-0">
+          {/* ページ切り替え（個人戦で複数ページある場合のみ） */}
+          {!hasTeams && totalPages > 1 && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={currentPage <= 0}
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+              >
+                ← 前の10人
+              </button>
+              <span className="text-base text-gray-600 [font-variant-numeric:tabular-nums]">
+                {currentPage * ITEMS_PER_PAGE + 1}〜{Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalRankings)}位 / 全{totalRankings}人
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+              >
+                次の10人 →
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-4 justify-center">
+            <button
+              type="button"
+              onClick={onNextQuestion}
+              className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              次の問題
+            </button>
+            <button
+              type="button"
+              onClick={onEndGame}
+              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            >
+              最終結果発表
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -35,6 +35,7 @@ type ServerToClientEvents = {
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
   revealNextRank: () => void;
+  rankingPageChanged: (data: { page: number }) => void;
 };
 
 type ClientToServerEvents = {
@@ -84,6 +85,10 @@ type ClientToServerEvents = {
   ) => void;
   revealNextRank: (
     data: { roomCode: string; hostSecret: string },
+    cb: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  setRankingPage: (
+    data: { roomCode: string; hostSecret: string; page: number },
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
 };

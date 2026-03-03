@@ -289,6 +289,11 @@ export function HostPage() {
     emit("revealNextRank", { roomCode, hostSecret }, () => {});
   }, [roomCode, hostSecret, emit]);
 
+  const handleSetRankingPage = useCallback((page: number) => {
+    if (!roomCode) return;
+    emit("setRankingPage", { roomCode, hostSecret, page }, () => {});
+  }, [roomCode, hostSecret, emit]);
+
   const handleCloseGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
     if (!window.confirm("ルームを閉じますか？参加者全員が切断されます。")) return;
@@ -396,6 +401,7 @@ export function HostPage() {
               data={rankingData}
               onNextQuestion={handleNextQuestion}
               onEndGame={handleEndGame}
+              onSetRankingPage={handleSetRankingPage}
             />
           </>
         );

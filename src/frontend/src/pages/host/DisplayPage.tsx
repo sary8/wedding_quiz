@@ -43,6 +43,7 @@ export function DisplayPage() {
   const [countdownValue, setCountdownValue] = useState(5);
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [revealTrigger, setRevealTrigger] = useState(0);
+  const [rankingPage, setRankingPage] = useState(0);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -99,6 +100,7 @@ export function DisplayPage() {
       }),
       on("rankingUpdate", (data) => {
         setRankingData(data);
+        setRankingPage(0);
         setPhase("ranking");
         playRankingFanfare();
       }),
@@ -123,6 +125,9 @@ export function DisplayPage() {
       }),
       on("revealNextRank", () => {
         setRevealTrigger((prev) => prev + 1);
+      }),
+      on("rankingPageChanged", (data) => {
+        setRankingPage(data.page);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -251,6 +256,7 @@ export function DisplayPage() {
               onNextQuestion={NOOP}
               onEndGame={NOOP}
               isDisplay={true}
+              rankingPage={rankingPage}
             />
           </>
         );
