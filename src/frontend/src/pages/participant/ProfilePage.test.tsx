@@ -100,15 +100,15 @@ describe("ProfilePage", () => {
     expect(handleJoin).not.toHaveBeenCalled();
   });
 
-  it("ニックネームが20文字に制限される", async () => {
+  it("ニックネームが8文字に制限される", async () => {
     mockCapturedImage = null;
     const user = userEvent.setup();
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
 
     const input = screen.getByLabelText(/ニックネーム/);
-    await user.type(input, "あいうえおかきくけこさしすせそたちつてとな");
+    await user.type(input, "あいうえおかきくけこ");
 
-    expect(input).toHaveValue("あいうえおかきくけこさしすせそたちつてと");
+    expect(input).toHaveValue("あいうえおかきく");
   });
 
   it("空白のみのニックネームでは参加ボタンが無効", async () => {
