@@ -164,7 +164,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
-                    <div className="flex-1 h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden">
+                    <div className="w-[40%] h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden shrink-0">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
@@ -209,7 +209,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                   <div key={team.teamId} className="flex items-center gap-3">
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
                     <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
-                    <div className="flex-1 h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden">
+                    <div className="w-[40%] h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
@@ -237,7 +237,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                         </span>
                       ) : null}
                     </span>
-                    <span className="w-[60px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
+                    <span className="w-[80px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
                   </div>
                 );
               })
