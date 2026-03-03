@@ -202,7 +202,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 return (
                   <div key={team.teamId} className="flex items-center gap-2">
                     <span className="w-12 text-3xl lg:text-4xl font-bold text-center [font-variant-numeric:tabular-nums]">{team.rank}</span>
-                    <span className="w-28 md:w-40 text-lg md:text-2xl lg:text-3xl font-bold truncate">{team.teamName}</span>
+                    <span className="w-36 md:w-48 text-lg md:text-2xl lg:text-3xl font-bold truncate">{team.teamName}</span>
                     <div className="flex-1 h-12 lg:h-14 bg-amber-100 rounded-lg overflow-hidden relative">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
