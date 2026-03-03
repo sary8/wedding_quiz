@@ -30,6 +30,13 @@ const PASTEL_BG_CLASSES = [
   "bg-choice-pastel-amber/40",
 ];
 
+function rankColorClass(rank: number): string {
+  if (rank === 1) return "text-amber-500";
+  if (rank === 2) return "text-gray-400";
+  if (rank === 3) return "text-amber-700";
+  return "text-gray-900";
+}
+
 const MOTION_BAR_INITIAL = { width: 0 } as const;
 const MOTION_BAR_TRANSITION = { type: "spring", stiffness: 60, damping: 15 } as const;
 const MOTION_INSTANT = { duration: 0 } as const;
@@ -122,7 +129,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
       <h2 className="font-script text-5xl lg:text-7xl text-amber-800 text-center mb-4 shrink-0 [text-wrap:balance]">{heading}</h2>
 
       {/* メインリスト */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0" role="region" aria-label={heading}>
+      <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full min-h-0" role="region" aria-label={heading}>
         <AnimatePresence mode="wait">
           <motion.div
             key={`${currentMode}-${currentPage}`}
@@ -139,7 +146,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 const rankChange = entry.previousRank - entry.rank;
                 return (
                   <div key={entry.participantId} className="flex items-center gap-2.5">
-                    <span className="w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums]">{entry.rank}</span>
+                    <span className={`w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
                     {entry.selfieUrl ? (
                       <img
                         src={entry.selfieUrl}
@@ -157,28 +164,28 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     <span className="w-[8.5em] text-xl lg:text-3xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
-                    <div className="flex-1 h-12 lg:h-14 bg-primary-light rounded-lg overflow-hidden relative">
+                    <div className="flex-1 h-12 lg:h-14 bg-primary-light rounded-lg overflow-hidden">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
                         transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
                         className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-2xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] [font-variant-numeric:tabular-nums]">
-                        {entry.totalScore.toLocaleString()} pts
-                      </span>
                     </div>
-                    <span className="w-12 text-base lg:text-lg font-bold flex items-center justify-center gap-0.5 shrink-0">
+                    <span className="whitespace-nowrap text-lg lg:text-2xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {entry.totalScore.toLocaleString()} <span className="text-sm lg:text-base">pts</span>
+                    </span>
+                    <span className="w-14 text-lg lg:text-xl font-bold flex items-center justify-center gap-0.5 shrink-0">
                       {rankChange > 0 ? (
                         <span className="flex items-center gap-0.5 text-green-500">
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 2L11 8H1z" />
                           </svg>
                           {rankChange}
                         </span>
                       ) : rankChange < 0 ? (
                         <span className="flex items-center gap-0.5 text-red-500">
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                             <path d="M6 10L1 4h10z" />
                           </svg>
                           {Math.abs(rankChange)}
@@ -197,22 +204,40 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
               /* === チームランキング === */
               teamEntries.map((team) => {
                 const barWidth = (team.totalScore / teamMaxScore) * 100;
+                const rankChange = (team.previousRank ?? team.rank) - team.rank;
                 return (
                   <div key={team.teamId} className="flex items-center gap-2.5">
-                    <span className="w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums]">{team.rank}</span>
+                    <span className={`w-12 text-3xl lg:text-4xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
                     <span className="w-[8.5em] text-xl lg:text-3xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
-                    <div className="flex-1 h-12 lg:h-14 bg-amber-100 rounded-lg overflow-hidden relative">
+                    <div className="flex-1 h-12 lg:h-14 bg-amber-100 rounded-lg overflow-hidden">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
                         animate={{ width: `${barWidth}%` }}
                         transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
                         className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-2xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] [font-variant-numeric:tabular-nums]">
-                        {team.totalScore.toLocaleString()} pts
-                      </span>
                     </div>
-                    <span className="w-[70px] text-sm lg:text-base font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
+                    <span className="whitespace-nowrap text-lg lg:text-2xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {team.totalScore.toLocaleString()} <span className="text-sm lg:text-base">pts</span>
+                    </span>
+                    <span className="w-14 text-lg lg:text-xl font-bold flex items-center justify-center gap-0.5 shrink-0">
+                      {rankChange > 0 ? (
+                        <span className="flex items-center gap-0.5 text-green-500">
+                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                            <path d="M6 2L11 8H1z" />
+                          </svg>
+                          {rankChange}
+                        </span>
+                      ) : rankChange < 0 ? (
+                        <span className="flex items-center gap-0.5 text-red-500">
+                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                            <path d="M6 10L1 4h10z" />
+                          </svg>
+                          {Math.abs(rankChange)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="w-[50px] text-sm lg:text-base font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
                   </div>
                 );
               })
@@ -223,12 +248,12 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
 
       {/* Display用: ページ情報 */}
       {isDisplay && totalPages > 1 && (
-        <p className="text-center text-lg font-semibold text-gray-600 mt-2 shrink-0">{pageInfoText}</p>
+        <p className="text-center text-lg font-semibold text-gray-600 mt-4 shrink-0">{pageInfoText}</p>
       )}
 
       {/* ホスト操作パネル */}
       {!isDisplay && (
-        <div className="flex flex-col gap-3 items-center mt-4 shrink-0">
+        <div className="flex flex-col gap-3 items-center mt-6 shrink-0">
           {/* ページ切り替え */}
           {totalPages > 1 && (
             <div className="flex items-center gap-3">

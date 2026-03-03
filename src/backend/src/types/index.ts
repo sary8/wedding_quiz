@@ -129,6 +129,7 @@ export type TeamRankingEntry = {
   totalScore: number;
   memberCount: number;
   rank: number;
+  previousRank?: number;
 };
 
 // Shared data types

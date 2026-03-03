@@ -26,22 +26,23 @@ function generateMockRanking(teamMode: boolean): RankingData {
       participantId: i + 1,
       nickname: NAMES[i % NAMES.length] + (i >= NAMES.length ? `${Math.floor(i / NAMES.length) + 1}` : ""),
       selfieUrl: null,
-      totalScore: Math.max(100, 5000 - rank * 120 + Math.floor(Math.random() * 100)),
+      totalScore: Math.max(100, 150000 - rank * 3500 + Math.floor(Math.random() * 2000)),
       rank,
       previousRank: rank + (Math.random() > 0.5 ? Math.floor(Math.random() * 3) : -Math.floor(Math.random() * 2)),
       lastResponseTimeMs: 1500 + rank * 200 + Math.floor(Math.random() * 500),
     });
   }
 
-  const result: RankingData = { rankings, maxPossibleScore: 5000 };
+  const result: RankingData = { rankings, maxPossibleScore: 150000 };
 
   if (teamMode) {
     const teamRankings: TeamRankingEntry[] = TEAM_NAMES.map((name, i) => ({
       teamId: i + 1,
       teamName: name,
-      totalScore: Math.max(1000, 15000 - i * 1100 + Math.floor(Math.random() * 500)),
+      totalScore: Math.max(10000, 450000 - i * 35000 + Math.floor(Math.random() * 5000)),
       memberCount: 5 + Math.floor(Math.random() * 15),
       rank: i + 1,
+      previousRank: i + 1 + (Math.random() > 0.5 ? Math.floor(Math.random() * 3) : -Math.floor(Math.random() * 2)),
     }));
     result.teamRankings = teamRankings;
   }

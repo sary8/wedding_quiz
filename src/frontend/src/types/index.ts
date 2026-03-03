@@ -37,6 +37,7 @@ export type TeamRankingEntry = {
   totalScore: number;
   memberCount: number;
   rank: number;
+  previousRank?: number;
 };
 
 export type ParticipantInfo = {
