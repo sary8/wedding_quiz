@@ -100,12 +100,12 @@
     color: #78350F;
   }
   .bg-medal-silver {
-    background: linear-gradient(135deg, #c0c0c0, #e0e0e0);
-    color: #1a1a2e;
+    background: linear-gradient(135deg, #e8e8f0, #f0f0f8);
+    color: #374151;
   }
   .bg-medal-bronze {
-    background: linear-gradient(135deg, #cd7f32, #d4a574);
-    color: #fff;
+    background: linear-gradient(135deg, #f0d9b5, #f5e6d0);
+    color: #6b4c2a;
   }
 }
 

@@ -36,9 +36,9 @@ const MEDAL_CLASSES: Record<number, string> = {
 };
 
 const FINAL_MEDAL_CLASSES: Record<number, string> = {
-  1: "bg-medal-gold border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]",
-  2: "bg-medal-silver border-2 border-gray-400 shadow-[0_0_8px_rgba(156,163,175,0.3)]",
-  3: "bg-medal-bronze border-2 border-amber-700 shadow-[0_0_8px_rgba(180,83,9,0.3)]",
+  1: "bg-medal-gold shadow-[0_0_12px_rgba(245,158,11,0.3)]",
+  2: "bg-medal-silver shadow-[0_0_8px_rgba(156,163,175,0.3)]",
+  3: "bg-medal-bronze shadow-[0_0_8px_rgba(180,83,9,0.3)]",
 };
 
 const PASTEL_BORDER_CLASSES = [
@@ -235,7 +235,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       if (count >= autoCount) return;
       count++;
       setFinalVisibleCount(count);
-      setTimeout(showNext, 800);
+      setTimeout(showNext, 1500);
     }
 
     const initTimer = setTimeout(showNext, 300);
@@ -523,7 +523,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
   const isFinal = variant === "final";
   const pastelBorder = `border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]}`;
   const bg = highlight
-    ? highlight
+    ? `${highlight} ${pastelBorder}`
     : isFinal
       ? `bg-white/90 ${pastelBorder} shadow-sm`
       : `bg-white/70 ${pastelBorder}`;
