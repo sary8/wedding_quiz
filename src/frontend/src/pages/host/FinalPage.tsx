@@ -429,7 +429,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       {phase === "finalReveal" ? (
         <>
-          <div className="flex-1 flex flex-col justify-end max-w-4xl mx-auto w-full min-h-0">
+          <div className="flex-1 flex flex-col justify-end max-w-3xl mx-auto w-full min-h-0">
             {visibleFinal.map((entry) => (
               <motion.div
                 key={entry.participantId}
@@ -490,7 +490,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
               </div>
             </div>
           ) : (
-            <div className={`flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
+            <div className={`flex-1 flex flex-col max-w-3xl mx-auto w-full min-h-0 transition-opacity duration-300 ${batchFading ? "opacity-0" : "opacity-100"}`}>
               <div style={{ flex: leftCol.length - visibleLeftCount }} />
               {visibleLeftEntries.map((entry) => (
                 <div key={entry.participantId} className="flex-1 flex items-center min-h-0">
@@ -528,8 +528,8 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       ? `bg-white/90 ${pastelBorder} shadow-sm`
       : `bg-white/70 ${pastelBorder}`;
   return (
-    <div className={`flex items-center w-full rounded-lg motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5" : "gap-2 px-3"}`}>
-      <span className={`${isFinal ? "w-10 text-lg" : "w-8 text-sm"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
+    <div className={`flex items-center w-full rounded-lg border-b border-gray-200/40 motion-safe:animate-batch-row-in ${bg} ${isFinal ? "gap-3 px-5" : "gap-2 px-3"}`}>
+      <span className={`${isFinal ? "w-10 text-xl" : "w-8 text-base"} font-semibold text-gray-400 text-center [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.rank}
       </span>
       {entry.selfieUrl ? (
@@ -542,17 +542,17 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
           loading="lazy"
         />
       ) : (
-        <div className={`${isFinal ? "w-12 h-12 mr-1 text-lg" : "w-9 h-9 text-sm"} rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center font-bold text-gray-900 shrink-0`}>
+        <div className={`${isFinal ? "w-12 h-12 mr-1 text-xl" : "w-9 h-9 text-base"} rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center font-bold text-gray-900 shrink-0`}>
           {entry.nickname?.[0] || "?"}
         </div>
       )}
-      <span className={`flex-1 ${isFinal ? "text-2xl" : "text-lg"} font-bold text-gray-800 truncate min-w-0`}>
+      <span className={`flex-1 ${isFinal ? "text-3xl" : "text-xl"} font-bold text-gray-800 truncate min-w-0`}>
         {entry.nickname}
       </span>
-      <span className={`${isFinal ? "text-lg" : "text-sm"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
+      <span className={`${isFinal ? "text-xl" : "text-base"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
         {entry.totalScore.toLocaleString()} pts
       </span>
-      <span className={`${isFinal ? "text-xs" : "text-[11px]"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
+      <span className={`${isFinal ? "text-sm" : "text-xs"} font-medium text-gray-500 text-right [font-variant-numeric:tabular-nums] shrink-0`}>
         {(entry.averageResponseTimeMs / 1000).toFixed(1)}s
       </span>
     </div>
