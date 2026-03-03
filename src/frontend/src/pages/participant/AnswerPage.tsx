@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { CheckCircle2 } from "lucide-react";
 import type { QuestionData } from "../../types";
 import { ChoiceButton } from "../../components/quiz/ChoiceButton";
 import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
@@ -48,7 +47,10 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900" role="status" aria-live="polite">
         <div className="mb-4 text-green-600" aria-hidden="true">
-          <CheckCircle2 size={64} strokeWidth={1.5} />
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
         </div>
         <p className="text-2xl font-bold">回答済み</p>
         <p className="text-base text-gray-600 mt-2">結果をお待ちください…</p>

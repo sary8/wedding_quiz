@@ -110,6 +110,7 @@
 }
 
 /* 最終結果発表タイトル: ゴールドメタリックグラデーション */
+@layer components {
   .title-final-reveal {
     font-weight: 700;
     background: linear-gradient(135deg, #CA8A04 0%, #FDE68A 40%, #CA8A04 60%, #FEF3C7 100%);

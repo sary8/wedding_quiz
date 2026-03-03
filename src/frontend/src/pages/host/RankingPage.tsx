@@ -23,6 +23,17 @@ const PASTEL_BG_CLASSES = [
   "bg-choice-pastel-amber/40",
 ];
 
+// framer-motion アニメーション定数（インラインオブジェクト回避）
+const MOTION_TEAM_INITIAL = { opacity: 0, x: -30 } as const;
+const MOTION_TEAM_ANIMATE = { opacity: 1, x: 0 } as const;
+const MOTION_TEAM_TRANSITION = { type: "spring", stiffness: 80, damping: 15 } as const;
+const MOTION_TEAM_BAR_INITIAL = { width: 0 } as const;
+const MOTION_BAR_TRANSITION = { type: "spring", stiffness: 60, damping: 15 } as const;
+const MOTION_ENTRY_INITIAL = { opacity: 0, x: -50 } as const;
+const MOTION_ENTRY_ANIMATE = { opacity: 1, x: 0 } as const;
+const MOTION_ENTRY_TRANSITION = { type: "spring", stiffness: 80, damping: 15, duration: 1.5 } as const;
+const MOTION_INSTANT = { duration: 0 } as const;
+
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false }: Props) {
   const top10 = useMemo(() => data?.rankings.slice(0, 10) ?? [], [data]);
   const maxScore = useMemo(() => top10.reduce((max, r) => Math.max(max, r.totalScore), 1), [top10]);
@@ -50,18 +61,18 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
               return (
                 <motion.div
                   key={team.teamId}
-                  initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80, damping: 15 }}
+                  initial={prefersReducedMotion ? false : MOTION_TEAM_INITIAL}
+                  animate={MOTION_TEAM_ANIMATE}
+                  transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_TEAM_TRANSITION}
                   className="flex items-center gap-2"
                 >
                   <span className="w-10 text-2xl lg:text-3xl font-bold text-center [font-variant-numeric:tabular-nums]">{team.rank}</span>
                   <span className="w-28 md:w-36 text-lg md:text-xl font-bold truncate">{team.teamName}</span>
                   <div className="flex-1 h-10 lg:h-12 bg-amber-100 rounded-lg overflow-hidden relative">
                     <motion.div
-                      initial={prefersReducedMotion ? false : { width: 0 }}
+                      initial={prefersReducedMotion ? false : MOTION_TEAM_BAR_INITIAL}
                       animate={{ width: `${barWidth}%` }}
-                      transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 60, damping: 15 }}
+                      transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
                       className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">
@@ -87,9 +98,9 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
               <motion.div
                 key={entry.participantId}
                 layout={!prefersReducedMotion}
-                initial={prefersReducedMotion ? false : { opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80, damping: 15, duration: 1.5 }}
+                initial={prefersReducedMotion ? false : MOTION_ENTRY_INITIAL}
+                animate={MOTION_ENTRY_ANIMATE}
+                transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_ENTRY_TRANSITION}
                 className="flex items-center gap-2 md:gap-3"
               >
                 {/* 順位 */}
@@ -119,9 +130,9 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 {/* スコアバー */}
                 <div className="flex-1 h-12 lg:h-14 bg-primary-light rounded-lg overflow-hidden relative">
                   <motion.div
-                    initial={prefersReducedMotion ? false : { width: 0 }}
+                    initial={prefersReducedMotion ? false : MOTION_TEAM_BAR_INITIAL}
                     animate={{ width: `${barWidth}%` }}
-                    transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 60, damping: 15 }}
+                    transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
                     className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg lg:text-2xl font-bold drop-shadow [font-variant-numeric:tabular-nums]">

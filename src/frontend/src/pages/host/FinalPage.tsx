@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { FinalResultData, FinalRankingEntry } from "../../types";
 
@@ -54,6 +54,18 @@ const PASTEL_BG_CLASSES = [
   "bg-choice-pastel-mint/40",
   "bg-choice-pastel-amber/40",
 ];
+
+// framer-motion アニメーション定数（インラインオブジェクト回避）
+const MOTION_TEAM_INITIAL = { opacity: 0, scale: 0.8 } as const;
+const MOTION_TEAM_ANIMATE = { opacity: 1, scale: 1 } as const;
+const MOTION_TEAM_TRANSITION = { type: "spring", stiffness: 100, damping: 15 } as const;
+const MOTION_INSTANT = { duration: 0 } as const;
+const MOTION_DONE_INITIAL = { scale: 0 } as const;
+const MOTION_DONE_ANIMATE = { scale: 1 } as const;
+const MOTION_DONE_TRANSITION = { type: "spring", stiffness: 80 } as const;
+const MOTION_GROUP_INITIAL = { opacity: 0, y: 20 } as const;
+const MOTION_GROUP_ANIMATE = { opacity: 1, y: 0 } as const;
+const MOTION_GROUP_TRANSITION = { delay: 1 } as const;
 
 function computeBatches(rankings: FinalRankingEntry[]): Batch[] {
   const fastEntries = rankings.filter((r) => r.rank > 10).sort((a, b) => a.rank - b.rank);
@@ -298,9 +310,9 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
                   <motion.div
                     key={team.teamId}
                     layout={!prefersReducedMotion}
-                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
+                    initial={prefersReducedMotion ? false : MOTION_TEAM_INITIAL}
+                    animate={MOTION_TEAM_ANIMATE}
+                    transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_TEAM_TRANSITION}
                     className={[
                       "flex items-center gap-4 rounded-2xl",
                       isWinner
@@ -334,9 +346,9 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     return (
       <div className={`h-[100dvh] flex flex-col items-center justify-center relative ${MEDAL_CLASSES[1]}`}>
         <motion.div
-          initial={prefersReducedMotion ? false : { scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 80 }}
+          initial={prefersReducedMotion ? false : MOTION_DONE_INITIAL}
+          animate={MOTION_DONE_ANIMATE}
+          transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_DONE_TRANSITION}
           className="text-5xl md:text-8xl font-extrabold mb-4"
         >
           第1位
@@ -497,7 +509,7 @@ type BatchRowProps = {
   variant?: "batch" | "final";
 };
 
-function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
+const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
   const isFinal = variant === "final";
   const bg = highlight
     ? highlight
@@ -530,7 +542,7 @@ function BatchRow({ entry, highlight, variant = "batch" }: BatchRowProps) {
       </span>
     </div>
   );
-}
+});
 
 // ========== 紙吹雪ヘルパー ==========
 
@@ -629,9 +641,9 @@ function GroupPhotoView({ rankings, onReplay, onCloseGame, isDisplay, prefersRed
 
       {!isDisplay && (onReplay || onCloseGame) && (
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
+          initial={prefersReducedMotion ? false : MOTION_GROUP_INITIAL}
+          animate={MOTION_GROUP_ANIMATE}
+          transition={MOTION_GROUP_TRANSITION}
           className="absolute bottom-8 flex gap-4 z-10"
         >
           {onReplay && (
@@ -663,7 +675,7 @@ type GroupAvatarProps = {
   index: number;
 };
 
-function GroupAvatarBubble({ entry, index }: GroupAvatarProps) {
+const GroupAvatarBubble = memo(function GroupAvatarBubble({ entry, index }: GroupAvatarProps) {
   const borderClass = PASTEL_BORDER_CLASSES[index % PASTEL_BORDER_CLASSES.length];
   const bgClass = PASTEL_BG_CLASSES[index % PASTEL_BG_CLASSES.length];
 
@@ -685,4 +697,4 @@ function GroupAvatarBubble({ entry, index }: GroupAvatarProps) {
       )}
     </div>
   );
-}
+});

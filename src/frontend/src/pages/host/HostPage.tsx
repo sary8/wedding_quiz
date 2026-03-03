@@ -438,7 +438,7 @@ export function HostPage() {
   })();
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white"><p className="text-lg text-gray-600">読み込み中…</p></div>}>
       {isProcessing && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/20 pointer-events-none">
           <svg className="animate-spin h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" aria-label="処理中">
