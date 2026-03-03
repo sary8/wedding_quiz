@@ -85,16 +85,16 @@ export function FinalDemoPage() {
   return (
     <div className="relative">
       {/* コントロールパネル */}
-      <div className="fixed top-2 right-2 z-50 bg-black/70 text-white text-xs rounded-lg px-3 py-2 flex flex-col gap-1">
+      <nav aria-label="デモ操作パネル" className="fixed top-2 right-2 z-50 bg-black/70 text-white text-xs rounded-lg px-3 py-2 flex flex-col gap-1">
         <span>{count}人 {teamMode ? "/ チーム戦" : ""}</span>
         <button
           type="button"
           onClick={handleReset}
-          className="bg-white/20 rounded px-2 py-1 hover:bg-white/30 cursor-pointer"
+          className="bg-white/20 rounded px-3 py-2 min-h-[44px] hover:bg-white/30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           リセット
         </button>
-      </div>
+      </nav>
 
       <FinalPage
         key={key}
