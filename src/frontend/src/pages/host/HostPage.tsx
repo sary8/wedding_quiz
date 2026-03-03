@@ -267,6 +267,7 @@ export function HostPage() {
 
   const handleEndGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
+    if (!window.confirm("ゲームを終了して最終結果を表示しますか？")) return;
     setIsProcessing(true);
     emit("endGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
@@ -290,6 +291,7 @@ export function HostPage() {
 
   const handleCloseGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
+    if (!window.confirm("ルームを閉じますか？参加者全員が切断されます。")) return;
     setIsProcessing(true);
     emit("closeGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
@@ -324,15 +326,16 @@ export function HostPage() {
 
   // エラーバナー
   const errorBanner = error ? (
-    <button
-      type="button"
-      onClick={() => setError(null)}
-      role="alert"
-      aria-label="エラーを閉じる"
-      className="fixed top-0 left-0 right-0 px-6 py-3 bg-red-500 text-white text-sm text-center z-50 w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
-    >
-      {error}（タップで閉じる）
-    </button>
+    <div role="alert" className="fixed top-0 left-0 right-0 z-50">
+      <button
+        type="button"
+        onClick={() => setError(null)}
+        aria-label="エラーを閉じる"
+        className="px-6 py-3 bg-red-500 text-white text-sm text-center w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
+      >
+        {error}（タップで閉じる）
+      </button>
+    </div>
   ) : null;
 
   const content = (() => {
@@ -355,7 +358,7 @@ export function HostPage() {
         return (
           <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
             <p className="text-2xl font-bold mb-4">ゲーム開始</p>
-            <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-scale-pulse">
+            <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-scale-pulse" aria-live="polite" aria-atomic="true">
               {countdownValue > 0 ? countdownValue : ""}
             </p>
           </div>

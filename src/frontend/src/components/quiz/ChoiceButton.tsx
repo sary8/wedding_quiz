@@ -29,6 +29,7 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
 
   return (
     <button
+      type="button"
       className={cn(
         "rounded-xl text-gray-900 font-bold flex items-center justify-center p-3 min-h-[44px]",
         "motion-safe:transition-[opacity,transform,box-shadow] motion-safe:duration-200",
@@ -49,6 +50,8 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, color, isSelect
             <img
               src={safeImageUrl}
               alt={choice || `選択肢${choiceIndex}`}
+              width={120}
+              height={120}
               className="max-w-full max-h-full object-cover rounded-lg"
             />
           </div>

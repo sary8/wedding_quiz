@@ -24,10 +24,11 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(
-  ({ variant = "primary", size = "md", fullWidth = false, className, children, ...props }, ref) => {
+  ({ variant = "primary", size = "md", fullWidth = false, className, children, type = "button", ...props }, ref) => {
     return (
       <button
         ref={ref}
+        type={type}
         className={cn(
           "font-bold transition-[opacity,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50",
           "disabled:cursor-not-allowed",

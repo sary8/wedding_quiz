@@ -67,6 +67,8 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             <img
               src={safeMediaUrl}
               alt={question.mediaAltText || "問題の画像"}
+              width={600}
+              height={400}
               className="w-full h-full object-cover"
             />
           </div>
@@ -107,7 +109,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
                 {imageUrl ? (
                   <div className="flex items-center gap-4 w-full h-full">
                     <div className={cn("shrink-0 overflow-hidden rounded-lg", isDisplay ? "h-[80%] w-auto aspect-square" : "w-28 h-28 lg:w-36 lg:h-36")}>
-                      <img src={imageUrl} alt={choice ? `${choice}の画像` : `選択肢${i + 1}の画像`} className="w-full h-full object-cover" />
+                      <img src={imageUrl} alt={choice ? `${choice}の画像` : `選択肢${i + 1}の画像`} width={144} height={144} className="w-full h-full object-cover" />
                     </div>
                     {choice && <span className="truncate">{choice}</span>}
                   </div>

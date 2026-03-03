@@ -12,7 +12,7 @@ const FinalDemoPage = lazy(() => import("./pages/host/FinalDemoPage").then((m) =
 
 function LoadingFallback() {
   return (
-    <div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white">
+    <div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white" role="status">
       <p className="text-lg text-gray-600">読み込み中…</p>
     </div>
   );

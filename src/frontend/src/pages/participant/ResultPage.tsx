@@ -29,6 +29,8 @@ export function ResultPage({ result, question }: Props) {
               <img
                 src={safeCorrectImageUrl}
                 alt={correctAnswerText || "正解の画像"}
+                width={64}
+                height={64}
                 className="h-16 w-16 object-cover rounded-lg mx-auto mb-2"
               />
             )}
@@ -88,6 +90,8 @@ export function ResultPage({ result, question }: Props) {
             <img
               src={safeCorrectImageUrl}
               alt={correctAnswerText || "正解の画像"}
+              width={64}
+              height={64}
               className="h-16 w-16 object-cover rounded-lg mx-auto mb-2"
             />
           )}

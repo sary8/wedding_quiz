@@ -102,6 +102,8 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
                       <img
                         src={safeChoiceImageUrl}
                         alt={choiceText}
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover"
                       />
                     </div>

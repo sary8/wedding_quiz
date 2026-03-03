@@ -107,7 +107,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
           <p className="text-sm text-sage-text/80 mb-3">アイコン</p>
 
           {cameraError !== null ? (
-            <div className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
+            <div role="alert" className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
               {cameraError}
             </div>
           ) : null}
@@ -145,7 +145,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
               </div>
 
               {captureError !== null ? (
-                <p className="mt-2 text-sm text-red-500">{captureError}</p>
+                <p role="alert" className="mt-2 text-sm text-red-500">{captureError}</p>
               ) : null}
               <button
                 type="button"
