@@ -4,15 +4,30 @@ import type { FinalResultData } from "../../types";
 type Props = {
   data: FinalResultData | null;
   participantId: number | null;
+  resultsRevealed: boolean;
 };
 
-export function ParticipantFinalPage({ data, participantId }: Props) {
+export function ParticipantFinalPage({ data, participantId, resultsRevealed }: Props) {
   const myResult = useMemo(
     () => (data && participantId) ? data.rankings.find((r) => r.participantId === participantId) : null,
     [data, participantId],
   );
 
   if (!data || !participantId || !myResult) return null;
+
+  if (!resultsRevealed) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white p-6">
+        <h2 className="font-script text-4xl text-primary mb-4 [text-wrap:balance]">最終結果発表中...</h2>
+        <div className="flex items-center gap-3 mb-8 w-40">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
+          <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent/60" aria-hidden="true" />
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
+        </div>
+        <p className="text-lg text-sage-text/70 text-center">スクリーンをご覧ください</p>
+      </div>
+    );
+  }
 
   const accuracyPercent = myResult.totalQuestions > 0
     ? Math.round((myResult.correctCount / myResult.totalQuestions) * 100)

@@ -56,6 +56,7 @@ export type ServerToClientEvents = {
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
   revealNextRank: () => void;
   rankingPageChanged: (data: { page: number; mode: RankingViewMode }) => void;
+  showParticipantResults: () => void;
 };
 
 // Socket.io client → server events
@@ -112,6 +113,10 @@ export type ClientToServerEvents = {
   ) => void;
   setRankingPage: (
     data: { roomCode: string; hostSecret: string; page: number; mode: RankingViewMode },
+    callback: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  showParticipantResults: (
+    data: { roomCode: string; hostSecret: string },
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
 };

@@ -319,6 +319,73 @@ describe("watchRoom", () => {
   });
 });
 
+describe("showParticipantResults", () => {
+  it("認証失敗 → エラー返却", async () => {
+    vi.mocked(quizService.verifyHostSecret).mockResolvedValue(undefined);
+
+    const client = await connectClient();
+    try {
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "showParticipantResults", { roomCode: "123456", hostSecret: "wrong" },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("認証エラー");
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("認証成功 → ルーム内にshowParticipantResultsをリレー", async () => {
+    vi.mocked(quizService.verifyHostSecret).mockResolvedValue({
+      id: 1,
+      room_code: "123456",
+      host_secret: "secret",
+      title: "テスト",
+      status: "finished",
+      current_question_index: 0,
+      team_mode: false,
+      created_at: new Date().toISOString(),
+    });
+
+    const host = await connectClient();
+    const viewer = await connectClient();
+    try {
+      // viewerをルームに参加させる
+      vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+        id: 1,
+        room_code: "123456",
+        host_secret: "secret",
+        title: "テスト",
+        status: "finished",
+        current_question_index: 0,
+        team_mode: false,
+        created_at: new Date().toISOString(),
+      });
+      vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
+      await emitWithCallback<{ success: boolean }>(viewer, "watchRoom", { roomCode: "123456" });
+
+      // viewerがshowParticipantResultsを受信するか確認
+      const resultPromise = new Promise<void>((resolve) => {
+        viewer.on("showParticipantResults", () => resolve());
+      });
+
+      const res = await emitWithCallback<{ success: boolean }>(
+        host, "showParticipantResults", { roomCode: "123456", hostSecret: "secret" },
+      );
+      expect(res.success).toBe(true);
+
+      // viewerがイベントを受信するまで待機（タイムアウト1秒）
+      await Promise.race([
+        resultPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1000)),
+      ]);
+    } finally {
+      host.disconnect();
+      viewer.disconnect();
+    }
+  });
+});
+
 describe("socket rate limiting", () => {
   it("joinRoom 21回目でレート制限エラー", async () => {
     // joinRoom は roomCode バリデーション前にレート制限チェック

@@ -20,6 +20,7 @@ type Props = {
   onRevealNext?: () => void;
   onDrumRoll?: () => void;
   onSpotlight?: (rank: number) => void;
+  onShowParticipantResults?: () => void;
 };
 
 type RevealPhase = "teamReveal" | "batchScroll" | "finalReveal" | "done" | "group";
@@ -93,7 +94,7 @@ function seededRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigger, onRevealNext, onDrumRoll, onSpotlight }: Props) {
+export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigger, onRevealNext, onDrumRoll, onSpotlight, onShowParticipantResults }: Props) {
   const hasTeamRankings = (data?.teamRankings?.length ?? 0) > 0;
   const [phase, setPhase] = useState<RevealPhase>(hasTeamRankings ? "teamReveal" : "batchScroll");
   const prefersReducedMotion = useReducedMotion();
@@ -115,6 +116,8 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   onDrumRollRef.current = onDrumRoll;
   const onSpotlightRef = useRef(onSpotlight);
   onSpotlightRef.current = onSpotlight;
+  const onShowParticipantResultsRef = useRef(onShowParticipantResults);
+  onShowParticipantResultsRef.current = onShowParticipantResults;
   const prevRevealTriggerRef = useRef(revealTrigger ?? 0);
 
   const { rankings, batches, finalEntries } = useMemo(() => {
@@ -288,9 +291,10 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     prevRevealTriggerRef.current = current;
   }, [revealTrigger, phase, revealNextFinal, isDisplay]);
 
-  // --- done → 5秒後に group フェーズへ自動遷移 ---
+  // --- done → 参加者に結果公開 + 5秒後に group フェーズへ自動遷移 ---
   useEffect(() => {
     if (phase !== "done") return;
+    onShowParticipantResultsRef.current?.();
     const timer = setTimeout(() => setPhase("group"), 5000);
     return () => clearTimeout(timer);
   }, [phase]);

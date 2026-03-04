@@ -37,6 +37,7 @@ type ServerToClientEvents = {
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
   revealNextRank: () => void;
   rankingPageChanged: (data: { page: number; mode: RankingViewMode }) => void;
+  showParticipantResults: () => void;
 };
 
 type ClientToServerEvents = {
@@ -90,6 +91,10 @@ type ClientToServerEvents = {
   ) => void;
   setRankingPage: (
     data: { roomCode: string; hostSecret: string; page: number; mode: RankingViewMode },
+    cb: (res: { success: boolean; error?: string }) => void
+  ) => void;
+  showParticipantResults: (
+    data: { roomCode: string; hostSecret: string },
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
 };

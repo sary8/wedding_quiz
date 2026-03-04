@@ -295,6 +295,11 @@ export function HostPage() {
     emit("setRankingPage", { roomCode, hostSecret, page, mode }, () => {});
   }, [roomCode, hostSecret, emit]);
 
+  const handleShowParticipantResults = useCallback(() => {
+    if (!roomCode) return;
+    emit("showParticipantResults", { roomCode, hostSecret }, () => {});
+  }, [roomCode, hostSecret, emit]);
+
   const handleCloseGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
     if (!window.confirm("ルームを閉じますか？参加者全員が切断されます。")) return;
@@ -410,7 +415,7 @@ export function HostPage() {
         return (
           <>
             {errorBanner}
-            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onRevealNext={handleRevealNext} onDrumRoll={playDrumRoll} onSpotlight={playFanfare} />
+            <FinalPage data={finalData} onReplay={handleReplay} onCloseGame={handleCloseGame} onRevealNext={handleRevealNext} onDrumRoll={playDrumRoll} onSpotlight={playFanfare} onShowParticipantResults={handleShowParticipantResults} />
           </>
         );
       case "closed":

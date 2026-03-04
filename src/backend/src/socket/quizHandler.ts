@@ -681,6 +681,28 @@ export function setupQuizSocket(io: QuizIO) {
       }
     });
 
+    // === ホスト: 参加者に個人結果を公開 ===
+    socket.on("showParticipantResults", async (data, callback) => {
+      try {
+        const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
+        if (!quiz) {
+          logger.warn("showParticipantResults auth failed", { roomCode: data.roomCode });
+          callback({ success: false, error: "認証エラー" });
+          return;
+        }
+
+        socket.to(data.roomCode).emit("showParticipantResults");
+
+        logger.info("showParticipantResults relayed", { roomCode: data.roomCode });
+
+        callback({ success: true });
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("showParticipantResults error", { error: err, roomCode: data.roomCode });
+        callback({ success: false, error: "参加者結果の公開に失敗しました" });
+      }
+    });
+
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {

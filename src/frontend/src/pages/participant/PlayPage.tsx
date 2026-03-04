@@ -29,6 +29,7 @@ export function PlayPage() {
   const [isJoining, setIsJoining] = useState(false);
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
+  const [resultsRevealed, setResultsRevealed] = useState(false);
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
 
   // ルーム情報取得（チームモード判定用）
@@ -98,7 +99,11 @@ export function PlayPage() {
       }),
       on("gameEnded", (data) => {
         setFinalData(data);
+        setResultsRevealed(false);
         setPhase("final");
+      }),
+      on("showParticipantResults", () => {
+        setResultsRevealed(true);
       }),
       on("quizReset", () => {
         setPhase("waiting");
@@ -108,6 +113,7 @@ export function PlayPage() {
         setQuestionResult(null);
         setRankingData(null);
         setFinalData(null);
+        setResultsRevealed(false);
         setAnswerCount(0);
       }),
       on("reconnected", (data) => {
@@ -123,6 +129,7 @@ export function PlayPage() {
           if (data.finalData) {
             setFinalData(data.finalData);
           }
+          setResultsRevealed(true);
           setPhase("final");
         }
       }),
@@ -234,7 +241,7 @@ export function PlayPage() {
     case "ranking":
       return <ParticipantRankingPage data={rankingData} participantId={participantId} />;
     case "final":
-      return <ParticipantFinalPage data={finalData} participantId={participantId} />;
+      return <ParticipantFinalPage data={finalData} participantId={participantId} resultsRevealed={resultsRevealed} />;
     case "closed":
       return <ThankYouScreen participants={closedParticipants} />;
   }
