@@ -1,21 +1,35 @@
 import { db, schema } from "../db/index.js";
-import { eq, and, lte } from "drizzle-orm";
+import { eq, and, lte, or } from "drizzle-orm";
 import { deleteQuizCompletely } from "./quizService.js";
 import { logger } from "../utils/logger.js";
 
-const CLEANUP_TTL_MS = 3_600_000; // 1時間
-const CLEANUP_INTERVAL_MS = 600_000; // 10分
+const CLEANUP_FINISHED_TTL_MS = 3_600_000;   // 1時間
+const CLEANUP_DRAFT_TTL_MS = 86_400_000;      // 24時間
+const CLEANUP_LOBBY_TTL_MS = 43_200_000;      // 12時間
+const CLEANUP_INTERVAL_MS = 600_000;           // 10分
 
 async function cleanupExpiredQuizzes(): Promise<void> {
-  const cutoff = new Date(Date.now() - CLEANUP_TTL_MS).toISOString();
+  const finishedCutoff = new Date(Date.now() - CLEANUP_FINISHED_TTL_MS).toISOString();
+  const draftCutoff = new Date(Date.now() - CLEANUP_DRAFT_TTL_MS).toISOString();
+  const lobbyCutoff = new Date(Date.now() - CLEANUP_LOBBY_TTL_MS).toISOString();
 
   const expired = await db
-    .select({ id: schema.quizzes.id })
+    .select({ id: schema.quizzes.id, status: schema.quizzes.status })
     .from(schema.quizzes)
     .where(
-      and(
-        eq(schema.quizzes.status, "finished"),
-        lte(schema.quizzes.finished_at, cutoff)
+      or(
+        and(
+          eq(schema.quizzes.status, "finished"),
+          lte(schema.quizzes.finished_at, finishedCutoff)
+        ),
+        and(
+          eq(schema.quizzes.status, "draft"),
+          lte(schema.quizzes.created_at, draftCutoff)
+        ),
+        and(
+          eq(schema.quizzes.status, "lobby"),
+          lte(schema.quizzes.created_at, lobbyCutoff)
+        )
       )
     );
 
@@ -26,7 +40,7 @@ async function cleanupExpiredQuizzes(): Promise<void> {
   for (const quiz of expired) {
     try {
       await deleteQuizCompletely(quiz.id);
-      logger.info("cleanup: deleted quiz", { quizId: quiz.id });
+      logger.info("cleanup: deleted quiz", { quizId: quiz.id, status: quiz.status });
     } catch (e) {
       const err = e as Error;
       logger.error("cleanup: failed to delete quiz", { quizId: quiz.id, error: err.message });
@@ -51,4 +65,4 @@ export function startCleanupScheduler(): void {
 }
 
 // テスト用にエクスポート
-export { cleanupExpiredQuizzes, CLEANUP_TTL_MS };
+export { cleanupExpiredQuizzes, CLEANUP_FINISHED_TTL_MS, CLEANUP_DRAFT_TTL_MS, CLEANUP_LOBBY_TTL_MS };
