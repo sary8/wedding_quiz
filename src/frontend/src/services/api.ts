@@ -307,10 +307,10 @@ export function getRoomInfo(roomCode: string) {
 }
 
 // Media
-export function uploadSelfie(base64Data: string) {
+export function uploadSelfie(base64Data: string, roomCode: string) {
   return request<{ url: string; filename: string }>("/media/selfie", {
     method: "POST",
-    body: JSON.stringify({ data: base64Data }),
+    body: JSON.stringify({ data: base64Data, roomCode }),
   });
 }
 

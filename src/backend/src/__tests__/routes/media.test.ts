@@ -2,7 +2,16 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach, afterEach } 
 import { existsSync } from "fs";
 import { writeFile, mkdir, rm, unlink } from "fs/promises";
 import { join } from "path";
+
+// quizService モック
+vi.mock("../../services/quizService.js", () => ({
+  getQuizByRoom: vi.fn(),
+}));
+
 import { mediaRoutes, deleteMediaFile } from "../../routes/media.js";
+import { getQuizByRoom } from "../../services/quizService.js";
+
+const mockGetQuizByRoom = vi.mocked(getQuizByRoom);
 
 const UPLOAD_DIR = "./uploads";
 const createdFiles: string[] = [];
@@ -27,16 +36,22 @@ function trackFile(filename: string) {
 
 describe("media routes", () => {
   describe("POST /selfie", () => {
-    it("正常なbase64 JPEG → 201、filename返却", async () => {
-      // 1x1 JPEG (smallest valid JPEG)
-      const jpegBase64 =
-        "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAFRABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AKwA//9k=";
+    // 1x1 JPEG (smallest valid JPEG)
+    const jpegBase64 =
+      "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAFRABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AKwA//9k=";
+
+    beforeEach(() => {
+      mockGetQuizByRoom.mockReset();
+    });
+
+    it("正常なbase64 JPEG + roomCode → 201、filename返却", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "lobby" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
       const data = `data:image/jpeg;base64,${jpegBase64}`;
 
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data, roomCode: "123456" }),
       });
 
       expect(res.status).toBe(201);
@@ -46,8 +61,8 @@ describe("media routes", () => {
       trackFile(body.filename);
     });
 
-    it("正常なbase64 PNG → 201、ext=png", async () => {
-      // 1x1 PNG
+    it("正常なbase64 PNG + in_progress ルーム → 201", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "in_progress" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
       const pngBase64 =
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
       const data = `data:image/png;base64,${pngBase64}`;
@@ -55,7 +70,7 @@ describe("media routes", () => {
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data, roomCode: "123456" }),
       });
 
       expect(res.status).toBe(201);
@@ -64,33 +79,86 @@ describe("media routes", () => {
       trackFile(body.filename);
     });
 
-    it("データなし → 400", async () => {
+    it("roomCode なし → 400", async () => {
+      const data = `data:image/jpeg;base64,${jpegBase64}`;
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: "" }),
+        body: JSON.stringify({ data }),
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("ルームコード");
+    });
+
+    it("存在しないルーム → 404", async () => {
+      mockGetQuizByRoom.mockResolvedValue(null);
+      const data = `data:image/jpeg;base64,${jpegBase64}`;
+      const res = await mediaRoutes.request("/selfie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data, roomCode: "999999" }),
+      });
+      expect(res.status).toBe(404);
+      const body = await res.json();
+      expect(body.error).toContain("ルームが見つかりません");
+    });
+
+    it("draft ステータスのルーム → 400", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "draft" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
+      const data = `data:image/jpeg;base64,${jpegBase64}`;
+      const res = await mediaRoutes.request("/selfie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data, roomCode: "123456" }),
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("参加を受け付けていません");
+    });
+
+    it("finished ステータスのルーム → 400", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "finished" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
+      const data = `data:image/jpeg;base64,${jpegBase64}`;
+      const res = await mediaRoutes.request("/selfie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data, roomCode: "123456" }),
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("参加を受け付けていません");
+    });
+
+    it("データなし → 400", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "lobby" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
+      const res = await mediaRoutes.request("/selfie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: "", roomCode: "123456" }),
       });
       expect(res.status).toBe(400);
     });
 
     it("不正なbase64形式 → 400", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "lobby" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: "not-a-valid-data-url" }),
+        body: JSON.stringify({ data: "not-a-valid-data-url", roomCode: "123456" }),
       });
       expect(res.status).toBe(400);
     });
 
     it("サイズ超過 → 400", async () => {
-      // base64 decodes to 3/4 of string length. Need >5MB decoded = >6.67MB base64
+      mockGetQuizByRoom.mockResolvedValue({ status: "lobby" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
       const largeData = "A".repeat(8 * 1024 * 1024);
       const data = `data:image/jpeg;base64,${largeData}`;
 
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data, roomCode: "123456" }),
       });
       expect(res.status).toBe(400);
     });
@@ -125,8 +193,6 @@ describe("media routes", () => {
     });
 
     it("パストラバーサル(..) → 400", async () => {
-      // Hono's /:filename matches single path segment, so use a filename
-      // containing ".." without path separators
       const res = await mediaRoutes.request("/..secret.jpg", {
         method: "GET",
       });
@@ -134,7 +200,6 @@ describe("media routes", () => {
     });
 
     it("パストラバーサル(\\) → 400", async () => {
-      // URL-encoded backslash (%5C) gets decoded in the filename param
       const res = await mediaRoutes.request("/test%5Cfile.jpg", {
         method: "GET",
       });
@@ -174,7 +239,6 @@ describe("media routes", () => {
 
   describe("POST /upload", () => {
     it("許可された拡張子 → 201", async () => {
-      // 有効なJPEGマジックバイト (FF D8 FF) + ダミーデータ
       const jpegBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, ...Array(20).fill(0)]);
       const file = new File(
         [jpegBytes],
@@ -193,7 +257,6 @@ describe("media routes", () => {
       const body = await res.json();
       expect(body.url).toMatch(/^\/api\/media\/.*\.jpg$/);
 
-      // ファイル名を取得してクリーンアップ用に追跡
       const filename = body.url.replace("/api/media/", "");
       trackFile(filename);
     });
@@ -216,7 +279,6 @@ describe("media routes", () => {
     });
 
     it("サイズ超過 → 400", async () => {
-      // 6MB file
       const largeBuffer = Buffer.alloc(6 * 1024 * 1024, "x");
       const file = new File([largeBuffer], "large.jpg", {
         type: "image/jpeg",
@@ -233,7 +295,6 @@ describe("media routes", () => {
     });
 
     it("拡張子と内容が不一致 → 400", async () => {
-      // .jpgだがPNGのマジックバイト
       const pngBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, ...Array(20).fill(0)]);
       const file = new File(
         [pngBytes],
@@ -320,19 +381,6 @@ describe("deleteMediaFile", () => {
 
 describe("ストレージ上限", () => {
   it("MAX_STORAGE_MB環境変数がモジュール読み込み時に評価される", async () => {
-    // 動的インポートでMAX_STORAGE_MB=0のmediaRoutesを生成してテスト
-    // 注: 現在のmediaRoutesはモジュール読み込み時に環境変数を評価するため、
-    // テストではファイルを実際に配置してストレージ使用量を超えさせる
-
-    // 上限に近づくテスト: uploadsに大きなダミーファイルを作成
-    const dummyFilename = "storage_test_dummy.bin";
-    const dummyPath = join(UPLOAD_DIR, dummyFilename);
-
-    // getStorageUsageは全ファイルのサイズを合計するので、
-    // MAX_STORAGE_BYTES(デフォルト500MB)を超えるダミーは作成せず
-    // メディアルートの関数が正しくストレージチェックを呼ぶことを間接的に検証
-
-    // upload: 小さいファイルは成功する（ストレージに余裕がある）
     const jpegBytes = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, ...Array(20).fill(0)]);
     const file = new File([jpegBytes], "test_storage.jpg", { type: "image/jpeg" });
     const formData = new FormData();

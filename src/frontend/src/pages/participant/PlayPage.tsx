@@ -151,14 +151,14 @@ export function PlayPage() {
       let selfieFileName: string | undefined;
       if (selfieData) {
         try {
-          const res = await uploadSelfie(selfieData);
+          const res = await uploadSelfie(selfieData, roomCode);
           selfieFileName = res.filename;
         } catch {
           setAnswerError("自撮りのアップロードに失敗しました。自撮りなしで参加します。");
         }
       }
 
-      const token = localStorage.getItem(`quiz_token_${roomCode}`) || undefined;
+      const token = sessionStorage.getItem(`quiz_token_${roomCode}`) || undefined;
 
       // タイムアウト: 10秒以内にサーバーから応答がなければエラー
       const joinTimeout = setTimeout(() => {
@@ -170,7 +170,7 @@ export function PlayPage() {
         clearTimeout(joinTimeout);
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
-          localStorage.setItem(`quiz_token_${roomCode}`, res.token);
+          sessionStorage.setItem(`quiz_token_${roomCode}`, res.token);
           setPhase("waiting");
         } else {
           setAnswerError(res.error || "参加に失敗しました");
