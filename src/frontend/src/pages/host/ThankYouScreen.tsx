@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { ParticipantInfo } from "../../types";
 
 type Props = {
   participants: ParticipantInfo[];
   onBackToSetup?: () => void;
+  onDeleteQuiz?: () => Promise<void>;
   isDisplay?: boolean;
 };
 
@@ -52,8 +53,10 @@ function generateFloatConfigs(participants: ParticipantInfo[]): FloatConfig[] {
   });
 }
 
-export function ThankYouScreen({ participants, onBackToSetup, isDisplay }: Props) {
+export function ThankYouScreen({ participants, onBackToSetup, onDeleteQuiz, isDisplay }: Props) {
   const prefersReducedMotion = useReducedMotion();
+  const [isPendingDelete, setIsPendingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const floatConfigs = useMemo(
     () => generateFloatConfigs(participants),
@@ -104,15 +107,57 @@ export function ThankYouScreen({ participants, onBackToSetup, isDisplay }: Props
         </div>
       )}
 
-      {/* ホストのみ: 管理画面に戻るボタン */}
-      {onBackToSetup && !isDisplay && (
-        <button
-          type="button"
-          onClick={onBackToSetup}
-          className="mt-8 px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-        >
-          管理画面に戻る
-        </button>
+      {/* ホストのみ: 操作ボタン */}
+      {!isDisplay && (onBackToSetup || onDeleteQuiz) && (
+        <div className="mt-8 flex flex-col items-center gap-3 z-10">
+          {onBackToSetup && (
+            <button
+              type="button"
+              onClick={onBackToSetup}
+              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            >
+              管理画面に戻る
+            </button>
+          )}
+          {onDeleteQuiz && !isPendingDelete && (
+            <button
+              type="button"
+              onClick={() => setIsPendingDelete(true)}
+              className="px-6 py-2 rounded-lg text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-150 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            >
+              ルームを削除
+            </button>
+          )}
+          {onDeleteQuiz && isPendingDelete && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await onDeleteQuiz();
+                  } catch {
+                    setIsPendingDelete(false);
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              >
+                {isDeleting ? "削除中…" : "本当に削除する"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPendingDelete(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+              >
+                キャンセル
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

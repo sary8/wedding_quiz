@@ -12,6 +12,7 @@ import type {
 } from "../../types";
 import { useGameSounds } from "../../hooks/useGameSounds";
 import { useBgm } from "../../hooks/useBgm";
+import { deleteQuiz } from "../../services/api";
 import { BgmControls } from "../../components/ui/BgmControls";
 import { LobbyPage } from "./LobbyPage";
 import { QuestionPage } from "./QuestionPage";
@@ -323,6 +324,11 @@ export function HostPage() {
     navigate(`/host/setup?view=edit&quizId=${quizId}`);
   }, [navigate, quizId]);
 
+  const handleDeleteQuiz = useCallback(async () => {
+    await deleteQuiz(quizId);
+    navigate("/host/setup");
+  }, [quizId, navigate]);
+
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
   // 接続エラー表示
@@ -423,6 +429,7 @@ export function HostPage() {
           <ThankYouScreen
             participants={closedParticipants}
             onBackToSetup={handleBackToSetup}
+            onDeleteQuiz={handleDeleteQuiz}
           />
         );
       case "recovering":
