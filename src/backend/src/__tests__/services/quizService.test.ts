@@ -14,6 +14,10 @@ vi.mock("../../db/index.js", async () => {
   return { db: testDb.db, schema: testDb.testSchema };
 });
 
+vi.mock("../../routes/media.js", () => ({
+  deleteMediaFile: vi.fn().mockResolvedValue(undefined),
+}));
+
 const {
   verifyHostSecret,
   openRoom,
@@ -34,6 +38,7 @@ const {
   getQuizByRoom,
   getParticipant,
   replayQuiz,
+  deleteQuizCompletely,
 } = await import("../../services/quizService.js");
 
 import { eq } from "drizzle-orm";
@@ -1376,6 +1381,42 @@ describe("quizService", () => {
       const teams = await getTeams(quiz.id);
       expect(teams).toHaveLength(1);
       expect(teams[0].name).toBe("チームX");
+    });
+  });
+
+  describe("deleteQuizCompletely", () => {
+    it("クイズと関連データを完全に削除する", async () => {
+      const quiz = await createTestQuiz({ status: "finished" });
+      const question = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      const participant = await createTestParticipant(quiz.id, {
+        nickname: "削除対象",
+        token: "delete-test-token",
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: participant.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1000,
+      });
+
+      const result = await deleteQuizCompletely(quiz.id);
+      expect(result).toBe(true);
+
+      // クイズが削除されていることを確認
+      const remainingQuiz = await db.query.quizzes.findFirst({
+        where: eq(schema.quizzes.id, quiz.id),
+      });
+      expect(remainingQuiz).toBeUndefined();
+
+      // 関連データもカスケード削除されていることを確認
+      const remainingParticipants = await db.select().from(schema.participants);
+      expect(remainingParticipants).toHaveLength(0);
+    });
+
+    it("存在しないクイズIDの場合はfalseを返す", async () => {
+      const result = await deleteQuizCompletely(99999);
+      expect(result).toBe(false);
     });
   });
 });
