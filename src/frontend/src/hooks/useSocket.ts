@@ -8,6 +8,7 @@ import type {
   RankingData,
   FinalResultData,
   QuizStatus,
+  RankingViewMode,
 } from "../types";
 
 type ServerToClientEvents = {
@@ -35,7 +36,7 @@ type ServerToClientEvents = {
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
   revealNextRank: () => void;
-  rankingPageChanged: (data: { page: number; mode: import("../types").RankingViewMode }) => void;
+  rankingPageChanged: (data: { page: number; mode: RankingViewMode }) => void;
 };
 
 type ClientToServerEvents = {
@@ -88,7 +89,7 @@ type ClientToServerEvents = {
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
   setRankingPage: (
-    data: { roomCode: string; hostSecret: string; page: number; mode: import("../types").RankingViewMode },
+    data: { roomCode: string; hostSecret: string; page: number; mode: RankingViewMode },
     cb: (res: { success: boolean; error?: string }) => void
   ) => void;
 };

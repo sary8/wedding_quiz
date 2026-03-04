@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { RankingPage } from "./RankingPage";
-import type { RankingData, RankingEntry, TeamRankingEntry } from "../../types";
+import type { RankingData, RankingEntry, TeamRankingEntry, RankingViewMode } from "../../types";
 
 const NAMES = [
   "ゆうき", "あかりんりん", "けんた", "みさきちゃん大好", "そうた", "はるか", "りく", "さくら",
@@ -57,7 +57,7 @@ export function RankingDemoPage() {
   const [viewMode, setViewMode] = useState<"host" | "display">("host");
   const [key, setKey] = useState(0);
   const [displayPage, setDisplayPage] = useState(0);
-  const [displayMode, setDisplayMode] = useState<import("../../types").RankingViewMode>("individual");
+  const [displayMode, setDisplayMode] = useState<RankingViewMode>("individual");
 
   const mockData = useMemo(() => generateMockRanking(teamMode), [teamMode, key]);
 
@@ -74,7 +74,7 @@ export function RankingDemoPage() {
     setDisplayMode("individual");
   }, []);
 
-  const handleRankingViewChange = useCallback((page: number, mode: import("../../types").RankingViewMode) => {
+  const handleRankingViewChange = useCallback((page: number, mode: RankingViewMode) => {
     setDisplayPage(page);
     setDisplayMode(mode);
   }, []);

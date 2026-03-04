@@ -1,7 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import type { RankingData } from "../../types";
-import type { RankingViewMode } from "../../types";
+import type { RankingData, RankingViewMode } from "../../types";
 
 const ITEMS_PER_PAGE = 10;
 
