@@ -14,6 +14,15 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
   );
   const top5 = useMemo(() => data ? data.rankings.slice(0, 5) : [], [data]);
 
+  // 問題別ランキングの自分のエントリ
+  const questionRanking = data?.questionRanking;
+  const myQuestionEntry = useMemo(
+    () => (questionRanking && participantId)
+      ? questionRanking.rankings.find((r) => r.participantId === participantId)
+      : null,
+    [questionRanking, participantId],
+  );
+
   if (!data) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900 gap-3">
@@ -37,6 +46,17 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
                 {t.teamName}: 第{t.rank}位（{t.totalScore.toLocaleString()}点）
               </p>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 問題別の自分の結果 */}
+      {questionRanking && myQuestionEntry && (
+        <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 px-4">
+          <div className="px-5 py-2.5 bg-primary-light/60 rounded-xl border border-primary/20">
+            <p className="text-sm font-bold text-primary-dark text-center">
+              Q{questionRanking.questionIndex + 1}の結果: 第{myQuestionEntry.rank}位（{myQuestionEntry.scoreAwarded}点）
+            </p>
           </div>
         </div>
       )}

@@ -1,10 +1,9 @@
 import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { RankingData } from "../../types";
+import type { RankingViewMode } from "../../types";
 
 const ITEMS_PER_PAGE = 10;
-
-type RankingViewMode = "individual" | "team";
 
 type Props = {
   data: RankingData | null;
@@ -44,26 +43,45 @@ const MOTION_INSTANT = { duration: 0 } as const;
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false, rankingPage: externalPage, rankingMode: externalMode, onRankingViewChange }: Props) {
   const teamRankings = data?.teamRankings ?? [];
   const hasTeams = teamRankings.length > 0;
+  const questionRanking = data?.questionRanking;
+  const hasQuestionRanking = !!questionRanking;
 
   // モード管理: ホストはローカルstate、Displayは外部propで制御
-  const [localMode, setLocalMode] = useState<RankingViewMode>("individual");
+  const [localMode, setLocalMode] = useState<RankingViewMode>(
+    hasQuestionRanking ? "questionIndividual" : "individual"
+  );
   const currentMode = isDisplay ? (externalMode ?? "individual") : localMode;
+
+  // 問題別ステップかどうか
+  const isQuestionStep = currentMode === "questionIndividual" || currentMode === "questionTeam";
 
   // ページ管理（個人・チームそれぞれ）
   const [individualPage, setIndividualPage] = useState(0);
   const [teamPage, setTeamPage] = useState(0);
+  const [questionIndividualPage, setQuestionIndividualPage] = useState(0);
+  const [questionTeamPage, setQuestionTeamPage] = useState(0);
   const currentPage = isDisplay
     ? (externalPage ?? 0)
-    : (currentMode === "individual" ? individualPage : teamPage);
+    : (currentMode === "individual" ? individualPage
+      : currentMode === "team" ? teamPage
+      : currentMode === "questionIndividual" ? questionIndividualPage
+      : questionTeamPage);
 
   // エントリ計算
   const allRankings = data?.rankings ?? [];
+  const questionIndividualRankings = questionRanking?.rankings ?? [];
+  const questionTeamRankings = questionRanking?.teamRankings ?? [];
+
   const totalIndividual = allRankings.length;
   const totalTeam = teamRankings.length;
-  const totalIndividualPages = Math.max(1, Math.ceil(totalIndividual / ITEMS_PER_PAGE));
-  const totalTeamPages = Math.max(1, Math.ceil(totalTeam / ITEMS_PER_PAGE));
-  const totalPages = currentMode === "individual" ? totalIndividualPages : totalTeamPages;
-  const totalItems = currentMode === "individual" ? totalIndividual : totalTeam;
+  const totalQuestionIndividual = questionIndividualRankings.length;
+  const totalQuestionTeam = questionTeamRankings.length;
+
+  const totalItems = currentMode === "individual" ? totalIndividual
+    : currentMode === "team" ? totalTeam
+    : currentMode === "questionIndividual" ? totalQuestionIndividual
+    : totalQuestionTeam;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
 
   const individualEntries = useMemo(() => {
     const start = currentPage * ITEMS_PER_PAGE;
@@ -75,13 +93,25 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
     return teamRankings.slice(start, start + ITEMS_PER_PAGE);
   }, [teamRankings, currentPage]);
 
-  // バーの基準スコア: maxPossibleScore（満点）があればそれを使う。なければ全体maxにフォールバック
+  const questionIndividualEntries = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return questionIndividualRankings.slice(start, start + ITEMS_PER_PAGE);
+  }, [questionIndividualRankings, currentPage]);
+
+  const questionTeamEntries = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return questionTeamRankings.slice(start, start + ITEMS_PER_PAGE);
+  }, [questionTeamRankings, currentPage]);
+
+  // バーの基準スコア
   const maxPossible = data?.maxPossibleScore;
   const individualMaxScore = maxPossible && maxPossible > 0
     ? maxPossible
     : allRankings.reduce((max, r) => Math.max(max, r.totalScore), 1);
-  // チームの満点 = 個人満点 × メンバー数（不明なので全体maxにフォールバック）
   const teamMaxScore = teamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
+  const questionMaxScore = questionRanking?.maxQuestionScore
+    ?? questionIndividualRankings.reduce((max, r) => Math.max(max, r.scoreAwarded), 1);
+  const questionTeamMaxScore = questionTeamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -91,37 +121,55 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   }, [onRankingViewChange]);
 
   const handlePageChange = useCallback((page: number) => {
-    if (currentMode === "individual") {
-      setIndividualPage(page);
-    } else {
-      setTeamPage(page);
-    }
+    if (currentMode === "individual") setIndividualPage(page);
+    else if (currentMode === "team") setTeamPage(page);
+    else if (currentMode === "questionIndividual") setQuestionIndividualPage(page);
+    else setQuestionTeamPage(page);
     emitViewChange(currentMode, page);
   }, [currentMode, emitViewChange]);
 
   const handleShowTeamRanking = useCallback(() => {
-    setLocalMode("team");
-    setTeamPage(0);
-    emitViewChange("team", 0);
-  }, [emitViewChange]);
+    if (isQuestionStep) {
+      setLocalMode("questionTeam");
+      setQuestionTeamPage(0);
+      emitViewChange("questionTeam", 0);
+    } else {
+      setLocalMode("team");
+      setTeamPage(0);
+      emitViewChange("team", 0);
+    }
+  }, [isQuestionStep, emitViewChange]);
 
   const handleBackToIndividual = useCallback(() => {
+    if (isQuestionStep) {
+      setLocalMode("questionIndividual");
+      emitViewChange("questionIndividual", questionIndividualPage);
+    } else {
+      setLocalMode("individual");
+      emitViewChange("individual", individualPage);
+    }
+  }, [isQuestionStep, emitViewChange, individualPage, questionIndividualPage]);
+
+  const handleGoToTotalRanking = useCallback(() => {
     setLocalMode("individual");
-    emitViewChange("individual", individualPage);
-  }, [emitViewChange, individualPage]);
+    setIndividualPage(0);
+    emitViewChange("individual", 0);
+  }, [emitViewChange]);
 
   if (!data) return null;
 
   // ページ情報テキスト
-  const unitLabel = currentMode === "individual" ? "人" : "チーム";
+  const unitLabel = (currentMode === "individual" || currentMode === "questionIndividual") ? "人" : "チーム";
   const pageStart = currentPage * ITEMS_PER_PAGE + 1;
   const pageEnd = Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalItems);
   const pageInfoText = `${pageStart}〜${pageEnd}位 / 全${totalItems}${unitLabel}`;
 
   // 見出し
-  const heading = hasTeams
-    ? (currentMode === "individual" ? "Individual Ranking" : "Team Ranking")
-    : "Ranking";
+  const heading = isQuestionStep
+    ? `Q${(questionRanking?.questionIndex ?? 0) + 1} ${currentMode === "questionTeam" ? "Team Ranking" : "Ranking"}`
+    : hasTeams
+      ? (currentMode === "individual" ? "Individual Ranking" : "Team Ranking")
+      : "Ranking";
 
   return (
     <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
@@ -139,8 +187,76 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             transition={{ duration: 0.15 }}
             className="flex-1 flex flex-col gap-3 justify-center"
           >
-            {currentMode === "individual" ? (
-              /* === 個人ランキング === */
+            {currentMode === "questionIndividual" ? (
+              /* === 問題別個人ランキング === */
+              questionIndividualEntries.map((entry) => {
+                const barWidth = questionMaxScore > 0 ? (entry.scoreAwarded / questionMaxScore) * 100 : 0;
+                return (
+                  <div key={entry.participantId} className="flex items-center gap-3">
+                    <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
+                    {entry.selfieUrl ? (
+                      <img
+                        src={entry.selfieUrl}
+                        alt={`${entry.nickname}のアバター`}
+                        width={64}
+                        height={64}
+                        className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-lg lg:text-xl font-bold text-gray-900 shrink-0`}>
+                        {entry.nickname?.[0] || "?"}
+                      </div>
+                    )}
+                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
+                      {entry.nickname}
+                    </span>
+                    <div className="w-[40%] h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden shrink-0">
+                      <motion.div
+                        initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
+                        animate={{ width: `${barWidth}%` }}
+                        transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
+                        className="h-full rounded-lg bg-gradient-to-r from-primary to-primary-dark"
+                      />
+                    </div>
+                    <span className="whitespace-nowrap text-xl lg:text-3xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {entry.scoreAwarded.toLocaleString()} <span className="text-base lg:text-lg">pts</span>
+                    </span>
+                    <span className="w-16 shrink-0" />
+                    <span className="w-[80px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {entry.responseTimeMs != null
+                        ? `${(entry.responseTimeMs / 1000).toFixed(2)}s`
+                        : "---"}
+                    </span>
+                  </div>
+                );
+              })
+            ) : currentMode === "questionTeam" ? (
+              /* === 問題別チームランキング === */
+              questionTeamEntries.map((team) => {
+                const barWidth = questionTeamMaxScore > 0 ? (team.totalScore / questionTeamMaxScore) * 100 : 0;
+                return (
+                  <div key={team.teamId} className="flex items-center gap-3">
+                    <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
+                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
+                    <div className="w-[40%] h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
+                      <motion.div
+                        initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
+                        animate={{ width: `${barWidth}%` }}
+                        transition={prefersReducedMotion ? MOTION_INSTANT : MOTION_BAR_TRANSITION}
+                        className="h-full rounded-lg bg-gradient-to-r from-amber-400 to-amber-600"
+                      />
+                    </div>
+                    <span className="whitespace-nowrap text-xl lg:text-3xl font-extrabold text-gray-900 text-right shrink-0 [font-variant-numeric:tabular-nums]">
+                      {team.totalScore.toLocaleString()} <span className="text-base lg:text-lg">pts</span>
+                    </span>
+                    <span className="w-16 shrink-0" />
+                    <span className="w-[80px] text-base lg:text-lg font-semibold text-gray-600 text-right shrink-0">{team.memberCount}人</span>
+                  </div>
+                );
+              })
+            ) : currentMode === "individual" ? (
+              /* === 合計個人ランキング === */
               individualEntries.map((entry) => {
                 const barWidth = (entry.totalScore / individualMaxScore) * 100;
                 const rankChange = entry.previousRank - entry.rank;
@@ -201,7 +317,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 );
               })
             ) : (
-              /* === チームランキング === */
+              /* === 合計チームランキング === */
               teamEntries.map((team) => {
                 const barWidth = (team.totalScore / teamMaxScore) * 100;
                 const rankChange = (team.previousRank ?? team.rank) - team.rank;
@@ -277,9 +393,40 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
             </div>
           )}
 
-          <div className="flex gap-4 justify-center">
-            {/* 個人モード: チームランキング表示ボタン（チーム戦のみ） */}
-            {currentMode === "individual" && hasTeams && (
+          <div className="flex gap-4 justify-center flex-wrap">
+            {/* 問題別ステップ: チーム切替 + 合計ランキングへ */}
+            {isQuestionStep && (
+              <>
+                {currentMode === "questionIndividual" && hasTeams && (
+                  <button
+                    type="button"
+                    onClick={handleShowTeamRanking}
+                    className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  >
+                    チームランキングを表示
+                  </button>
+                )}
+                {currentMode === "questionTeam" && (
+                  <button
+                    type="button"
+                    onClick={handleBackToIndividual}
+                    className="px-6 py-4 rounded-xl bg-gray-200 text-gray-700 text-lg font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+                  >
+                    個人ランキングに戻る
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleGoToTotalRanking}
+                  className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  合計ランキングへ
+                </button>
+              </>
+            )}
+
+            {/* 合計ステップ: 個人モード（チーム戦あり）→ チーム切替 */}
+            {!isQuestionStep && currentMode === "individual" && hasTeams && (
               <button
                 type="button"
                 onClick={handleShowTeamRanking}
@@ -289,8 +436,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
               </button>
             )}
 
-            {/* 個人モード（チーム戦なし）: 次の問題 + 最終結果発表 */}
-            {currentMode === "individual" && !hasTeams && (
+            {/* 合計ステップ: 個人モード（チーム戦なし）→ 次の問題 + 最終結果発表 */}
+            {!isQuestionStep && currentMode === "individual" && !hasTeams && (
               <>
                 <button
                   type="button"
@@ -309,8 +456,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
               </>
             )}
 
-            {/* チームモード: 個人に戻る + 次の問題 + 最終結果発表 */}
-            {currentMode === "team" && (
+            {/* 合計ステップ: チームモード → 個人に戻る + 次の問題 + 最終結果発表 */}
+            {!isQuestionStep && currentMode === "team" && (
               <>
                 <button
                   type="button"

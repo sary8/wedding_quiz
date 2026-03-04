@@ -11,6 +11,9 @@ import type {
   RankingEntry,
   RankingData,
   FinalResultData,
+  QuestionRankingEntry,
+  QuestionTeamRankingEntry,
+  QuestionRankingData,
 } from "../types/index.js";
 
 // ルーム認証
@@ -339,6 +342,83 @@ export async function calculateTeamRanking(quizId: number): Promise<TeamRankingE
   }));
 }
 
+// 問題別個人ランキング計算
+export async function calculateQuestionRanking(
+  quizId: number,
+  questionId: number
+): Promise<QuestionRankingEntry[]> {
+  const participants = await db
+    .select()
+    .from(schema.participants)
+    .where(eq(schema.participants.quiz_id, quizId));
+
+  const answers = await db
+    .select()
+    .from(schema.answers)
+    .where(eq(schema.answers.question_id, questionId));
+
+  const answerMap = new Map(answers.map((a) => [a.participant_id, a]));
+
+  const entries: QuestionRankingEntry[] = participants.map((p) => {
+    const answer = answerMap.get(p.id);
+    return {
+      participantId: p.id,
+      nickname: p.nickname,
+      selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
+      scoreAwarded: answer?.score_awarded ?? 0,
+      responseTimeMs: answer?.response_time_ms ?? null,
+      rank: 0,
+    };
+  });
+
+  // score_awarded DESC, response_time_ms ASC (nullは末尾)
+  entries.sort((a, b) => {
+    if (a.scoreAwarded !== b.scoreAwarded) return b.scoreAwarded - a.scoreAwarded;
+    if (a.responseTimeMs == null && b.responseTimeMs == null) return 0;
+    if (a.responseTimeMs == null) return 1;
+    if (b.responseTimeMs == null) return -1;
+    return a.responseTimeMs - b.responseTimeMs;
+  });
+
+  entries.forEach((e, i) => { e.rank = i + 1; });
+
+  return entries;
+}
+
+// 問題別チームランキング計算
+export async function calculateQuestionTeamRanking(
+  quizId: number,
+  questionId: number
+): Promise<QuestionTeamRankingEntry[]> {
+  const rows = await db
+    .select({
+      teamId: schema.teams.id,
+      teamName: schema.teams.name,
+      totalScore: sql<number>`COALESCE(SUM(${schema.answers.score_awarded}), 0)`,
+      memberCount: sql<number>`COUNT(DISTINCT ${schema.participants.id})`,
+    })
+    .from(schema.teams)
+    .leftJoin(schema.participants, eq(schema.teams.id, schema.participants.team_id))
+    .leftJoin(
+      schema.answers,
+      and(
+        eq(schema.answers.participant_id, schema.participants.id),
+        eq(schema.answers.question_id, questionId)
+      )
+    )
+    .where(eq(schema.teams.quiz_id, quizId))
+    .groupBy(schema.teams.id)
+    .orderBy(desc(sql`COALESCE(SUM(${schema.answers.score_awarded}), 0)`));
+
+  return rows.map((r, i) => ({
+    teamId: r.teamId,
+    teamName: r.teamName,
+    totalScore: r.totalScore,
+    memberCount: r.memberCount,
+    rank: i + 1,
+  }));
+}
+
 // チーム一覧取得
 export async function getTeams(quizId: number): Promise<TeamInfo[]> {
   const rows = await db
@@ -425,6 +505,26 @@ export async function calculateRanking(roomCode: string): Promise<RankingData> {
   // チームモードの場合はチームランキングも計算
   if (quiz.team_mode) {
     result.teamRankings = await calculateTeamRanking(quiz.id);
+  }
+
+  // 問題別ランキングを計算
+  if (currentQuestionId) {
+    const question = await db.query.questions.findFirst({
+      where: eq(schema.questions.id, currentQuestionId),
+    });
+    if (question) {
+      const qRankings = await calculateQuestionRanking(quiz.id, currentQuestionId);
+      const questionRanking: QuestionRankingData = {
+        questionIndex: quiz.current_question_index,
+        questionText: question.text,
+        maxQuestionScore: question.points * question.point_multiplier,
+        rankings: qRankings,
+      };
+      if (quiz.team_mode) {
+        questionRanking.teamRankings = await calculateQuestionTeamRanking(quiz.id, currentQuestionId);
+      }
+      result.questionRanking = questionRanking;
+    }
   }
 
   return result;

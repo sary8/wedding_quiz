@@ -55,7 +55,7 @@ export type ServerToClientEvents = {
   }) => void;
   gameClosed: (data: { participants: ParticipantInfo[] }) => void;
   revealNextRank: () => void;
-  rankingPageChanged: (data: { page: number; mode: "individual" | "team" }) => void;
+  rankingPageChanged: (data: { page: number; mode: RankingViewMode }) => void;
 };
 
 // Socket.io client → server events
@@ -111,7 +111,7 @@ export type ClientToServerEvents = {
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
   setRankingPage: (
-    data: { roomCode: string; hostSecret: string; page: number; mode: "individual" | "team" },
+    data: { roomCode: string; hostSecret: string; page: number; mode: RankingViewMode },
     callback: (res: { success: boolean; error?: string }) => void
   ) => void;
 };
@@ -182,11 +182,49 @@ export type RankingEntry = {
   lastResponseTimeMs: number | null;
 };
 
+// 問題別ランキングエントリ
+export type QuestionRankingEntry = {
+  participantId: number;
+  nickname: string;
+  selfieUrl: string | null;
+  scoreAwarded: number;
+  responseTimeMs: number | null;
+  rank: number;
+};
+
+// 問題別チームランキングエントリ
+export type QuestionTeamRankingEntry = {
+  teamId: number;
+  teamName: string;
+  totalScore: number;
+  memberCount: number;
+  rank: number;
+};
+
+// 問題別ランキングデータ
+export type QuestionRankingData = {
+  questionIndex: number;
+  questionText: string;
+  maxQuestionScore: number;
+  rankings: QuestionRankingEntry[];
+  teamRankings?: QuestionTeamRankingEntry[];
+};
+
 export type RankingData = {
   rankings: RankingEntry[];
   teamRankings?: TeamRankingEntry[];
   maxPossibleScore?: number;
+  questionRanking?: QuestionRankingData;
 };
+
+// ランキング表示モード
+export const RankingViewMode = {
+  Individual: "individual",
+  Team: "team",
+  QuestionIndividual: "questionIndividual",
+  QuestionTeam: "questionTeam",
+} as const;
+export type RankingViewMode = (typeof RankingViewMode)[keyof typeof RankingViewMode];
 
 export type FinalResultData = {
   rankings: (RankingEntry & {

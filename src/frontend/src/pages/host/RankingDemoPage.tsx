@@ -57,7 +57,7 @@ export function RankingDemoPage() {
   const [viewMode, setViewMode] = useState<"host" | "display">("host");
   const [key, setKey] = useState(0);
   const [displayPage, setDisplayPage] = useState(0);
-  const [displayMode, setDisplayMode] = useState<"individual" | "team">("individual");
+  const [displayMode, setDisplayMode] = useState<import("../../types").RankingViewMode>("individual");
 
   const mockData = useMemo(() => generateMockRanking(teamMode), [teamMode, key]);
 
@@ -74,7 +74,7 @@ export function RankingDemoPage() {
     setDisplayMode("individual");
   }, []);
 
-  const handleRankingViewChange = useCallback((page: number, mode: "individual" | "team") => {
+  const handleRankingViewChange = useCallback((page: number, mode: import("../../types").RankingViewMode) => {
     setDisplayPage(page);
     setDisplayMode(mode);
   }, []);

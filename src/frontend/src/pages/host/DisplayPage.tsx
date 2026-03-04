@@ -8,6 +8,7 @@ import type {
   QuestionResultData,
   RankingData,
   FinalResultData,
+  RankingViewMode,
 } from "../../types";
 import { useGameSounds } from "../../hooks/useGameSounds";
 import { useBgm } from "../../hooks/useBgm";
@@ -44,7 +45,7 @@ export function DisplayPage() {
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [revealTrigger, setRevealTrigger] = useState(0);
   const [rankingPage, setRankingPage] = useState(0);
-  const [rankingMode, setRankingMode] = useState<"individual" | "team">("individual");
+  const [rankingMode, setRankingMode] = useState<RankingViewMode>("individual");
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Socket.ioイベント登録
@@ -102,7 +103,7 @@ export function DisplayPage() {
       on("rankingUpdate", (data) => {
         setRankingData(data);
         setRankingPage(0);
-        setRankingMode("individual");
+        setRankingMode(data.questionRanking ? "questionIndividual" : "individual");
         setPhase("ranking");
         playRankingFanfare();
       }),

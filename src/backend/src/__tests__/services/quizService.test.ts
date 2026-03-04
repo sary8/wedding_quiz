@@ -27,6 +27,8 @@ const {
   getQuestionResult,
   calculateRanking,
   calculateTeamRanking,
+  calculateQuestionRanking,
+  calculateQuestionTeamRanking,
   getTeams,
   getFinalResult,
   getQuizByRoom,
@@ -1084,6 +1086,195 @@ describe("quizService", () => {
       const result = await calculateRanking("123456");
       expect(result.rankings).toHaveLength(1);
       expect(result.teamRankings).toBeUndefined();
+    });
+  });
+
+  describe("calculateRanking questionRanking", () => {
+    it("問題別ランキングがquestionRankingフィールドに含まれる", async () => {
+      const quiz = await createTestQuiz({
+        status: "in_progress",
+        currentQuestionIndex: 0,
+      });
+      const question = await createTestQuestion(quiz.id, {
+        orderIndex: 0,
+        text: "テスト問題1",
+        points: 1000,
+        pointMultiplier: 1,
+      });
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "速い人",
+        totalScore: 900,
+        currentRank: 0,
+        token: "qr-token-1",
+      });
+      const p2 = await createTestParticipant(quiz.id, {
+        nickname: "遅い人",
+        totalScore: 800,
+        currentRank: 0,
+        token: "qr-token-2",
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1000,
+        scoreAwarded: 900,
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p2.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 3000,
+        scoreAwarded: 800,
+      });
+
+      const result = await calculateRanking("123456");
+      expect(result.questionRanking).toBeDefined();
+      expect(result.questionRanking!.questionIndex).toBe(0);
+      expect(result.questionRanking!.questionText).toBe("テスト問題1");
+      expect(result.questionRanking!.maxQuestionScore).toBe(1000);
+      expect(result.questionRanking!.rankings).toHaveLength(2);
+      // scoreAwarded DESC, responseTimeMs ASC
+      expect(result.questionRanking!.rankings[0].nickname).toBe("速い人");
+      expect(result.questionRanking!.rankings[0].scoreAwarded).toBe(900);
+      expect(result.questionRanking!.rankings[0].rank).toBe(1);
+      expect(result.questionRanking!.rankings[1].nickname).toBe("遅い人");
+      expect(result.questionRanking!.rankings[1].scoreAwarded).toBe(800);
+      expect(result.questionRanking!.rankings[1].rank).toBe(2);
+    });
+
+    it("同スコアの場合はresponse_time_ms昇順でランク付け", async () => {
+      const quiz = await createTestQuiz({
+        status: "in_progress",
+        currentQuestionIndex: 0,
+      });
+      const question = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "遅い回答者",
+        totalScore: 500,
+        token: "qr-same-1",
+      });
+      const p2 = await createTestParticipant(quiz.id, {
+        nickname: "速い回答者",
+        totalScore: 500,
+        token: "qr-same-2",
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 5000,
+        scoreAwarded: 500,
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p2.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 2000,
+        scoreAwarded: 500,
+      });
+
+      const result = await calculateRanking("123456");
+      expect(result.questionRanking!.rankings[0].nickname).toBe("速い回答者");
+      expect(result.questionRanking!.rankings[0].rank).toBe(1);
+      expect(result.questionRanking!.rankings[1].nickname).toBe("遅い回答者");
+      expect(result.questionRanking!.rankings[1].rank).toBe(2);
+    });
+
+    it("未回答者はscoreAwarded=0、responseTimeMs=nullで末尾にランク", async () => {
+      const quiz = await createTestQuiz({
+        status: "in_progress",
+        currentQuestionIndex: 0,
+      });
+      const question = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "回答者",
+        totalScore: 500,
+        token: "qr-unanswered-1",
+      });
+      const p2 = await createTestParticipant(quiz.id, {
+        nickname: "未回答",
+        totalScore: 0,
+        token: "qr-unanswered-2",
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 2000,
+        scoreAwarded: 500,
+      });
+
+      const result = await calculateRanking("123456");
+      expect(result.questionRanking!.rankings[0].nickname).toBe("回答者");
+      expect(result.questionRanking!.rankings[0].scoreAwarded).toBe(500);
+      expect(result.questionRanking!.rankings[1].nickname).toBe("未回答");
+      expect(result.questionRanking!.rankings[1].scoreAwarded).toBe(0);
+      expect(result.questionRanking!.rankings[1].responseTimeMs).toBeNull();
+    });
+
+    it("currentQuestionIndex=-1の場合はquestionRankingなし", async () => {
+      await createTestQuiz({
+        status: "in_progress",
+        currentQuestionIndex: -1,
+      });
+
+      const result = await calculateRanking("123456");
+      expect(result.questionRanking).toBeUndefined();
+    });
+
+    it("team_mode ONの場合はquestionRanking.teamRankingsも含まれる", async () => {
+      const quiz = await createTestQuiz({
+        status: "in_progress",
+        currentQuestionIndex: 0,
+      });
+      await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
+      const question = await createTestQuestion(quiz.id, { orderIndex: 0 });
+      const teamA = await createTestTeam(quiz.id, { name: "チームA" });
+      const teamB = await createTestTeam(quiz.id, { name: "チームB" });
+
+      const p1 = await createTestParticipant(quiz.id, {
+        nickname: "A1",
+        totalScore: 800,
+        teamId: teamA.id,
+        token: "qr-team-1",
+      });
+      const p2 = await createTestParticipant(quiz.id, {
+        nickname: "B1",
+        totalScore: 300,
+        teamId: teamB.id,
+        token: "qr-team-2",
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p1.id,
+        choiceIndex: 1,
+        isCorrect: true,
+        responseTimeMs: 1500,
+        scoreAwarded: 800,
+      });
+      await createTestAnswer({
+        questionId: question.id,
+        participantId: p2.id,
+        choiceIndex: 2,
+        isCorrect: false,
+        responseTimeMs: 3000,
+        scoreAwarded: 0,
+      });
+
+      const result = await calculateRanking("123456");
+      expect(result.questionRanking).toBeDefined();
+      expect(result.questionRanking!.teamRankings).toBeDefined();
+      expect(result.questionRanking!.teamRankings).toHaveLength(2);
+      expect(result.questionRanking!.teamRankings![0].teamName).toBe("チームA");
+      expect(result.questionRanking!.teamRankings![0].totalScore).toBe(800);
+      expect(result.questionRanking!.teamRankings![1].teamName).toBe("チームB");
+      expect(result.questionRanking!.teamRankings![1].totalScore).toBe(0);
     });
   });
 

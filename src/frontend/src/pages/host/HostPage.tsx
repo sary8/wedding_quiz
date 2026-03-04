@@ -8,6 +8,7 @@ import type {
   QuestionResultData,
   RankingData,
   FinalResultData,
+  RankingViewMode,
 } from "../../types";
 import { useGameSounds } from "../../hooks/useGameSounds";
 import { useBgm } from "../../hooks/useBgm";
@@ -289,7 +290,7 @@ export function HostPage() {
     emit("revealNextRank", { roomCode, hostSecret }, () => {});
   }, [roomCode, hostSecret, emit]);
 
-  const handleRankingViewChange = useCallback((page: number, mode: "individual" | "team") => {
+  const handleRankingViewChange = useCallback((page: number, mode: RankingViewMode) => {
     if (!roomCode) return;
     emit("setRankingPage", { roomCode, hostSecret, page, mode }, () => {});
   }, [roomCode, hostSecret, emit]);
