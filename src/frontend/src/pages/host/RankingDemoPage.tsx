@@ -57,7 +57,7 @@ function generateMockRanking(teamMode: boolean, questionMode: boolean): RankingD
       participantId: orig + 1,
       nickname: NAMES[orig % NAMES.length] + (orig >= NAMES.length ? `${Math.floor(orig / NAMES.length) + 1}` : ""),
       selfieUrl: null,
-      scoreAwarded: Math.max(100, 15000 - (i + 1) * 350 + Math.floor(Math.random() * 200)),
+      scoreAwarded: Math.max(0, 1000 - (i + 1) * 20 + Math.floor(Math.random() * 50)),
       responseTimeMs: 1000 + (i + 1) * 100 + Math.floor(Math.random() * 500),
       rank: i + 1,
     }));
@@ -65,7 +65,7 @@ function generateMockRanking(teamMode: boolean, questionMode: boolean): RankingD
     result.questionRanking = {
       questionIndex: 2,
       questionText: "新郎が初めてプロポーズした場所は？",
-      maxQuestionScore: 15000,
+      maxQuestionScore: 1000,
       rankings: qRankings,
     };
 
@@ -73,7 +73,7 @@ function generateMockRanking(teamMode: boolean, questionMode: boolean): RankingD
       const qTeamRankings: QuestionTeamRankingEntry[] = TEAM_NAMES.slice(0, 5).map((name, i) => ({
         teamId: i + 1,
         teamName: name,
-        totalScore: Math.max(1000, 45000 - i * 8000 + Math.floor(Math.random() * 2000)),
+        totalScore: Math.max(500, 5000 - i * 800 + Math.floor(Math.random() * 300)),
         memberCount: 5 + Math.floor(Math.random() * 10),
         rank: i + 1,
       }));
