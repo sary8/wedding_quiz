@@ -31,8 +31,9 @@ export function PlayPage() {
   const [closedParticipants, setClosedParticipants] = useState<ParticipantInfo[]>([]);
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
+  const [roomNotFound, setRoomNotFound] = useState(false);
 
-  // ルーム情報取得（チームモード判定用）
+  // ルーム情報取得（存在チェック + チームモード判定）
   useEffect(() => {
     if (!roomCode) return;
     let ignore = false;
@@ -43,7 +44,7 @@ export function PlayPage() {
         }
       })
       .catch(() => {
-        // エラー時はチームなしで進行
+        if (!ignore) setRoomNotFound(true);
       });
     return () => { ignore = true; };
   }, [roomCode]);
@@ -199,6 +200,21 @@ export function PlayPage() {
   );
 
   if (!roomCode) return <div>ルームコードが不正です</div>;
+
+  if (roomNotFound) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush px-6">
+        <h2 className="font-script text-3xl text-primary mb-4 [text-wrap:balance]">ルームが見つかりません</h2>
+        <p className="text-sage-text/70 text-center mb-6">ルームコード「{roomCode}」は存在しないか、既に終了しています。</p>
+        <a
+          href="/"
+          className="px-8 py-3 rounded-xl bg-primary text-white text-base font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px]"
+        >
+          トップに戻る
+        </a>
+      </div>
+    );
+  }
 
   const errorBanner = answerError !== null ? (
     <div role="alert" className="fixed top-0 left-0 right-0 z-50">
