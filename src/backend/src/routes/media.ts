@@ -4,6 +4,8 @@ import { writeFile, mkdir, readdir, stat, unlink } from "fs/promises";
 import { join, extname, basename } from "path";
 import { nanoid } from "nanoid";
 import { readFile } from "fs/promises";
+import { getClientIp } from "../utils/clientIp.js";
+import { getQuizByRoom } from "../services/quizService.js";
 
 export const mediaRoutes = new Hono();
 
@@ -92,7 +94,7 @@ function validateMagicBytes(buffer: Buffer, ext: string): boolean {
 
 // メディアアップロード
 mediaRoutes.post("/upload", async (c) => {
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp(c);
   if (!checkUploadRateLimit(ip)) {
     return c.json({ error: "アップロードが多すぎます。しばらくしてから再試行してください" }, 429);
   }
@@ -136,14 +138,26 @@ mediaRoutes.post("/upload", async (c) => {
 
 // 自撮り画像アップロード (base64)
 mediaRoutes.post("/selfie", async (c) => {
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp(c);
   if (!checkUploadRateLimit(ip)) {
     return c.json({ error: "アップロードが多すぎます。しばらくしてから再試行してください" }, 429);
   }
 
-  const body = await c.req.json<{ data: string }>().catch(() => null);
+  const body = await c.req.json<{ data: string; roomCode?: string }>().catch(() => null);
   if (!body) {
     return c.json({ error: "リクエストの形式が不正です" }, 400);
+  }
+
+  // M5: ルーム検証
+  if (!body.roomCode || typeof body.roomCode !== "string") {
+    return c.json({ error: "ルームコードが必要です" }, 400);
+  }
+  const quiz = await getQuizByRoom(body.roomCode);
+  if (!quiz) {
+    return c.json({ error: "ルームが見つかりません" }, 404);
+  }
+  if (quiz.status !== "lobby" && quiz.status !== "in_progress") {
+    return c.json({ error: "このルームは現在参加を受け付けていません" }, 400);
   }
 
   if (!body.data) {

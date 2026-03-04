@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createSession, validateSession, verifyAdminPin } from "../services/authService.js";
+import { getClientIp } from "../utils/clientIp.js";
 
 export const authRoutes = new Hono();
 
@@ -34,7 +35,7 @@ if (typeof cleanupInterval === "object" && "unref" in cleanupInterval) {
 
 // セッショントークン発行
 authRoutes.post("/session", async (c) => {
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp(c);
   if (!checkAuthRateLimit(ip)) {
     return c.json({ error: "試行回数が多すぎます。しばらくしてから再試行してください" }, 429);
   }

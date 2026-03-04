@@ -1,6 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
+import { bodyLimit } from "hono/body-limit";
 import { Server as SocketIOServer } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents } from "./types/index.js";
 import { quizRoutes, participantRoutes } from "./routes/quiz.js";
@@ -15,14 +17,35 @@ import { startCleanupScheduler } from "./services/cleanupService.js";
 
 const app = new Hono();
 
-// CORS（環境変数 CORS_ORIGIN で本番ドメインを指定可能）
+// H1: CORS fail-closed（本番で CORS_ORIGIN 未設定なら起動拒否）
 if (!process.env.CORS_ORIGIN && process.env.NODE_ENV === "production") {
-  logger.warn("CORS_ORIGIN が未設定です。本番環境では明示的に指定してください");
+  logger.error("CORS_ORIGIN が未設定です。本番環境では必須です");
+  process.exit(1);
 }
 const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174,https://localhost:5174,https://localhost:5175,https://localhost:5176")
   .split(",")
   .map((s) => s.trim());
 
+// H3: セキュリティヘッダ（全ルート）
+app.use(secureHeaders());
+
+// M4: ボディサイズ制限（media用 10MB → その他 1MB の順で登録）
+app.use(
+  "/api/media/*",
+  bodyLimit({
+    maxSize: 10 * 1024 * 1024,
+    onError: (c) => c.json({ error: "リクエストサイズが上限（10MB）を超えています" }, 413),
+  })
+);
+app.use(
+  "/api/*",
+  bodyLimit({
+    maxSize: 1 * 1024 * 1024,
+    onError: (c) => c.json({ error: "リクエストサイズが上限（1MB）を超えています" }, 413),
+  })
+);
+
+// CORS
 app.use(
   "/api/*",
   cors({

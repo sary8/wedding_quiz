@@ -3,6 +3,7 @@ import type { ServerToClientEvents, ClientToServerEvents, QuizStatus } from "../
 import * as quizService from "../services/quizService.js";
 import { startTimer, stopTimer, getElapsedMs, getRemainingSeconds } from "../services/timerService.js";
 import { logger } from "../utils/logger.js";
+import { getSocketClientIp } from "../utils/clientIp.js";
 
 type QuizIO = Server<ClientToServerEvents, ServerToClientEvents>;
 type QuizSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -142,7 +143,7 @@ export function setupQuizSocket(io: QuizIO) {
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
-        const joinIp = socket.handshake.address;
+        const joinIp = getSocketClientIp(socket);
         if (!checkSocketRateLimit(joinIp)) {
           logger.warn("joinRoom rate limited", { ip: joinIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
@@ -706,7 +707,7 @@ export function setupQuizSocket(io: QuizIO) {
     // === ビューワー: 読み取り専用参加 ===
     socket.on("watchRoom", async (data, callback) => {
       try {
-        const watchIp = socket.handshake.address;
+        const watchIp = getSocketClientIp(socket);
         if (!checkSocketRateLimit(watchIp)) {
           logger.warn("watchRoom rate limited", { ip: watchIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
