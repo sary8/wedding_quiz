@@ -92,7 +92,7 @@ describe("media routes", () => {
     });
 
     it("存在しないルーム → 404", async () => {
-      mockGetQuizByRoom.mockResolvedValue(null);
+      mockGetQuizByRoom.mockResolvedValue(undefined);
       const data = `data:image/jpeg;base64,${jpegBase64}`;
       const res = await mediaRoutes.request("/selfie", {
         method: "POST",

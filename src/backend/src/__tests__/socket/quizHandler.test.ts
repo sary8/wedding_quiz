@@ -151,6 +151,7 @@ describe("watchRoom", () => {
       status: "lobby",
       current_question_index: -1,
       team_mode: false,
+      finished_at: null,
       created_at: new Date().toISOString(),
     });
     vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
@@ -184,6 +185,7 @@ describe("watchRoom", () => {
       status: "lobby",
       current_question_index: -1,
       team_mode: false,
+      finished_at: null,
       created_at: new Date().toISOString(),
     });
     vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
@@ -237,6 +239,7 @@ describe("watchRoom", () => {
       status: "lobby",
       current_question_index: -1,
       team_mode: false,
+      finished_at: null,
       created_at: new Date().toISOString(),
     });
     vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
@@ -291,6 +294,7 @@ describe("watchRoom", () => {
       status: "lobby",
       current_question_index: -1,
       team_mode: true,
+      finished_at: null,
       created_at: new Date().toISOString(),
     });
     vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
@@ -344,6 +348,7 @@ describe("showParticipantResults", () => {
       status: "finished",
       current_question_index: 0,
       team_mode: false,
+      finished_at: null,
       created_at: new Date().toISOString(),
     });
 
@@ -359,6 +364,7 @@ describe("showParticipantResults", () => {
         status: "finished",
         current_question_index: 0,
         team_mode: false,
+        finished_at: null,
         created_at: new Date().toISOString(),
       });
       vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([]);
