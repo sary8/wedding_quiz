@@ -11,6 +11,7 @@ import { authRoutes } from "./routes/auth.js";
 import { setupQuizSocket } from "./socket/quizHandler.js";
 import { logger } from "./utils/logger.js";
 import { validateSession } from "./services/authService.js";
+import { startCleanupScheduler } from "./services/cleanupService.js";
 
 const app = new Hono();
 
@@ -115,5 +116,6 @@ const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(server
 });
 
 setupQuizSocket(io);
+startCleanupScheduler();
 
 logger.info("socket.io attached");
