@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { RankingPage } from "./RankingPage";
-import type { RankingData, RankingEntry, TeamRankingEntry, RankingViewMode } from "../../types";
+import type { RankingData, RankingEntry, TeamRankingEntry, RankingViewMode, QuestionRankingEntry, QuestionTeamRankingEntry } from "../../types";
 
 const NAMES = [
   "ゆうき", "あかりんりん", "けんた", "みさきちゃん大好", "そうた", "はるか", "りく", "さくら",
@@ -18,7 +18,7 @@ const TEAM_NAMES = [
 
 const PARTICIPANT_COUNT = 35;
 
-function generateMockRanking(teamMode: boolean): RankingData {
+function generateMockRanking(teamMode: boolean, questionMode: boolean): RankingData {
   const rankings: RankingEntry[] = [];
   for (let i = 0; i < PARTICIPANT_COUNT; i++) {
     const rank = i + 1;
@@ -47,6 +47,40 @@ function generateMockRanking(teamMode: boolean): RankingData {
     result.teamRankings = teamRankings;
   }
 
+  if (questionMode) {
+    const shuffled = Array.from({ length: PARTICIPANT_COUNT }, (_, i) => i);
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const qRankings: QuestionRankingEntry[] = shuffled.map((orig, i) => ({
+      participantId: orig + 1,
+      nickname: NAMES[orig % NAMES.length] + (orig >= NAMES.length ? `${Math.floor(orig / NAMES.length) + 1}` : ""),
+      selfieUrl: null,
+      scoreAwarded: Math.max(100, 15000 - (i + 1) * 350 + Math.floor(Math.random() * 200)),
+      responseTimeMs: 1000 + (i + 1) * 100 + Math.floor(Math.random() * 500),
+      rank: i + 1,
+    }));
+
+    result.questionRanking = {
+      questionIndex: 2,
+      questionText: "新郎が初めてプロポーズした場所は？",
+      maxQuestionScore: 15000,
+      rankings: qRankings,
+    };
+
+    if (teamMode) {
+      const qTeamRankings: QuestionTeamRankingEntry[] = TEAM_NAMES.slice(0, 5).map((name, i) => ({
+        teamId: i + 1,
+        teamName: name,
+        totalScore: Math.max(1000, 45000 - i * 8000 + Math.floor(Math.random() * 2000)),
+        memberCount: 5 + Math.floor(Math.random() * 10),
+        rank: i + 1,
+      }));
+      result.questionRanking.teamRankings = qTeamRankings;
+    }
+  }
+
   return result;
 }
 
@@ -54,25 +88,36 @@ const NOOP = () => {};
 
 export function RankingDemoPage() {
   const [teamMode, setTeamMode] = useState(false);
+  const [questionMode, setQuestionMode] = useState(false);
   const [viewMode, setViewMode] = useState<"host" | "display">("host");
   const [key, setKey] = useState(0);
   const [displayPage, setDisplayPage] = useState(0);
   const [displayMode, setDisplayMode] = useState<RankingViewMode>("individual");
 
-  const mockData = useMemo(() => generateMockRanking(teamMode), [teamMode, key]);
+  const mockData = useMemo(() => generateMockRanking(teamMode, questionMode), [teamMode, questionMode, key]);
 
   const handleToggleTeam = useCallback(() => {
     setTeamMode((prev) => !prev);
     setKey((prev) => prev + 1);
     setDisplayPage(0);
-    setDisplayMode("individual");
+    setDisplayMode(questionMode ? "questionIndividual" : "individual");
+  }, [questionMode]);
+
+  const handleToggleQuestion = useCallback(() => {
+    setQuestionMode((prev) => {
+      const next = !prev;
+      setDisplayMode(next ? "questionIndividual" : "individual");
+      return next;
+    });
+    setKey((prev) => prev + 1);
+    setDisplayPage(0);
   }, []);
 
   const handleReset = useCallback(() => {
     setKey((prev) => prev + 1);
     setDisplayPage(0);
-    setDisplayMode("individual");
-  }, []);
+    setDisplayMode(questionMode ? "questionIndividual" : "individual");
+  }, [questionMode]);
 
   const handleRankingViewChange = useCallback((page: number, mode: RankingViewMode) => {
     setDisplayPage(page);
@@ -84,13 +129,20 @@ export function RankingDemoPage() {
   return (
     <div className="relative">
       <nav aria-label="デモ操作パネル" className="fixed top-2 right-2 z-50 bg-black/70 text-white text-xs rounded-lg px-3 py-2 flex flex-col gap-1">
-        <span>{teamMode ? "チーム戦" : "個人戦"} / {isDisplay ? "スクリーン" : "ホスト"}</span>
+        <span>{teamMode ? "チーム戦" : "個人戦"} / {questionMode ? "問題別" : "合計"} / {isDisplay ? "スクリーン" : "ホスト"}</span>
         <button
           type="button"
           onClick={handleToggleTeam}
           className="bg-white/20 rounded px-3 py-2 min-h-[44px] hover:bg-white/30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           {teamMode ? "個人戦に切替" : "チーム戦に切替"}
+        </button>
+        <button
+          type="button"
+          onClick={handleToggleQuestion}
+          className="bg-white/20 rounded px-3 py-2 min-h-[44px] hover:bg-white/30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        >
+          {questionMode ? "合計ランキングに切替" : "問題別ランキングに切替"}
         </button>
         <button
           type="button"
