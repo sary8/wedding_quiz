@@ -3,6 +3,7 @@ import { db, schema } from "../db/index.js";
 import { eq, sql, and, inArray, asc, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { deleteMediaFile } from "./media.js";
+import { deleteQuizCompletely } from "../services/quizService.js";
 
 export const quizRoutes = new Hono();
 
@@ -380,49 +381,10 @@ quizRoutes.delete("/:id/teams/:teamId", async (c) => {
 // クイズ削除（/:id は最も汎用的なので最後に定義）
 quizRoutes.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
-
-  const quiz = await db.query.quizzes.findFirst({
-    where: eq(schema.quizzes.id, id),
-  });
-
-  if (!quiz) {
+  const deleted = await deleteQuizCompletely(id);
+  if (!deleted) {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
-
-  // 削除前にメディアファイル情報を取得
-  const [participantsWithSelfie, questionsWithMedia] = await Promise.all([
-    db
-      .select({ selfie_file_name: schema.participants.selfie_file_name })
-      .from(schema.participants)
-      .where(eq(schema.participants.quiz_id, id)),
-    db
-      .select({
-        media_url: schema.questions.media_url,
-        choice1_image_url: schema.questions.choice1_image_url,
-        choice2_image_url: schema.questions.choice2_image_url,
-        choice3_image_url: schema.questions.choice3_image_url,
-        choice4_image_url: schema.questions.choice4_image_url,
-      })
-      .from(schema.questions)
-      .where(eq(schema.questions.quiz_id, id)),
-  ]);
-
-  await db.delete(schema.quizzes).where(eq(schema.quizzes.id, id));
-
-  // メディアファイル削除
-  const deletePromises: Promise<void>[] = [];
-  for (const p of participantsWithSelfie) {
-    deletePromises.push(deleteMediaFile(p.selfie_file_name));
-  }
-  for (const q of questionsWithMedia) {
-    deletePromises.push(deleteMediaFile(q.media_url));
-    deletePromises.push(deleteMediaFile(q.choice1_image_url));
-    deletePromises.push(deleteMediaFile(q.choice2_image_url));
-    deletePromises.push(deleteMediaFile(q.choice3_image_url));
-    deletePromises.push(deleteMediaFile(q.choice4_image_url));
-  }
-  await Promise.all(deletePromises);
-
   return c.json({ success: true });
 });
 

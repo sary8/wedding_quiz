@@ -2,6 +2,7 @@ import { db, schema } from "../db/index.js";
 import { eq, and, asc, desc, sql, inArray, lte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { calculateScore } from "./scoringService.js";
+import { deleteMediaFile } from "../routes/media.js";
 import type {
   ParticipantInfo,
   TeamInfo,
@@ -751,4 +752,46 @@ export async function getParticipant(participantId: number) {
   return db.query.participants.findFirst({
     where: eq(schema.participants.id, participantId),
   });
+}
+
+// クイズ完全削除（DB + メディアファイル）
+export async function deleteQuizCompletely(quizId: number): Promise<boolean> {
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, quizId),
+  });
+  if (!quiz) return false;
+
+  const [participantsWithSelfie, questionsWithMedia] = await Promise.all([
+    db
+      .select({ selfie_file_name: schema.participants.selfie_file_name })
+      .from(schema.participants)
+      .where(eq(schema.participants.quiz_id, quizId)),
+    db
+      .select({
+        media_url: schema.questions.media_url,
+        choice1_image_url: schema.questions.choice1_image_url,
+        choice2_image_url: schema.questions.choice2_image_url,
+        choice3_image_url: schema.questions.choice3_image_url,
+        choice4_image_url: schema.questions.choice4_image_url,
+      })
+      .from(schema.questions)
+      .where(eq(schema.questions.quiz_id, quizId)),
+  ]);
+
+  await db.delete(schema.quizzes).where(eq(schema.quizzes.id, quizId));
+
+  const deletePromises: Promise<void>[] = [];
+  for (const p of participantsWithSelfie) {
+    deletePromises.push(deleteMediaFile(p.selfie_file_name));
+  }
+  for (const q of questionsWithMedia) {
+    deletePromises.push(deleteMediaFile(q.media_url));
+    deletePromises.push(deleteMediaFile(q.choice1_image_url));
+    deletePromises.push(deleteMediaFile(q.choice2_image_url));
+    deletePromises.push(deleteMediaFile(q.choice3_image_url));
+    deletePromises.push(deleteMediaFile(q.choice4_image_url));
+  }
+  await Promise.all(deletePromises);
+
+  return true;
 }
