@@ -321,7 +321,7 @@ describe("watchRoom", () => {
 
 describe("showParticipantResults", () => {
   it("認証失敗 → エラー返却", async () => {
-    vi.mocked(quizService.verifyHostSecret).mockResolvedValue(undefined);
+    vi.mocked(quizService.verifyHostSecret).mockResolvedValue(null);
 
     const client = await connectClient();
     try {
