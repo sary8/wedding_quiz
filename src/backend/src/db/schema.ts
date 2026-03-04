@@ -11,6 +11,7 @@ export const quizzes = sqliteTable("quizzes", {
     .default("draft"),
   current_question_index: integer("current_question_index").notNull().default(-1),
   team_mode: integer("team_mode", { mode: "boolean" }).notNull().default(false),
+  finished_at: text("finished_at"),
   created_at: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

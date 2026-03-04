@@ -11,6 +11,7 @@ const CREATE_TABLES_SQL = [
     status TEXT NOT NULL DEFAULT 'draft',
     current_question_index INTEGER NOT NULL DEFAULT -1,
     team_mode INTEGER NOT NULL DEFAULT 0,
+    finished_at TEXT,
     created_at TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE TABLE IF NOT EXISTS questions (

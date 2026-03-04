@@ -41,7 +41,7 @@ export async function openRoom(quizId: number, hostSecret: string) {
 
   await db
     .update(schema.quizzes)
-    .set({ status: "lobby" })
+    .set({ status: "lobby", finished_at: null })
     .where(eq(schema.quizzes.id, quizId));
 
   return quiz.room_code;
@@ -601,7 +601,7 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
   // ゲーム終了
   await db
     .update(schema.quizzes)
-    .set({ status: "finished" })
+    .set({ status: "finished", finished_at: new Date().toISOString() })
     .where(eq(schema.quizzes.id, quiz.id));
 
   const result: FinalResultData = { rankings };
@@ -646,7 +646,7 @@ export async function replayQuiz(quizId: number, hostSecret: string) {
   ops.push(
     db
       .update(schema.quizzes)
-      .set({ status: "lobby", current_question_index: -1 })
+      .set({ status: "lobby", current_question_index: -1, finished_at: null })
       .where(eq(schema.quizzes.id, quizId))
   );
 

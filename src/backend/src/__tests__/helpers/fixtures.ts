@@ -6,6 +6,7 @@ export async function createTestQuiz(overrides: Partial<{
   title: string;
   status: string;
   currentQuestionIndex: number;
+  finishedAt: string | null;
 }> = {}) {
   const result = await db
     .insert(schema.quizzes)
@@ -15,6 +16,7 @@ export async function createTestQuiz(overrides: Partial<{
       title: overrides.title ?? "テストクイズ",
       status: (overrides.status as "draft" | "lobby" | "in_progress" | "finished") ?? "draft",
       current_question_index: overrides.currentQuestionIndex ?? -1,
+      finished_at: overrides.finishedAt ?? null,
       created_at: new Date().toISOString(),
     })
     .returning();
