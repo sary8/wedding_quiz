@@ -21,8 +21,7 @@ Thumbs.db
 *.swo
 
 # Claude Code
-.claude/*
-!.claude/settings.json
+.claude/
 
 # Design system (auto-generated)
 design-system/
