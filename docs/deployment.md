@@ -46,7 +46,7 @@ App Service の構成で以下の環境変数を設定：
 NODE_ENV=production
 PORT=8080
 DATABASE_URL=file:./data/quiz.db
-ALLOWED_ORIGINS=https://<your-static-web-app>.azurestaticapps.net
+CORS_ORIGIN=https://<your-static-web-app>.azurestaticapps.net
 ADMIN_PIN=<管理画面アクセス用PIN（任意）>
 ```
 
@@ -157,7 +157,7 @@ APIサーバー: http://localhost:3001
 
 1. App Service で WebSocket が有効になっているか確認
 2. CORS設定が正しいか確認
-3. 環境変数 `ALLOWED_ORIGINS` が正しく設定されているか確認
+3. 環境変数 `CORS_ORIGIN` が正しく設定されているか確認
 
 ## セキュリティ対策
 

@@ -21,7 +21,7 @@
 - `?view=stats&quizId=N`: 統計ダッシュボード（参加者数・正答率・平均スコア・データエクスポート）
 - プレビューボタン → `/host/:quizId/preview` へ遷移
 - リハーサルボタン → `?rehearsal=true` で開始
-- ロビーを開くボタン → `/host/:roomCode?key=...&quizId=...` へ遷移
+- ロビーを開くボタン → `/host/:roomCode?quizId=...` へ遷移
 
 ---
 
@@ -34,7 +34,7 @@
 
 ---
 
-### `/host/:roomCode?key=HOST_SECRET&quizId=QUIZ_ID`
+### `/host/:roomCode?quizId=QUIZ_ID`
 **ホスト操作画面**（Socket.io `openRoom` で自動接続）
 
 | フェーズ | 表示内容 | 操作 |
@@ -48,7 +48,7 @@
 | closed | サンキュースクリーン（浮遊アバター） | 管理画面に戻る / ルームを削除（2段階確認） |
 | recovering | ホスト復旧画面（ゲーム中に再接続時） | 次の問題を配信 / ランキング表示 |
 
-> `host_secret` は sessionStorage に保存（URLには露出しない）
+> ホスト認証情報は sessionStorage に保存される
 > `quizId` パラメータ = クイズID
 > `?rehearsal=true` でリハーサルモード（黄色バナー表示、最終問題後に自動リプレイ）
 
@@ -228,7 +228,7 @@
 |------|------|-----------|
 | `PORT` | サーバーポート | 3001 |
 | `CORS_ORIGIN` | 許可オリジン（カンマ区切り） | localhost各ポート |
-| `ADMIN_PIN` | 管理画面アクセス用PIN（未設定時は認証なし） | — |
+| `ADMIN_PIN` | 管理画面アクセス用PIN（productionでは設定必須） | — |
 | `NODE_ENV` | 実行環境 | development |
 
 ---

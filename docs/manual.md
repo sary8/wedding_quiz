@@ -150,8 +150,8 @@ http://<サーバーURL>/host/setup
 - 最終問題後に5秒待って自動的にリプレイ（ロビーに戻る）
 - 本番前の動作確認に使用
 
-> **注意**: ロビーを開く前に Host Secret Key が sessionStorage に保存されます。
-> 同じブラウザタブからのみホスト操作が可能です。タブを閉じた場合は SetupPage からやり直してください。
+> **注意**: ホスト認証情報は sessionStorage に保存されます。
+> 通常は SetupPage から遷移すればそのまま引き継がれます。
 
 ---
 
@@ -295,7 +295,7 @@ http://<サーバーURL>/host/<ルームコード>/screen
 
 ゲーム進行中にホストのブラウザを閉じてしまった場合：
 
-1. 同じURL（`/host/:roomCode?key=...&quizId=...`）でブラウザを再度開く
+1. 同じURL（`/host/:roomCode?quizId=...`）でブラウザを再度開く
 2. 「ゲームを再開」画面が表示される
 3. 「次の問題を配信」または「ランキング表示」ボタンで続行できる
 4. 参加者やプロジェクターの画面はそのまま維持される
@@ -410,7 +410,7 @@ http://<サーバーURL>/host/<ルームコード>/screen
 - リハーサルボタン（テスト進行モード）
 - ロビーを開くボタン
 
-#### `/host/:roomCode?key=HOST_SECRET&quizId=QUIZ_ID` — ホスト操作画面
+#### `/host/:roomCode?quizId=QUIZ_ID` — ホスト操作画面
 
 フェーズごとの表示と操作：
 
@@ -548,11 +548,12 @@ http://<サーバーURL>/host/<ルームコード>/screen
    - OS: Linux
 2. デプロイメント設定（GitHub Actions または ZIP デプロイ）
 3. 環境変数を設定：
-   - `HOST_SECRET`: ホスト認証用シークレット
    - `NODE_ENV`: `production`
    - `PORT`: `8080`（App Service のデフォルト）
-4. スタートアップコマンド: `node dist/index.js`
-5. **CORS 設定**: フロントエンドの Static Web Apps URL を許可
+   - `CORS_ORIGIN`: フロントエンド URL の許可リスト
+   - `ADMIN_PIN`: 管理画面アクセス用 PIN（production では設定必須）
+4. スタートアップコマンド: `npm run db:migrate && npm start`
+5. **CORS 設定**: フロントエンドの Static Web Apps URL を `CORS_ORIGIN` に設定
 
 ### SQLite データの扱い
 
