@@ -14,6 +14,9 @@ const socketMeta = new Map<string, { participantId: number; roomCode: string }>(
 // roomCode → 現在の問題ID
 const activeQuestions = new Map<string, number>();
 
+// nextQuestion の二重押し防止
+const advancingRooms = new Set<string>();
+
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
@@ -270,18 +273,7 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        const questionId = activeQuestions.get(meta.roomCode);
-        if (questionId !== data.questionId) {
-          logger.warn("submitAnswer rejected: question not active", {
-            roomCode: meta.roomCode,
-            participantId: meta.participantId,
-            questionId: data.questionId,
-          });
-          callback({ success: false, error: "この問題の回答期間は終了しました" });
-          return;
-        }
-
-        // バリデーション
+        // バリデーション（アクティブチェックより先に実行）
         if (!Number.isInteger(data.questionId) || data.questionId <= 0) {
           logger.warn("submitAnswer validation failed: invalid questionId", {
             roomCode: meta.roomCode,
@@ -296,6 +288,17 @@ export function setupQuizSocket(io: QuizIO) {
             participantId: meta.participantId,
           });
           callback({ success: false, error: "不正な選択肢です" });
+          return;
+        }
+
+        const questionId = activeQuestions.get(meta.roomCode);
+        if (questionId !== data.questionId) {
+          logger.warn("submitAnswer rejected: question not active", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+            questionId: data.questionId,
+          });
+          callback({ success: false, error: "この問題の回答期間は終了しました" });
           return;
         }
 
@@ -449,8 +452,16 @@ export function setupQuizSocket(io: QuizIO) {
     // === ホスト: 次の問題 ===
     socket.on("nextQuestion", async (data, callback) => {
       try {
+        // 二重押し防止
+        if (advancingRooms.has(data.roomCode)) {
+          callback({ success: false, error: "問題の配信中です" });
+          return;
+        }
+        advancingRooms.add(data.roomCode);
+
         const quiz = await quizService.verifyHostSecret(data.roomCode, data.hostSecret);
         if (!quiz) {
+          advancingRooms.delete(data.roomCode);
           logger.warn("nextQuestion auth failed", { roomCode: data.roomCode });
           callback({ success: false, error: "認証エラー" });
           return;
@@ -458,11 +469,13 @@ export function setupQuizSocket(io: QuizIO) {
 
         const question = await quizService.getNextQuestion(data.roomCode);
         if (!question) {
+          advancingRooms.delete(data.roomCode);
           callback({ success: false, error: "これ以上問題がありません" });
           return;
         }
 
         activeQuestions.set(data.roomCode, question.questionId);
+        advancingRooms.delete(data.roomCode);
         io.to(data.roomCode).emit("questionStarted", question);
 
         logger.info("question started", { roomCode: data.roomCode, questionId: question.questionId });
@@ -478,6 +491,9 @@ export function setupQuizSocket(io: QuizIO) {
           },
           async () => {
             // タイムアップ時に自動クローズ + 結果配信
+            // closeQuestionで既に処理済みなら何もしない（二重実行ガード）
+            const stillActive = activeQuestions.get(roomCode);
+            if (stillActive !== questionId) return;
             activeQuestions.delete(roomCode);
             io.to(roomCode).emit("questionClosed");
             try {
@@ -487,7 +503,7 @@ export function setupQuizSocket(io: QuizIO) {
               logger.error("timer auto-close result distribution error", { error: err, roomCode, questionId });
               io.to(roomCode).emit("questionResult", {
                 questionId,
-                correctChoice: 0,
+                correctChoice: -1,
                 distribution: [0, 0, 0, 0],
               });
             }
@@ -496,6 +512,7 @@ export function setupQuizSocket(io: QuizIO) {
 
         callback({ success: true });
       } catch (e) {
+        advancingRooms.delete(data.roomCode);
         const err = e instanceof Error ? e.message : String(e);
         logger.error("nextQuestion error", { error: err, roomCode: data.roomCode });
         callback({ success: false, error: "問題の配信に失敗しました" });
@@ -762,18 +779,7 @@ export function setupQuizSocket(io: QuizIO) {
           await quizService.handleDisconnect(socket.id);
         }
 
-        // ホスト切断時: activeQuestionsを掃除してタイマーを停止
-        if (meta.participantId === -1) {
-          const roomCode = meta.roomCode;
-          // 同じroomCodeに別のホストソケットがなければ掃除
-          const hasOtherHost = Array.from(socketMeta.entries()).some(
-            ([id, m]) => id !== socket.id && m.roomCode === roomCode && m.participantId === -1
-          );
-          if (!hasOtherHost) {
-            activeQuestions.delete(roomCode);
-            stopTimer(`question_${roomCode}`);
-          }
-        }
+        // ホスト切断時: タイマーは継続（onEndで自動クローズされる。ホストが再接続すれば状態復元される）
       }
       socketMeta.delete(socket.id);
     });

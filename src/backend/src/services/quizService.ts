@@ -226,6 +226,12 @@ export async function submitAnswer(
   });
   if (!question) return { error: "問題が見つかりません" };
 
+  // 問題タイプに応じた選択肢数バリデーション
+  const maxChoice = question.question_type === "true_false" ? 2 : 4;
+  if (choiceIndex < 1 || choiceIndex > maxChoice) {
+    return { error: "不正な選択肢です" };
+  }
+
   const isCorrect = choiceIndex === question.correct_choice;
   const scoreAwarded = calculateScore(isCorrect, responseTimeMs, question.time_limit_seconds, question.point_multiplier);
 
@@ -600,11 +606,13 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
     });
   }
 
-  // ゲーム終了
-  await db
-    .update(schema.quizzes)
-    .set({ status: "finished", finished_at: new Date().toISOString() })
-    .where(eq(schema.quizzes.id, quiz.id));
+  // ゲーム終了（既にfinishedならfinished_atを上書きしない）
+  if (quiz.status !== "finished") {
+    await db
+      .update(schema.quizzes)
+      .set({ status: "finished", finished_at: new Date().toISOString() })
+      .where(eq(schema.quizzes.id, quiz.id));
+  }
 
   const result: FinalResultData = { rankings };
 

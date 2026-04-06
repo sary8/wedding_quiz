@@ -151,12 +151,26 @@ describe("cleanupService", () => {
   });
 
   describe("in_progress クイズ", () => {
-    it("in_progressクイズは削除しない", async () => {
+    it("6時間超のin_progressクイズを削除する", async () => {
       const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       await createTestQuiz({
         roomCode: "555555",
         status: "in_progress",
         createdAt: twoDaysAgo,
+      });
+
+      await cleanupExpiredQuizzes();
+
+      const remaining = await db.select().from(schema.quizzes);
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("6時間以内のin_progressクイズは削除しない", async () => {
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      await createTestQuiz({
+        roomCode: "555555",
+        status: "in_progress",
+        createdAt: threeHoursAgo,
       });
 
       await cleanupExpiredQuizzes();
