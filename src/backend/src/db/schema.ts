@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
 export const quizzes = sqliteTable("quizzes", {
@@ -75,7 +75,10 @@ export const participants = sqliteTable("participants", {
   joined_at: text("joined_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
-});
+}, (table) => [
+  index("participants_quiz_id_idx").on(table.quiz_id),
+  index("participants_connection_id_idx").on(table.connection_id),
+]);
 
 export const answers = sqliteTable(
   "answers",
@@ -100,6 +103,7 @@ export const answers = sqliteTable(
       table.question_id,
       table.participant_id
     ),
+    index("answers_participant_id_idx").on(table.participant_id),
   ]
 );
 

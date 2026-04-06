@@ -326,6 +326,64 @@ export async function getQuestionResult(
   return result;
 }
 
+// 問題結果一括生成（N+1クエリ削減）
+export async function getQuestionResultBatch(
+  questionId: number,
+  participantIds: number[]
+): Promise<Map<number, QuestionResultData>> {
+  const [question, allAnswers, allParticipants] = await Promise.all([
+    db.query.questions.findFirst({
+      where: eq(schema.questions.id, questionId),
+    }),
+    db
+      .select()
+      .from(schema.answers)
+      .where(eq(schema.answers.question_id, questionId)),
+    participantIds.length > 0
+      ? db
+          .select()
+          .from(schema.participants)
+          .where(
+            sql`${schema.participants.id} IN (${sql.join(participantIds.map((id) => sql`${id}`), sql`, `)})`
+          )
+      : Promise.resolve([]),
+  ]);
+  if (!question) throw new Error("Question not found");
+
+  const distribution = [0, 0, 0, 0];
+  for (const a of allAnswers) {
+    if (a.choice_index >= 1 && a.choice_index <= 4) {
+      distribution[a.choice_index - 1]++;
+    }
+  }
+
+  const participantMap = new Map(allParticipants.map((p) => [p.id, p]));
+  const resultMap = new Map<number, QuestionResultData>();
+
+  for (const pid of participantIds) {
+    const result: QuestionResultData = {
+      questionId,
+      correctChoice: question.correct_choice,
+      distribution,
+    };
+    const myAnswer = allAnswers.find((a) => a.participant_id === pid);
+    if (myAnswer) {
+      const participant = participantMap.get(pid);
+      result.yourAnswer = {
+        choiceIndex: myAnswer.choice_index,
+        isCorrect: myAnswer.is_correct,
+        scoreAwarded: myAnswer.score_awarded,
+        responseTimeMs: myAnswer.response_time_ms,
+        currentRank: participant?.current_rank ?? 0,
+        totalScore: participant?.total_score ?? 0,
+      };
+    }
+    resultMap.set(pid, result);
+  }
+
+  return resultMap;
+}
+
 // チームランキング計算
 export async function calculateTeamRanking(quizId: number): Promise<TeamRankingEntry[]> {
   const rows = await db
@@ -484,29 +542,36 @@ export async function calculateRanking(roomCode: string): Promise<RankingData> {
     }
   }
 
+  // Dense ranking（同スコアは同順位）
+  const ranks: number[] = [];
+  let currentRank = 1;
+  for (let i = 0; i < participants.length; i++) {
+    if (i > 0 && participants[i].total_score < participants[i - 1].total_score) {
+      currentRank = i + 1;
+    }
+    ranks.push(currentRank);
+  }
+
   // ランク更新をバッチ実行
   const rankUpdates = participants.map((p, i) =>
     db
       .update(schema.participants)
-      .set({ current_rank: i + 1 })
+      .set({ current_rank: ranks[i] })
       .where(eq(schema.participants.id, p.id))
   );
   if (rankUpdates.length > 0) {
     await db.batch(rankUpdates as [typeof rankUpdates[0], ...typeof rankUpdates]);
   }
 
-  const rankings: RankingEntry[] = participants.map((p, i) => {
-    const rank = i + 1;
-    return {
-      participantId: p.id,
-      nickname: p.nickname,
-      selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
-      totalScore: p.total_score,
-      rank,
-      previousRank: previousRanks.get(p.id) || rank,
-      lastResponseTimeMs: answerMap.get(p.id) ?? null,
-    };
-  });
+  const rankings: RankingEntry[] = participants.map((p, i) => ({
+    participantId: p.id,
+    nickname: p.nickname,
+    selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
+    totalScore: p.total_score,
+    rank: ranks[i],
+    previousRank: previousRanks.get(p.id) || ranks[i],
+    lastResponseTimeMs: answerMap.get(p.id) ?? null,
+  }));
 
   const result: RankingData = { rankings, maxPossibleScore };
 
@@ -577,9 +642,14 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
     answersMap.set(a.participant_id, list);
   }
 
+  // Dense ranking（同スコアは同順位）
   const rankings = [];
+  let finalRank = 1;
   for (let i = 0; i < participants.length; i++) {
     const p = participants[i];
+    if (i > 0 && p.total_score < participants[i - 1].total_score) {
+      finalRank = i + 1;
+    }
     const answers = answersMap.get(p.id) ?? [];
 
     const correctCount = answers.filter((a) => a.is_correct).length;
@@ -596,7 +666,7 @@ export async function getFinalResult(roomCode: string): Promise<FinalResultData>
       nickname: p.nickname,
       selfieUrl: p.selfie_file_name ? `/api/media/${p.selfie_file_name}` : null,
       totalScore: p.total_score,
-      rank: i + 1,
+      rank: finalRank,
       previousRank: p.current_rank,
       lastResponseTimeMs: null,
       correctCount,
@@ -716,18 +786,23 @@ function buildQuestionData(
   };
 }
 
-// ヘルパー: 現在の問題ID取得
+// ヘルパー: 現在の問題ID取得（order_indexで直接検索）
 async function getCurrentQuestionId(
   quizId: number,
   currentQuestionIndex: number
 ): Promise<number | null> {
   if (currentQuestionIndex < 0) return null;
-  const questions = await db
-    .select()
+  const result = await db
+    .select({ id: schema.questions.id })
     .from(schema.questions)
-    .where(eq(schema.questions.quiz_id, quizId))
-    .orderBy(asc(schema.questions.order_index));
-  return questions[currentQuestionIndex]?.id ?? null;
+    .where(
+      and(
+        eq(schema.questions.quiz_id, quizId),
+        eq(schema.questions.order_index, currentQuestionIndex)
+      )
+    )
+    .limit(1);
+  return result[0]?.id ?? null;
 }
 
 // 再接続時の問題データ取得

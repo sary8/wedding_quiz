@@ -29,8 +29,16 @@ export async function deleteMediaFile(fileNameOrUrl: string | null): Promise<voi
   await unlink(filepath).catch(() => {});
 }
 
-// ストレージ使用量チェック
+// ストレージ使用量チェック（30秒キャッシュ）
+let cachedStorageUsage: number | null = null;
+let storageCacheTimestamp = 0;
+const STORAGE_CACHE_TTL = 30_000;
+
 async function getStorageUsage(): Promise<number> {
+  const now = Date.now();
+  if (cachedStorageUsage !== null && now - storageCacheTimestamp < STORAGE_CACHE_TTL) {
+    return cachedStorageUsage;
+  }
   if (!existsSync(UPLOAD_DIR)) return 0;
   const files = await readdir(UPLOAD_DIR);
   let total = 0;
@@ -38,6 +46,8 @@ async function getStorageUsage(): Promise<number> {
     const fileStat = await stat(join(UPLOAD_DIR, file)).catch(() => null);
     if (fileStat?.isFile()) total += fileStat.size;
   }
+  cachedStorageUsage = total;
+  storageCacheTimestamp = now;
   return total;
 }
 

@@ -1,5 +1,5 @@
 import type { Server, Socket } from "socket.io";
-import type { ServerToClientEvents, ClientToServerEvents, QuizStatus } from "../types/index.js";
+import type { ServerToClientEvents, ClientToServerEvents, QuizStatus, QuestionResultData } from "../types/index.js";
 import * as quizService from "../services/quizService.js";
 import { startTimer, stopTimer, getElapsedMs, getRemainingSeconds } from "../services/timerService.js";
 import { logger } from "../utils/logger.js";
@@ -86,24 +86,26 @@ async function distributeQuestionResult(
 
   const sockets = await io.in(roomCode).fetchSockets();
 
-  // 参加者ソケットとホストの結果を並列取得
+  // 参加者ソケットを抽出
   const participantSockets = sockets.filter((s) => {
     const meta = socketMeta.get(s.id);
     return meta && meta.participantId > 0;
   });
 
-  const [participantResults, hostResult] = await Promise.all([
-    Promise.all(
-      participantSockets.map((s) =>
-        quizService.getQuestionResult(questionId, socketMeta.get(s.id)!.participantId)
-      )
-    ),
+  // バッチクエリで全参加者の結果を一括取得（N+1削減）
+  const participantIds = participantSockets.map((s) => socketMeta.get(s.id)!.participantId);
+  const [resultMap, hostResult] = await Promise.all([
+    participantIds.length > 0
+      ? quizService.getQuestionResultBatch(questionId, participantIds)
+      : Promise.resolve(new Map<number, QuestionResultData>()),
     quizService.getQuestionResult(questionId),
   ]);
 
   // 各参加者に個別結果を送信
-  for (let i = 0; i < participantSockets.length; i++) {
-    participantSockets[i].emit("questionResult", participantResults[i]);
+  for (const s of participantSockets) {
+    const pid = socketMeta.get(s.id)!.participantId;
+    const result = resultMap.get(pid);
+    if (result) s.emit("questionResult", result);
   }
 
   // ホストには全体結果を送信
