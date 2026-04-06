@@ -8,6 +8,8 @@ export default defineConfig({
       include: [
         "src/services/**/*.ts",
         "src/routes/**/*.ts",
+        "src/socket/**/*.ts",
+        "src/utils/**/*.ts",
       ],
       exclude: ["src/__tests__/**"],
       all: true,

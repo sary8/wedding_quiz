@@ -20,6 +20,12 @@ export default defineConfig({
         "**/*.config.*",
         "**/mockData.ts",
       ],
+      thresholds: {
+        lines: 30,
+        functions: 30,
+        branches: 20,
+        statements: 30,
+      },
     },
   },
   resolve: {
