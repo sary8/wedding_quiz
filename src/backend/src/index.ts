@@ -142,3 +142,20 @@ setupQuizSocket(io);
 startCleanupScheduler();
 
 logger.info("socket.io attached");
+
+// グレースフルシャットダウン
+function gracefulShutdown(signal: string) {
+  logger.info(`${signal} received, shutting down gracefully`);
+  io.close();
+  server.close(() => {
+    logger.info("server closed");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    logger.error("forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000).unref();
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

@@ -8,6 +8,10 @@ import { getSocketClientIp } from "../utils/clientIp.js";
 type QuizIO = Server<ClientToServerEvents, ServerToClientEvents>;
 type QuizSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
+// 特殊な participantId 値
+const HOST_PARTICIPANT_ID = -1;
+const VIEWER_PARTICIPANT_ID = -2;
+
 // socketId → { participantId, roomCode } のマッピング
 const socketMeta = new Map<string, { participantId: number; roomCode: string }>();
 
@@ -115,10 +119,10 @@ async function distributeQuestionResult(
       hostSocket.emit("questionResult", hostResult);
     }
   } else {
-    // タイマー自動終了時: ホストのsocketIdが不明なので、participantId === -1 のソケットに送信
+    // タイマー自動終了時: ホストのsocketIdが不明なので、ホストソケットに送信
     for (const s of sockets) {
       const meta = socketMeta.get(s.id);
-      if (meta && meta.participantId === -1 && meta.roomCode === roomCode) {
+      if (meta && meta.participantId === HOST_PARTICIPANT_ID && meta.roomCode === roomCode) {
         s.emit("questionResult", hostResult);
         break;
       }
@@ -128,7 +132,7 @@ async function distributeQuestionResult(
   // ビューワー（Display画面）にも全体結果を送信
   for (const s of sockets) {
     const meta = socketMeta.get(s.id);
-    if (meta && meta.participantId === -2 && meta.roomCode === roomCode) {
+    if (meta && meta.participantId === VIEWER_PARTICIPANT_ID && meta.roomCode === roomCode) {
       s.emit("questionResult", hostResult);
     }
   }
@@ -355,7 +359,7 @@ export function setupQuizSocket(io: QuizIO) {
 
         // 既存ホストソケットを検知（同一roomCodeで別ソケット）
         const existingHost = Array.from(socketMeta.entries()).find(
-          ([id, m]) => id !== socket.id && m.roomCode === roomCode && m.participantId === -1
+          ([id, m]) => id !== socket.id && m.roomCode === roomCode && m.participantId === HOST_PARTICIPANT_ID
         );
         if (existingHost) {
           // 既存ホストに通知して切断
@@ -367,7 +371,7 @@ export function setupQuizSocket(io: QuizIO) {
         }
 
         socket.join(roomCode);
-        socketMeta.set(socket.id, { participantId: -1, roomCode });
+        socketMeta.set(socket.id, { participantId: HOST_PARTICIPANT_ID, roomCode });
 
         logger.info("room opened", { roomCode, quizId: data.quizId });
 
@@ -751,7 +755,7 @@ export function setupQuizSocket(io: QuizIO) {
         // meta設定済み（host/participant/既存viewer）は上書きしない
         const existingMeta = socketMeta.get(socket.id);
         if (!existingMeta) {
-          socketMeta.set(socket.id, { participantId: -2, roomCode: data.roomCode });
+          socketMeta.set(socket.id, { participantId: VIEWER_PARTICIPANT_ID, roomCode: data.roomCode });
         }
 
         const participants = await quizService.getLobbyParticipants(data.roomCode);
@@ -774,7 +778,7 @@ export function setupQuizSocket(io: QuizIO) {
     // === 切断処理 ===
     socket.on("disconnect", async () => {
       const meta = socketMeta.get(socket.id);
-      const role = meta ? (meta.participantId === -1 ? "host" : meta.participantId === -2 ? "viewer" : "participant") : "unknown";
+      const role = meta ? (meta.participantId === HOST_PARTICIPANT_ID ? "host" : meta.participantId === VIEWER_PARTICIPANT_ID ? "viewer" : "participant") : "unknown";
       logger.info("socket disconnected", { socketId: socket.id, roomCode: meta?.roomCode, role });
       if (meta) {
         if (meta.participantId > 0) {
