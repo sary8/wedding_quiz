@@ -30,18 +30,19 @@ describe("ProfilePage", () => {
     expect(button).toBeDisabled();
   });
 
-  it("ニックネームのみ（自撮りなし）でも参加ボタンが有効", async () => {
+  it("ニックネーム+同意ありで参加ボタンが有効（自撮りなし）", async () => {
     mockCapturedImage = null;
     const user = userEvent.setup();
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
 
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
+    await user.click(screen.getByRole("checkbox"));
     const button = screen.getByRole("button", { name: "参加する" });
 
     expect(button).toBeEnabled();
   });
 
-  it("ニックネーム+自撮りで参加ボタンが有効になる", async () => {
+  it("同意なしでは参加ボタンが無効", async () => {
     mockCapturedImage = "data:image/png;base64,test";
     const user = userEvent.setup();
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
@@ -49,7 +50,7 @@ describe("ProfilePage", () => {
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
     const button = screen.getByRole("button", { name: "参加する" });
 
-    expect(button).toBeEnabled();
+    expect(button).toBeDisabled();
   });
 
   it("参加ボタンクリックでonJoinが呼ばれる", async () => {
@@ -59,6 +60,7 @@ describe("ProfilePage", () => {
     render(<ProfilePage onJoin={handleJoin} isJoining={false} />);
 
     await user.type(screen.getByLabelText(/ニックネーム/), "太郎");
+    await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "参加する" }));
 
     expect(handleJoin).toHaveBeenCalledWith("太郎", "data:image/png;base64,selfie", undefined);
@@ -70,6 +72,7 @@ describe("ProfilePage", () => {
     const user = userEvent.setup();
     render(<ProfilePage onJoin={handleJoin} isJoining={false} />);
 
+    await user.click(screen.getByRole("checkbox"));
     const input = screen.getByLabelText(/ニックネーム/);
     await user.type(input, "花子");
     await user.keyboard("{Enter}");

@@ -12,6 +12,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
   const [nickname, setNickname] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState<number | undefined>(undefined);
   const [captureError, setCaptureError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
   const {
     videoRef,
     canvasRef,
@@ -35,7 +36,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
   function handleSubmit() {
     const trimmed = nickname.trim();
-    if (!trimmed || trimmed.length > 8 || isJoining) return;
+    if (!trimmed || trimmed.length > 8 || isJoining || !consent) return;
     if (hasTeams && selectedTeamId == null) return;
     onJoin(trimmed, capturedImage ?? undefined, selectedTeamId);
   }
@@ -173,14 +174,30 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
         <canvas ref={canvasRef} className="hidden" />
 
+        {/* 同意チェックボックス */}
+        <label className="flex items-start gap-2 text-sm text-sage-text/80 w-full cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-primary shrink-0"
+          />
+          <span>
+            データの収集・利用に同意します。
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline ml-1">
+              プライバシーポリシー
+            </a>
+          </span>
+        </label>
+
         {/* 参加ボタン */}
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!nickname.trim() || isJoining || (hasTeams && selectedTeamId == null)}
+          disabled={!nickname.trim() || isJoining || !consent || (hasTeams && selectedTeamId == null)}
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            nickname.trim() && !isJoining && (!hasTeams || selectedTeamId != null)
+            nickname.trim() && !isJoining && consent && (!hasTeams || selectedTeamId != null)
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(107,143,113,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}

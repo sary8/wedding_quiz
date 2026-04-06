@@ -10,6 +10,7 @@ const PlayPage = lazy(() => import("./pages/participant/PlayPage").then((m) => (
 const PreviewPage = lazy(() => import("./pages/host/PreviewPage").then((m) => ({ default: m.PreviewPage })));
 const FinalDemoPage = lazy(() => import("./pages/host/FinalDemoPage").then((m) => ({ default: m.FinalDemoPage })));
 const RankingDemoPage = lazy(() => import("./pages/host/RankingDemoPage").then((m) => ({ default: m.RankingDemoPage })));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy").then((m) => ({ default: m.PrivacyPolicy })));
 
 function LoadingFallback() {
   return (
@@ -39,6 +40,7 @@ export function App() {
           <Route path="/host/:roomCode" element={<HostPage />} />
           <Route path="/play" element={<JoinPage />} />
           <Route path="/play/:roomCode" element={<PlayPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/" element={<Navigate to="/play" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

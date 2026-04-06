@@ -247,6 +247,23 @@ quizRoutes.delete("/:id/participants", async (c) => {
   return c.json({ success: true });
 });
 
+// 参加者自身のデータ削除（トークンベース）
+quizRoutes.delete("/participants/me", async (c) => {
+  const token = c.req.header("X-Participant-Token");
+  if (!token) return c.json({ error: "トークンが必要です" }, 401);
+
+  const participant = await db.query.participants.findFirst({
+    where: eq(schema.participants.token, token),
+  });
+  if (!participant) return c.json({ error: "参加者が見つかりません" }, 404);
+
+  await deleteMediaFile(participant.selfie_file_name);
+  await db.delete(schema.answers).where(eq(schema.answers.participant_id, participant.id));
+  await db.delete(schema.participants).where(eq(schema.participants.id, participant.id));
+
+  return c.json({ success: true });
+});
+
 // ルーム情報取得（参加者がチーム選択用に取得）
 quizRoutes.get("/room/:roomCode/info", async (c) => {
   const roomCode = c.req.param("roomCode");
