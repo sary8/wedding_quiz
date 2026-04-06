@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { safeCompare } from "../utils/safeCompare.js";
 
 type Session = {
   token: string;
@@ -80,7 +81,7 @@ export function verifyAdminPin(pin: string): boolean {
     // 開発環境: 従来通り許可
     return process.env.NODE_ENV !== "production";
   }
-  return pin === adminPin;
+  return safeCompare(pin, adminPin);
 }
 
 export function revokeSession(token: string): boolean {

@@ -11,8 +11,7 @@ export function getClientIp(c: Context): string {
       return forwarded.split(",")[0].trim();
     }
   }
-  // Hono の ConnInfo が使えない場合は unknown
-  return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  return "unknown";
 }
 
 /** Socket.io Socket からクライアントIPを取得 */

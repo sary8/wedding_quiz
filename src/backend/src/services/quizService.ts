@@ -3,6 +3,7 @@ import { eq, and, asc, desc, sql, inArray, lte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { calculateScore } from "./scoringService.js";
 import { deleteMediaFile } from "../routes/media.js";
+import { safeCompare } from "../utils/safeCompare.js";
 import type {
   ParticipantInfo,
   TeamInfo,
@@ -23,7 +24,7 @@ export async function verifyHostSecret(roomCode: string, hostSecret: string) {
     where: eq(schema.quizzes.room_code, roomCode),
   });
   if (!quiz) return null;
-  if (quiz.host_secret !== hostSecret) return null;
+  if (!safeCompare(quiz.host_secret, hostSecret)) return null;
   return quiz;
 }
 
@@ -32,7 +33,7 @@ export async function openRoom(quizId: number, hostSecret: string) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
   });
-  if (!quiz || quiz.host_secret !== hostSecret) return null;
+  if (!quiz || !safeCompare(quiz.host_secret, hostSecret)) return null;
 
   if (quiz.status === "lobby" || quiz.status === "in_progress") {
     return quiz.room_code;
@@ -620,7 +621,7 @@ export async function replayQuiz(quizId: number, hostSecret: string) {
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
   });
-  if (!quiz || quiz.host_secret !== hostSecret) return { error: "認証エラー" };
+  if (!quiz || !safeCompare(quiz.host_secret, hostSecret)) return { error: "認証エラー" };
   if (quiz.status !== "finished") return { error: "終了済みのクイズのみリプレイできます" };
 
   const questionRows = await db

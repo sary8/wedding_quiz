@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { db, schema } from "../db/index.js";
 import { eq, sql, and, inArray, asc, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { randomInt } from "crypto";
 import { deleteMediaFile } from "./media.js";
 import { deleteQuizCompletely } from "../services/quizService.js";
 
@@ -11,7 +12,7 @@ function generateRoomCode(): string {
   const chars = "0123456789";
   let code = "";
   for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[randomInt(chars.length)];
   }
   return code;
 }

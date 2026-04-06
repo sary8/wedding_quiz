@@ -42,11 +42,11 @@ describe("clientIp", () => {
       expect(getClientIp(c)).toBe("unknown");
     });
 
-    it("TRUSTED_PROXY未設定 + x-forwarded-for あり → x-forwarded-forを使用", async () => {
+    it("TRUSTED_PROXY未設定 + x-forwarded-for あり → IP偽装防止のため無視してunknown", async () => {
       delete process.env.TRUSTED_PROXY;
       const { getClientIp } = await import("../../utils/clientIp.js");
       const c = createMockContext({ "x-forwarded-for": "203.0.113.1" });
-      expect(getClientIp(c)).toBe("203.0.113.1");
+      expect(getClientIp(c)).toBe("unknown");
     });
 
     it("TRUSTED_PROXY未設定 + ヘッダなし → unknown", async () => {
