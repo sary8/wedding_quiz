@@ -334,21 +334,29 @@ export function HostPage() {
   // 接続エラー表示
   if (connectionError && !isConnected) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-4">
-        <p className="text-xl text-red-600">接続が切れました</p>
-        <p className="text-sm text-gray-600">自動的に再接続を試みています…</p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical px-6">
+        <div className="glass-card rounded-3xl p-10 flex flex-col items-center gap-4 animate-fade-up max-w-sm">
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 0 1-12.73 0"/><path d="M5.64 6.64a9 9 0 0 0 12.73 0"/><circle cx="12" cy="12" r="1"/></svg>
+          </div>
+          <p className="text-lg font-bold text-sage-text">接続が切れました</p>
+          <div className="flex items-center gap-2 text-sm text-sage-text/60">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+            再接続を試みています…
+          </div>
+        </div>
       </div>
     );
   }
 
   // エラーバナー
   const errorBanner = error ? (
-    <div role="alert" className="fixed top-0 left-0 right-0 z-50">
+    <div role="alert" className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
       <button
         type="button"
         onClick={() => setError(null)}
         aria-label="エラーを閉じる"
-        className="px-6 py-3 bg-red-500 text-white text-sm text-center w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200"
+        className="px-6 py-3.5 bg-red-500/95 backdrop-blur-sm text-white text-sm text-center w-full border-none cursor-pointer hover:bg-red-600 transition-colors duration-200 shadow-lg"
       >
         {error}（タップで閉じる）
       </button>
@@ -373,11 +381,23 @@ export function HostPage() {
         );
       case "countdown":
         return (
-          <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900">
-            <p className="text-2xl font-bold mb-4">Get Ready!</p>
-            <p className="text-[10rem] font-bold leading-none text-amber-800 motion-safe:animate-scale-pulse" aria-live="polite" aria-atomic="true">
-              {countdownValue > 0 ? countdownValue : ""}
+          <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical overflow-hidden">
+            <p className="font-serif-wedding text-2xl tracking-[0.3em] text-sage-text/60 uppercase mb-6 animate-fade-up">
+              Get Ready
             </p>
+            <div className="relative">
+              <p
+                className="text-[12rem] font-bold leading-none text-primary motion-safe:animate-scale-pulse drop-shadow-[0_4px_24px_rgba(107,143,113,0.2)]"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {countdownValue > 0 ? countdownValue : ""}
+              </p>
+              {countdownValue > 0 && (
+                <div className="absolute inset-0 rounded-full border-4 border-accent/20 motion-safe:animate-[scale-pulse_1s_ease-in-out_infinite]" aria-hidden="true" />
+              )}
+            </div>
+            <div className="gold-line w-32 mt-8" />
           </div>
         );
       case "question":
@@ -436,24 +456,32 @@ export function HostPage() {
         return (
           <>
             {errorBanner}
-            <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-6">
-              <p className="text-2xl font-bold">ゲームを再開</p>
-              <p className="text-gray-600">ゲームは進行中です。操作を続けてください。</p>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={handleNextQuestion}
-                  className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  次の問題を配信
-                </button>
-                <button
-                  type="button"
-                  onClick={handleShowRanking}
-                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                >
-                  ランキング表示
-                </button>
+            <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical px-6">
+              <div className="glass-card-strong rounded-3xl p-10 flex flex-col items-center gap-6 animate-fade-up max-w-md">
+                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-sage-text mb-1">ゲームを再開</p>
+                  <p className="text-sm text-sage-text/60">ゲームは進行中です。操作を続けてください。</p>
+                </div>
+                <div className="gold-line w-full" />
+                <div className="flex gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={handleNextQuestion}
+                    className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-base font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    次の問題を配信
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShowRanking}
+                    className="flex-1 px-6 py-4 rounded-xl bg-accent/10 text-accent text-base font-bold min-h-[44px] hover:bg-accent/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                  >
+                    ランキング表示
+                  </button>
+                </div>
               </div>
             </div>
           </>
@@ -462,18 +490,20 @@ export function HostPage() {
   })();
 
   return (
-    <Suspense fallback={<div className="h-[100dvh] flex items-center justify-center bg-gradient-to-b from-blush to-white"><p className="text-lg text-gray-600">読み込み中…</p></div>}>
+    <Suspense fallback={<div className="h-[100dvh] flex items-center justify-center bg-botanical"><p className="text-lg text-sage-text/60 font-serif-wedding tracking-wider">Loading…</p></div>}>
       {isProcessing && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/20 pointer-events-none">
-          <svg className="animate-spin h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" aria-label="処理中">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/10 backdrop-blur-[2px] pointer-events-none">
+          <div className="glass-card rounded-2xl p-4">
+            <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" aria-label="処理中">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
         </div>
       )}
       {isRehearsal && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-300 text-yellow-900 text-center py-1.5 text-sm font-bold z-40">
-          リハーサルモード
+        <div className="fixed top-0 left-0 right-0 bg-amber-400/90 backdrop-blur-sm text-amber-900 text-center py-2 text-xs font-bold tracking-wider z-40 shadow-sm">
+          REHEARSAL MODE
         </div>
       )}
       {content}

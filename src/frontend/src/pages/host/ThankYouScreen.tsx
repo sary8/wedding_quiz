@@ -64,11 +64,12 @@ export function ThankYouScreen({ participants, onBackToSetup, onDeleteQuiz, isDi
   );
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="h-[100dvh] bg-botanical flex flex-col items-center justify-center relative overflow-hidden">
       {/* タイトル */}
-      <h2 className="font-script text-4xl md:text-5xl text-amber-800 text-center z-10 mb-4 [text-wrap:balance]">
+      <h2 className="font-script text-5xl md:text-6xl text-shimmer text-center z-10 mb-6 [text-wrap:balance] animate-fade-up drop-shadow-[0_2px_8px_rgba(107,143,113,0.12)]">
         Thank You for Playing!
       </h2>
+      <div className="gold-line w-48 z-10 mb-6" />
 
       {/* 浮遊アバター or 静的グリッド */}
       {prefersReducedMotion ? (
@@ -109,12 +110,12 @@ export function ThankYouScreen({ participants, onBackToSetup, onDeleteQuiz, isDi
 
       {/* ホストのみ: 操作ボタン */}
       {!isDisplay && (onBackToSetup || onDeleteQuiz) && (
-        <div className="mt-8 flex flex-col items-center gap-3 z-10">
+        <div className="mt-8 flex flex-col items-center gap-3 z-10 animate-fade-up" style={{ animationDelay: "0.2s" }}>
           {onBackToSetup && (
             <button
               type="button"
               onClick={onBackToSetup}
-              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              className="px-8 py-4 rounded-xl glass-card-strong text-sage-text text-lg font-bold min-h-[44px] hover:bg-white/90 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               管理画面に戻る
             </button>

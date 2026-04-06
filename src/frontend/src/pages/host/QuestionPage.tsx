@@ -32,22 +32,22 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
   const safeMediaUrl = sanitizeMediaUrl(question.mediaUrl);
 
   return (
-    <div className={cn("h-[100dvh] bg-gradient-to-b from-blush to-white", isDisplay && "overflow-hidden")}>
+    <div className={cn("h-[100dvh] bg-botanical", isDisplay && "overflow-hidden")}>
     <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col">
       {/* ヘッダー */}
-      <div className={cn("flex justify-between items-center px-8 text-gray-900 shrink-0", isDisplay ? "py-2" : "py-4")}>
+      <div className={cn("flex justify-between items-center px-8 text-sage-text shrink-0", isDisplay ? "py-2" : "py-4")}>
         <div className="flex items-center gap-3">
-          <span className="text-2xl lg:text-4xl font-semibold">
+          <span className="text-2xl lg:text-4xl font-serif-wedding tracking-wider text-sage-text/70">
             Q{question.questionIndex + 1} / {question.totalQuestions}
           </span>
           {question.pointMultiplier > 1 && (
-            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-lg lg:text-2xl font-bold motion-safe:animate-pulse">
+            <span className="px-3 py-1.5 rounded-full bg-amber-400/90 text-amber-900 text-lg lg:text-2xl font-bold motion-safe:animate-pulse shadow-sm">
               {question.pointMultiplier}x
             </span>
           )}
         </div>
         <span
-          className={cn("font-bold transition-colors duration-300", isDisplay ? "text-6xl" : "text-7xl lg:text-9xl", isUrgent ? "text-red-600 motion-safe:animate-scale-pulse" : "text-gray-900")}
+          className={cn("font-bold transition-colors duration-300 [font-variant-numeric:tabular-nums]", isDisplay ? "text-6xl" : "text-7xl lg:text-9xl", isUrgent ? "text-red-500 motion-safe:animate-scale-pulse" : "text-sage-text")}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -55,8 +55,8 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           {timeRemaining}
           <span className="sr-only">秒</span>
         </span>
-        <span className="text-2xl lg:text-4xl font-semibold">
-          Answers: {answerCount} / {totalParticipants}
+        <span className="text-2xl lg:text-4xl font-serif-wedding tracking-wider text-sage-text/70">
+          Answers: <span className="text-accent font-bold">{answerCount}</span> / {totalParticipants}
         </span>
       </div>
 
@@ -82,7 +82,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
             className={cn("max-w-[55%] rounded-xl mb-4", isDisplay ? "max-h-[50%]" : "max-h-[35vh]")}
           />
         ) : null}
-        <h2 className={cn("text-gray-900 text-center [text-wrap:balance] leading-tight", isDisplay ? "text-5xl line-clamp-2" : "text-6xl lg:text-8xl line-clamp-3")}>{question.text}</h2>
+        <h2 className={cn("text-sage-text text-center [text-wrap:balance] leading-tight", isDisplay ? "text-5xl line-clamp-2" : "text-6xl lg:text-8xl line-clamp-3")}>{question.text}</h2>
       </div>
 
       {/* 選択肢 */}
@@ -128,7 +128,7 @@ export function QuestionPage({ question, timeRemaining: rawTimeRemaining, answer
           <button
             type="button"
             onClick={onCloseQuestion}
-            className="px-8 py-3 rounded-lg bg-primary-light/80 text-primary-dark text-base font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-base font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 shadow-sm"
           >
             回答を締め切る
           </button>

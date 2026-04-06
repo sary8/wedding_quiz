@@ -48,22 +48,22 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
   if (!result) {
     return (
-      <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
-      <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 gap-6">
-        <p className="text-2xl text-gray-700">Loading Results…</p>
+      <div className="h-[100dvh] bg-botanical">
+      <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center gap-6">
+        <p className="text-xl text-sage-text/60 font-serif-wedding tracking-wider">Loading Results…</p>
         {!isDisplay && (
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={onShowRanking}
-              className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-lg font-bold min-h-[44px] hover:bg-accent/20 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
             >
               ランキング表示
             </button>
             <button
               type="button"
               onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               次の問題
             </button>
@@ -75,9 +75,9 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
   }
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
-    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 p-8">
-      <h2 className="font-script text-6xl lg:text-8xl text-amber-800 mb-8 [text-wrap:balance]">Results</h2>
+    <div className="h-[100dvh] bg-botanical">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-sage-text p-8">
+      <h2 className="font-script text-6xl lg:text-8xl text-shimmer mb-8 [text-wrap:balance] animate-fade-up">Results</h2>
 
       {/* 回答分布グラフ */}
       <div className="w-full max-w-5xl mb-12">
@@ -132,18 +132,18 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
       </div>
 
       {!isDisplay && (
-        <div className="flex gap-4">
+        <div className="flex gap-3 animate-fade-up" style={{ animationDelay: "0.3s" }}>
           <button
             type="button"
             onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-xl font-bold hover:bg-amber-200 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-xl font-bold hover:bg-accent/20 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
           >
             ランキング表示
           </button>
           <button
             type="button"
             onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-xl font-bold hover:bg-primary-light transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             次の問題
           </button>
