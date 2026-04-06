@@ -30,7 +30,7 @@ describe("ProfilePage", () => {
     expect(button).toBeDisabled();
   });
 
-  it("ニックネームのみ（自撮りなし）では参加ボタンが無効", async () => {
+  it("ニックネームのみ（自撮りなし）でも参加ボタンが有効", async () => {
     mockCapturedImage = null;
     const user = userEvent.setup();
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
@@ -38,7 +38,7 @@ describe("ProfilePage", () => {
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
     const button = screen.getByRole("button", { name: "参加する" });
 
-    expect(button).toBeDisabled();
+    expect(button).toBeEnabled();
   });
 
   it("ニックネーム+自撮りで参加ボタンが有効になる", async () => {

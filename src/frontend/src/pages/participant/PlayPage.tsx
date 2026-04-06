@@ -15,7 +15,7 @@ type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" |
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { emit, on } = useSocket();
+  const { emit, on, isConnected } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("profile");
   const [participantId, setParticipantId] = useState<number | null>(null);
@@ -216,6 +216,12 @@ export function PlayPage() {
     );
   }
 
+  const disconnectBanner = !isConnected && phase !== "profile" ? (
+    <div role="alert" className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-amber-500 text-white text-sm text-center">
+      接続が切れました。再接続中…
+    </div>
+  ) : null;
+
   const errorBanner = answerError !== null ? (
     <div role="alert" className="fixed top-0 left-0 right-0 z-50">
       <button
@@ -238,10 +244,11 @@ export function PlayPage() {
         </>
       );
     case "waiting":
-      return <WaitingPage roomCode={roomCode} message="次の問題を待っています…" />;
+      return <>{disconnectBanner}<WaitingPage roomCode={roomCode} message="次の問題を待っています…" /></>;
     case "answer":
       return (
         <>
+          {disconnectBanner}
           {errorBanner}
           <AnswerPage
             question={currentQuestion}
@@ -253,11 +260,11 @@ export function PlayPage() {
         </>
       );
     case "result":
-      return <ResultPage result={questionResult} question={currentQuestion} />;
+      return <>{disconnectBanner}<ResultPage result={questionResult} question={currentQuestion} /></>;
     case "ranking":
-      return <ParticipantRankingPage data={rankingData} participantId={participantId} />;
+      return <>{disconnectBanner}<ParticipantRankingPage data={rankingData} participantId={participantId} /></>;
     case "final":
-      return <ParticipantFinalPage data={finalData} participantId={participantId} resultsRevealed={resultsRevealed} />;
+      return <>{disconnectBanner}<ParticipantFinalPage data={finalData} participantId={participantId} resultsRevealed={resultsRevealed} /></>;
     case "closed":
       return <ThankYouScreen participants={closedParticipants} />;
   }

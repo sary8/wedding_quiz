@@ -35,9 +35,9 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
   function handleSubmit() {
     const trimmed = nickname.trim();
-    if (!trimmed || trimmed.length > 8 || !capturedImage || isJoining) return;
+    if (!trimmed || trimmed.length > 8 || isJoining) return;
     if (hasTeams && selectedTeamId == null) return;
-    onJoin(trimmed, capturedImage, selectedTeamId);
+    onJoin(trimmed, capturedImage ?? undefined, selectedTeamId);
   }
 
   return (
@@ -105,7 +105,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
 
         {/* 自撮りエリア */}
         <div className="text-center">
-          <p className="text-sm text-sage-text/80 mb-3">アイコン</p>
+          <p className="text-sm text-sage-text/80 mb-3">アイコン（任意）</p>
 
           {cameraError !== null ? (
             <div role="alert" className="mb-3 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
@@ -177,10 +177,10 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!nickname.trim() || !capturedImage || isJoining || (hasTeams && selectedTeamId == null)}
+          disabled={!nickname.trim() || isJoining || (hasTeams && selectedTeamId == null)}
           className={[
             "w-full py-4 rounded-xl text-xl font-bold transition-[background-color,opacity,box-shadow] duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            nickname.trim() && capturedImage && !isJoining && (!hasTeams || selectedTeamId != null)
+            nickname.trim() && !isJoining && (!hasTeams || selectedTeamId != null)
               ? "bg-primary text-white hover:opacity-90 shadow-[0_4px_16px_rgba(107,143,113,0.3)]"
               : "bg-primary/20 text-primary/40 cursor-not-allowed",
           ].join(" ")}

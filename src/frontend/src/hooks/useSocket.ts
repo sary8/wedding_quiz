@@ -151,6 +151,39 @@ export function useSocket() {
     []
   );
 
+  const emitWithTimeout = useCallback(
+    <E extends keyof ClientToServerEvents>(
+      event: E,
+      data: Parameters<ClientToServerEvents[E]>[0],
+      callback: Parameters<ClientToServerEvents[E]>[1],
+      timeoutMs = 10000
+    ) => {
+      const socket = socketRef.current;
+      if (!socket) {
+        (callback as (res: { success: boolean; error?: string }) => void)({
+          success: false,
+          error: "サーバーに接続されていません",
+        });
+        return;
+      }
+      (socket.timeout(timeoutMs).emit as unknown as (...a: unknown[]) => void)(
+        event,
+        data,
+        (err: Error | null, res: unknown) => {
+          if (err) {
+            (callback as (res: { success: boolean; error?: string }) => void)({
+              success: false,
+              error: "サーバーからの応答がタイムアウトしました",
+            });
+          } else {
+            (callback as (res: unknown) => void)(res);
+          }
+        }
+      );
+    },
+    []
+  );
+
   const on = useCallback(
     <E extends keyof ServerToClientEvents>(
       event: E,
@@ -165,7 +198,7 @@ export function useSocket() {
   );
 
   return useMemo(
-    () => ({ socket: socketRef, isConnected, connectionError, emit, on }),
-    [isConnected, connectionError, emit, on],
+    () => ({ socket: socketRef, isConnected, connectionError, emit, emitWithTimeout, on }),
+    [isConnected, connectionError, emit, emitWithTimeout, on],
   );
 }

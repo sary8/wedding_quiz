@@ -118,6 +118,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   onSpotlightRef.current = onSpotlight;
   const onShowParticipantResultsRef = useRef(onShowParticipantResults);
   onShowParticipantResultsRef.current = onShowParticipantResults;
+  const participantResultsSentRef = useRef(false);
   const prevRevealTriggerRef = useRef(revealTrigger ?? 0);
 
   const { rankings, batches, finalEntries } = useMemo(() => {
@@ -294,6 +295,8 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   // --- done → 参加者に結果公開 + 5秒後に group フェーズへ自動遷移 ---
   useEffect(() => {
     if (phase !== "done") return;
+    if (participantResultsSentRef.current) return;
+    participantResultsSentRef.current = true;
     onShowParticipantResultsRef.current?.();
     const timer = setTimeout(() => setPhase("group"), 5000);
     return () => clearTimeout(timer);

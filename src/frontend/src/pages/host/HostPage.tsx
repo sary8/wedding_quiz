@@ -332,11 +332,11 @@ export function HostPage() {
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
   // 接続エラー表示
-  if (connectionError) {
+  if (connectionError && !isConnected) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-blush to-white text-gray-900 gap-4">
-        <p className="text-xl text-red-600">{connectionError}</p>
-        <p className="text-sm text-gray-600">ページを再読み込みしてください</p>
+        <p className="text-xl text-red-600">接続が切れました</p>
+        <p className="text-sm text-gray-600">自動的に再接続を試みています…</p>
       </div>
     );
   }
