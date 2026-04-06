@@ -60,6 +60,35 @@
   to { transform: translate(var(--dx), var(--dy)); }
 }
 
+/* --- Botanical Glass UI animations --- */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes leaf-drift {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.15; }
+  90% { opacity: 0.15; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
 @layer base {
   html {
     font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
@@ -73,7 +102,7 @@
 
   body {
     min-height: 100dvh;
-    background-color: #EFF5F0;
+    background: linear-gradient(160deg, #EFF5F0 0%, #E4EDE6 40%, #F5F0E8 70%, #EFF5F0 100%);
     color: #2D4A33;
   }
 
@@ -106,6 +135,77 @@
   .bg-medal-bronze {
     background: linear-gradient(135deg, #f0d9b5, #f5e6d0);
     color: #6b4c2a;
+  }
+}
+
+/* Botanical Glass: グラスモーフィズムカード */
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(107, 143, 113, 0.12);
+    box-shadow:
+      0 4px 32px rgba(107, 143, 113, 0.08),
+      0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  }
+
+  .glass-card-strong {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(107, 143, 113, 0.15);
+    box-shadow:
+      0 8px 48px rgba(107, 143, 113, 0.12),
+      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  }
+
+  /* エントランスアニメーション */
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out both;
+  }
+
+  /* 植物的な装飾背景 */
+  .bg-botanical {
+    position: relative;
+  }
+  .bg-botanical::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 80%, rgba(107, 143, 113, 0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(202, 138, 4, 0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 50% 50%, rgba(212, 229, 214, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ゴールドアクセントライン */
+  .gold-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(202, 138, 4, 0.4), transparent);
+  }
+
+  /* シマー効果のテキスト */
+  .text-shimmer {
+    background: linear-gradient(
+      110deg,
+      #6B8F71 0%,
+      #6B8F71 35%,
+      #CA8A04 50%,
+      #6B8F71 65%,
+      #6B8F71 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s ease-in-out infinite;
   }
 }
 

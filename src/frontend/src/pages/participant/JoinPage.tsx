@@ -28,21 +28,42 @@ export function JoinPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-blush px-6">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 bg-botanical overflow-hidden">
+      {/* 装飾: 浮遊するリーフ */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="absolute text-primary/[0.07] motion-safe:animate-[gentle-float_6s_ease-in-out_infinite]"
+            style={{
+              left: `${20 + i * 30}%`,
+              top: `${15 + i * 25}%`,
+              animationDelay: `${i * 2}s`,
+              fontSize: `${40 + i * 16}px`,
+            }}
+          >
+            &#x1F33F;
+          </span>
+        ))}
+      </div>
+
       {/* タイトル */}
-      <header className="text-center mb-8">
-        <h1 className="font-script text-6xl text-primary mb-1 [text-wrap:balance]">Wedding Quiz</h1>
-        <div className="flex items-center gap-3 justify-center my-3">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
-          <span className="inline-block w-2 h-2 rotate-45 bg-accent" aria-hidden="true" />
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
-        </div>
-        <p className="font-serif-wedding text-sage-text/70 tracking-widest text-sm uppercase">Celebration Game</p>
+      <header className="text-center mb-10 relative z-10 animate-fade-up">
+        <h1 className="font-script text-7xl text-shimmer mb-2 [text-wrap:balance] drop-shadow-[0_2px_8px_rgba(107,143,113,0.15)]">
+          Wedding Quiz
+        </h1>
+        <div className="gold-line w-48 mx-auto my-4" />
+        <p className="font-serif-wedding text-sage-text/60 tracking-[0.25em] text-sm uppercase">
+          Celebration Game
+        </p>
       </header>
 
       {/* カード */}
-      <div className="w-full max-w-xs bg-white rounded-2xl shadow-[0_4px_32px_rgba(107,143,113,0.12)] border border-primary/10 p-8">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div
+        className="w-full max-w-xs glass-card-strong rounded-3xl p-8 relative z-10 animate-fade-up"
+        style={{ animationDelay: "0.15s" }}
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <Input
             type="text"
             value={roomCode}
@@ -52,7 +73,7 @@ export function JoinPage() {
             maxLength={6}
             label="ルームコード（6桁）"
             error={error}
-            className="text-3xl tracking-widest text-center"
+            className="text-3xl tracking-[0.3em] text-center font-bold"
             autoComplete="off"
             inputMode="numeric"
             spellCheck={false}
@@ -72,7 +93,12 @@ export function JoinPage() {
       </div>
 
       {/* フッター装飾 */}
-      <p className="mt-8 text-primary/60 text-xs">本日はご参加いただきありがとうございます</p>
+      <p
+        className="mt-10 text-primary/50 text-xs font-serif-wedding tracking-widest relative z-10 animate-fade-in"
+        style={{ animationDelay: "0.5s" }}
+      >
+        本日はご参加いただきありがとうございます
+      </p>
     </div>
   );
 }

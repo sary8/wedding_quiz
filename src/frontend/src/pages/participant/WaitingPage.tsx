@@ -7,30 +7,30 @@ type Props = {
 
 export function WaitingPage({ message = "まもなく開始します…", roomCode }: Props) {
   return (
-    <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush">
+    <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical overflow-hidden">
       {/* ゴールドハート */}
       <div
         aria-hidden="true"
-        className="mb-6 text-accent motion-safe:animate-[scale-pulse_2s_ease-in-out_infinite]"
+        className="mb-8 text-accent motion-safe:animate-[scale-pulse_2s_ease-in-out_infinite] drop-shadow-[0_4px_12px_rgba(202,138,4,0.2)]"
       >
-        <Heart size={56} strokeWidth={1.5} />
+        <Heart size={64} strokeWidth={1.2} fill="currentColor" fillOpacity={0.15} />
       </div>
 
       {/* タイトル */}
-      <h1 className="font-script text-4xl text-primary mb-2 [text-wrap:balance]">Wedding Quiz</h1>
+      <h1 className="font-script text-5xl text-primary mb-3 [text-wrap:balance] animate-fade-up">
+        Wedding Quiz
+      </h1>
 
       {/* セパレーター */}
-      <div className="flex items-center gap-3 mb-4 w-40">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/40" />
-        <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent/60" aria-hidden="true" />
-        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/40" />
+      <div className="gold-line w-32 mb-6" />
+
+      <div className="glass-card rounded-2xl px-8 py-4 animate-fade-up" style={{ animationDelay: "0.1s" }}>
+        <p className="text-sage-text text-base text-center" aria-live="polite">{message}</p>
       </div>
 
-      <p className="text-sage-text text-base" aria-live="polite">{message}</p>
-
       {roomCode && (
-        <p className="mt-4 text-xs text-gray-500">
-          ルームコード: <span className="font-mono font-bold text-gray-600">{roomCode}</span>
+        <p className="mt-6 text-xs text-sage-text/40 font-serif-wedding tracking-widest">
+          Room <span className="font-mono font-bold text-sage-text/60">{roomCode}</span>
         </p>
       )}
     </div>

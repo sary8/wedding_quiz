@@ -19,37 +19,37 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
   const joinUrl = `${appOrigin}/play/${roomCode}`;
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-b from-blush to-white">
-    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-gray-900 px-6">
+    <div className="h-[100dvh] bg-gradient-to-br from-[#F0F5F1] via-[#F5F0E8] to-[#EFF5F0] overflow-hidden">
+    <div className="h-full max-h-[1080px] max-w-[1920px] mx-auto flex flex-col items-center justify-center text-sage-text px-6 bg-botanical relative">
       {/* タイトル */}
-      <header className="text-center mb-8">
-        <h1 className="font-script text-6xl text-amber-800 mb-2 [text-wrap:balance]">Wedding Quiz</h1>
-        <div className="flex items-center gap-3 justify-center mb-2">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-800/40 max-w-[80px]" />
-          <span className="inline-block w-1.5 h-1.5 rotate-45 bg-amber-800/60" aria-hidden="true" />
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-800/40 max-w-[80px]" />
-        </div>
-        <p className="font-serif-wedding text-gray-600 tracking-widest text-sm uppercase">Celebration Game</p>
+      <header className="text-center mb-10 animate-fade-up">
+        <h1 className="font-script text-7xl md:text-8xl text-shimmer mb-3 [text-wrap:balance] drop-shadow-[0_2px_12px_rgba(107,143,113,0.12)]">
+          Wedding Quiz
+        </h1>
+        <div className="gold-line w-56 mx-auto my-4" />
+        <p className="font-serif-wedding text-sage-text/50 tracking-[0.3em] text-sm uppercase">Celebration Game</p>
       </header>
 
-      <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center mb-10 animate-fade-up" style={{ animationDelay: "0.1s" }}>
         {/* QRコード */}
-        <QRCodeDisplay value={joinUrl} size={200} label="Scan to Join" />
+        <div className="glass-card-strong rounded-3xl p-6">
+          <QRCodeDisplay value={joinUrl} size={200} label="Scan to Join" />
+        </div>
 
         {/* ルームコード */}
         <div className="text-center">
-          <p className="text-sm mb-2 text-gray-600 tracking-widest uppercase">Room Code</p>
-          <p className="text-7xl font-bold tracking-widest text-amber-800" aria-label={`ルームコード: ${roomCode.split('').join(' ')}`}>
+          <p className="text-xs mb-3 text-sage-text/50 tracking-[0.3em] uppercase font-serif-wedding">Room Code</p>
+          <p className="text-8xl md:text-9xl font-bold tracking-[0.2em] text-primary drop-shadow-[0_2px_8px_rgba(107,143,113,0.1)]" aria-label={`ルームコード: ${roomCode.split('').join(' ')}`}>
             {roomCode}
           </p>
-          <p className="text-gray-600 text-sm mt-2">Join with your phone!</p>
+          <p className="text-sage-text/50 text-sm mt-3 font-serif-wedding tracking-wider">Join with your phone!</p>
         </div>
       </div>
 
       {/* 参加者一覧 */}
-      <section className="mb-8 text-center w-full max-w-4xl">
-        <h2 className="text-xl font-bold mb-4 text-gray-700 [text-wrap:balance]">
-          Players: <span className="text-amber-800">{participants.length}</span>
+      <section className="mb-8 text-center w-full max-w-4xl animate-fade-up" style={{ animationDelay: "0.2s" }}>
+        <h2 className="text-lg font-serif-wedding tracking-wider mb-4 text-sage-text/70">
+          Players <span className="text-accent font-bold text-2xl ml-2 [font-variant-numeric:tabular-nums]">{participants.length}</span>
         </h2>
         {participants.length > 0 ? (
           teams && teams.length > 0 ? (

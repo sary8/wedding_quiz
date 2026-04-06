@@ -45,40 +45,42 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
 
   if (hasAnswered) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-blush text-gray-900" role="status" aria-live="polite">
-        <div className="mb-4 text-green-600" aria-hidden="true">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical text-gray-900" role="status" aria-live="polite">
+        <div className="glass-card rounded-3xl p-10 flex flex-col items-center animate-fade-up">
+          <div className="mb-4 text-primary" aria-hidden="true">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-sage-text">回答済み</p>
+          <p className="text-sm text-sage-text/60 mt-2">結果をお待ちください…</p>
         </div>
-        <p className="text-2xl font-bold">回答済み</p>
-        <p className="text-base text-gray-600 mt-2">結果をお待ちください…</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-blush">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-blush via-white/50 to-blush">
       {/* ボーナスバナー */}
       {question.pointMultiplier > 1 && (
-        <div className="bg-gradient-to-r from-amber-300 to-amber-200 text-amber-900 text-center py-2 text-sm font-bold">
+        <div className="bg-gradient-to-r from-amber-400/90 to-amber-300/90 backdrop-blur-sm text-amber-900 text-center py-2.5 text-sm font-bold tracking-wide shadow-sm">
           ボーナス問題！ ポイント{question.pointMultiplier}倍！
         </div>
       )}
 
       {/* ヘッダー: 問題番号 + 回答数 + タイマー */}
-      <header className="flex justify-between items-center px-4 py-3 text-gray-900">
+      <header className="flex justify-between items-center px-4 py-3 text-sage-text">
         <div className="flex flex-col">
-          <span className="text-sm">
+          <span className="text-sm font-serif-wedding tracking-wider text-sage-text/70">
             Q{question.questionIndex + 1} / {question.totalQuestions}
           </span>
           {answerCount !== undefined && answerCount > 0 && (
-            <span className="text-xs text-gray-600">回答済み: {answerCount}人</span>
+            <span className="text-xs text-sage-text/50">回答済み: {answerCount}人</span>
           )}
         </div>
         <div
-          className={`text-4xl font-bold ${timeRemaining <= 5 ? "text-red-600 motion-safe:animate-scale-pulse" : "text-gray-900"}`}
+          className={`text-4xl font-bold [font-variant-numeric:tabular-nums] ${timeRemaining <= 5 ? "text-red-500 motion-safe:animate-scale-pulse" : "text-sage-text"}`}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -89,7 +91,7 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
       </header>
 
       {/* 問題文 */}
-      <div className="px-4 py-2 text-gray-900 text-center">
+      <div className="px-4 py-2 text-sage-text text-center">
         {safeMediaUrl && question.mediaType === "image" ? (
           <img
             src={safeMediaUrl}
@@ -97,10 +99,10 @@ export function AnswerPage({ question, timeRemaining: rawTimeRemaining, hasAnswe
             width={480}
             height={320}
             loading="lazy"
-            className="max-w-[80%] max-h-[25vh] rounded-lg mb-2 object-cover mx-auto"
+            className="max-w-[80%] max-h-[25vh] rounded-xl mb-3 object-cover mx-auto shadow-lg"
           />
         ) : null}
-        <p className="text-xl font-bold">{question.text}</p>
+        <p className="text-xl font-bold leading-relaxed">{question.text}</p>
       </div>
 
       {/* 回答ボタン */}
