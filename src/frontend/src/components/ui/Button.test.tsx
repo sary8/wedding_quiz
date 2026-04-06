@@ -65,7 +65,7 @@ describe("Button", () => {
     render(<Button disabled>Disabled</Button>);
     const button = screen.getByRole("button");
     expect(button).toBeDisabled();
-    expect(button).toHaveClass("disabled:cursor-not-allowed", "disabled:opacity-40");
+    expect(button).toHaveClass("disabled:cursor-not-allowed", "disabled:opacity-60");
   });
 
   it("forwards ref to button element", () => {

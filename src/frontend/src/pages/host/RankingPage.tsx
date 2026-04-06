@@ -30,7 +30,7 @@ const PASTEL_BG_CLASSES = [
 
 function rankColorClass(rank: number): string {
   if (rank === 1) return "text-amber-500";
-  if (rank === 2) return "text-gray-400";
+  if (rank === 2) return "text-gray-500";
   if (rank === 3) return "text-amber-700";
   return "text-gray-900";
 }
@@ -376,7 +376,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 type="button"
                 disabled={currentPage <= 0}
                 onClick={() => handlePageChange(currentPage - 1)}
-                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
               >
                 ← 前の10{unitLabel}
               </button>
@@ -385,7 +385,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 type="button"
                 disabled={currentPage >= totalPages - 1}
                 onClick={() => handlePageChange(currentPage + 1)}
-                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-base font-bold hover:bg-gray-300 transition-colors duration-200 min-h-[44px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
               >
                 次の10{unitLabel} →
               </button>

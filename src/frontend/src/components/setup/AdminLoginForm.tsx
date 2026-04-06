@@ -59,7 +59,7 @@ export function AdminLoginForm({ isPinRequired, onAuthenticated }: Props) {
           <button
             type="submit"
             disabled={isLoading || (isPinRequired && !pin)}
-            className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isLoading ? "認証中..." : isPinRequired ? "ログイン" : "管理画面を開く"}
           </button>

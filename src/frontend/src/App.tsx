@@ -22,7 +22,14 @@ function LoadingFallback() {
 export function App() {
   return (
     <BrowserRouter>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-4 focus:text-primary focus:shadow-lg focus:rounded-br-lg"
+      >
+        メインコンテンツにスキップ
+      </a>
       <Suspense fallback={<LoadingFallback />}>
+        <main id="main-content">
         <Routes>
           <Route path="/demo/final" element={<FinalDemoPage />} />
           <Route path="/demo/ranking" element={<RankingDemoPage />} />
@@ -35,6 +42,7 @@ export function App() {
           <Route path="/" element={<Navigate to="/play" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </main>
       </Suspense>
     </BrowserRouter>
   );

@@ -60,13 +60,13 @@ describe("ChoiceButton", () => {
 
   it("applies disabled opacity when disabled and not selected", () => {
     render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} disabled />);
-    expect(screen.getByRole("button")).toHaveClass("opacity-40");
+    expect(screen.getByRole("button")).toHaveClass("opacity-60");
   });
 
   it("does not apply disabled opacity when selected", () => {
     render(<ChoiceButton choice="A" color="red" choiceIndex={1} onClick={NOOP} disabled isSelected />);
     const button = screen.getByRole("button");
-    expect(button).not.toHaveClass("opacity-40");
+    expect(button).not.toHaveClass("opacity-60");
     expect(button).toHaveClass("ring-4", "ring-gray-900");
   });
 
