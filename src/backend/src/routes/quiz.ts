@@ -131,6 +131,7 @@ quizRoutes.put("/:id", async (c) => {
 // 特定クイズの参加者一覧
 quizRoutes.get("/:id/participants", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -160,6 +161,7 @@ quizRoutes.get("/:id/participants", async (c) => {
 quizRoutes.delete("/:id/participants/:participantId", async (c) => {
   const quizId = parseId(c.req.param("id"));
   const participantId = parseId(c.req.param("participantId"));
+  if (!quizId || !participantId) return c.json({ error: "不正なIDです" }, 400);
 
   const participant = await db.query.participants.findFirst({
     where: and(
@@ -185,6 +187,7 @@ quizRoutes.delete("/:id/participants/:participantId", async (c) => {
 // body.ids 指定時: 指定IDのみ削除、未指定時: クイズの全参加者削除
 quizRoutes.delete("/:id/participants", async (c) => {
   const quizId = parseId(c.req.param("id"));
+  if (!quizId) return c.json({ error: "不正なIDです" }, 400);
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, quizId),
@@ -292,6 +295,7 @@ quizRoutes.get("/room/:roomCode/info", async (c) => {
 // チームモード切替
 quizRoutes.put("/:id/team-mode", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
   const body = await c.req.json<{ enabled: boolean }>().catch(() => null);
   if (!body) {
     return c.json({ error: "リクエストの形式が不正です" }, 400);
@@ -315,6 +319,7 @@ quizRoutes.put("/:id/team-mode", async (c) => {
 // チーム一覧取得
 quizRoutes.get("/:id/teams", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
 
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
@@ -335,6 +340,7 @@ quizRoutes.get("/:id/teams", async (c) => {
 // チーム一括設定
 quizRoutes.put("/:id/teams", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
   const body = await c.req.json<{ teams: { name: string }[] }>().catch(() => null);
   if (!body) {
     return c.json({ error: "リクエストの形式が不正です" }, 400);
@@ -387,6 +393,7 @@ quizRoutes.put("/:id/teams", async (c) => {
 quizRoutes.delete("/:id/teams/:teamId", async (c) => {
   const quizId = parseId(c.req.param("id"));
   const teamId = parseId(c.req.param("teamId"));
+  if (!quizId || !teamId) return c.json({ error: "不正なIDです" }, 400);
 
   const team = await db.query.teams.findFirst({
     where: and(
@@ -406,6 +413,7 @@ quizRoutes.delete("/:id/teams/:teamId", async (c) => {
 // クイズ削除（/:id は最も汎用的なので最後に定義）
 quizRoutes.delete("/:id", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
   const deleted = await deleteQuizCompletely(id);
   if (!deleted) {
     return c.json({ error: "クイズが見つかりません" }, 404);
@@ -416,6 +424,7 @@ quizRoutes.delete("/:id", async (c) => {
 // 統計データ取得
 quizRoutes.get("/:id/stats", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
   const { getQuizStats } = await import("../services/statsService.js");
   const stats = await getQuizStats(id);
   if (!stats) return c.json({ error: "クイズが見つかりません" }, 404);
@@ -425,6 +434,7 @@ quizRoutes.get("/:id/stats", async (c) => {
 // データエクスポート
 quizRoutes.get("/:id/export", async (c) => {
   const id = parseId(c.req.param("id"));
+  if (!id) return c.json({ error: "不正なIDです" }, 400);
   const format = c.req.query("format") ?? "json";
   if (format !== "csv" && format !== "json") {
     return c.json({ error: "format は csv または json を指定してください" }, 400);
