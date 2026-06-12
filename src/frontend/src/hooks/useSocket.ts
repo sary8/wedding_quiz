@@ -23,7 +23,14 @@ type ServerToClientEvents = {
   rankingUpdate: (data: RankingData) => void;
   gameEnded: (data: FinalResultData) => void;
   error: (data: { message: string }) => void;
-  reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null; finalData?: FinalResultData | null }) => void;
+  reconnected: (data: {
+    participantId: number;
+    quizStatus: QuizStatus;
+    currentQuestionData?: QuestionData | null;
+    finalData?: FinalResultData | null;
+    timerRemaining?: number;
+    hasAnswered?: boolean;
+  }) => void;
   quizReset: () => void;
   hostReconnected: (data: {
     quizStatus: QuizStatus;
@@ -75,7 +82,14 @@ type ClientToServerEvents = {
   ) => void;
   watchRoom: (
     data: { roomCode: string },
-    cb: (res: { success: boolean; error?: string }) => void
+    cb: (res: {
+      success: boolean;
+      error?: string;
+      quizStatus?: QuizStatus;
+      currentQuestionData?: QuestionData | null;
+      timerRemaining?: number;
+      finalData?: FinalResultData | null;
+    }) => void
   ) => void;
   replayQuiz: (
     data: { roomCode: string; hostSecret: string },
@@ -114,9 +128,10 @@ export function useSocket() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
-    const isProduction = import.meta.env.PROD;
+    // polling は WebSocket がプロキシ等で遮断された会場向けのフォールバック。
+    // WebSocket が使える環境では自動アップグレードされるため常用されない
     const socket: TypedSocket = io(import.meta.env.VITE_API_URL || undefined, {
-      transports: isProduction ? ["websocket"] : ["websocket", "polling"],
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -189,9 +204,13 @@ export function useSocket() {
       event: E,
       handler: ServerToClientEvents[E]
     ) => {
-      (socketRef.current as unknown as AnySocket)?.on(event as string, handler as (...args: unknown[]) => void);
+      // 登録時のインスタンスをクロージャに捕捉する。クリーンアップ時に
+      // socketRef.current を参照すると、インスタンスが入れ替わった場合に
+      // 旧ソケットのリスナーが解除されず購読が重複する
+      const socket = socketRef.current as unknown as AnySocket | null;
+      socket?.on(event as string, handler as (...args: unknown[]) => void);
       return () => {
-        (socketRef.current as unknown as AnySocket)?.off(event as string, handler as (...args: unknown[]) => void);
+        socket?.off(event as string, handler as (...args: unknown[]) => void);
       };
     },
     []

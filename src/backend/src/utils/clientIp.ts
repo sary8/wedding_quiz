@@ -11,7 +11,11 @@ export function getClientIp(c: Context): string {
       return forwarded.split(",")[0].trim();
     }
   }
-  return "unknown";
+  // @hono/node-server 直結時は Node のソケットからリモートアドレスを取得。
+  // これがないと全クライアントが "unknown" の単一バケットでレート制限される
+  const incoming = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)
+    ?.incoming;
+  return incoming?.socket?.remoteAddress || "unknown";
 }
 
 /** Socket.io Socket からクライアントIPを取得 */

@@ -206,10 +206,19 @@ export async function getNextQuestion(roomCode: string): Promise<QuestionData | 
 
   const q = questions[nextIndex];
 
-  await db
+  // 楽観ロック: 読み取り時のインデックスから変わっていない場合のみ進める。
+  // 無条件UPDATEだと二重実行でインデックスが2進み、問題が1つスキップされる
+  const updated = await db
     .update(schema.quizzes)
     .set({ current_question_index: nextIndex })
-    .where(eq(schema.quizzes.id, quiz.id));
+    .where(
+      and(
+        eq(schema.quizzes.id, quiz.id),
+        eq(schema.quizzes.current_question_index, quiz.current_question_index)
+      )
+    )
+    .returning({ id: schema.quizzes.id });
+  if (updated.length === 0) return null;
 
   return buildQuestionData(q, nextIndex, questions.length);
 }
@@ -270,6 +279,20 @@ export async function getAnswerCount(questionId: number): Promise<number> {
     .from(schema.answers)
     .where(eq(schema.answers.question_id, questionId));
   return result[0]?.count ?? 0;
+}
+
+// 参加者が指定問題に回答済みか（再接続時の状態復元用）
+export async function hasParticipantAnswered(
+  participantId: number,
+  questionId: number
+): Promise<boolean> {
+  const row = await db.query.answers.findFirst({
+    where: and(
+      eq(schema.answers.participant_id, participantId),
+      eq(schema.answers.question_id, questionId)
+    ),
+  });
+  return !!row;
 }
 
 // 問題結果生成

@@ -14,6 +14,13 @@ vi.mock("../../services/quizService.js", () => ({
   getParticipant: vi.fn(),
   verifyHostSecret: vi.fn(),
   handleDisconnect: vi.fn(),
+  getNextQuestion: vi.fn(),
+  submitAnswer: vi.fn(),
+  getAnswerCount: vi.fn(),
+  getReconnectQuestionData: vi.fn(),
+  hasParticipantAnswered: vi.fn(),
+  getFinalResult: vi.fn(),
+  startGame: vi.fn(),
 }));
 
 // timerService をモック
@@ -34,6 +41,7 @@ vi.mock("../../utils/logger.js", () => ({
 }));
 
 const quizService = await import("../../services/quizService.js");
+const timerService = await import("../../services/timerService.js");
 const { setupQuizSocket, _resetSocketRateLimit } = await import("../../socket/quizHandler.js");
 
 type TypedClientSocket = ClientSocket<ServerToClientEvents, ClientToServerEvents>;
@@ -393,23 +401,42 @@ describe("showParticipantResults", () => {
 });
 
 describe("socket rate limiting", () => {
-  it("joinRoom 21回目でレート制限エラー", async () => {
-    // joinRoom は roomCode バリデーション前にレート制限チェック
+  it("joinRoom 151回目でレート制限エラー（NAT会場の一斉参加を許容）", async () => {
+    // joinRoom は roomCode バリデーション前にレート制限チェック。
+    // 会場Wi-FiのNATで全員が同一IPになるケースを想定し、上限は150回/分
     const client = await connectClient();
     try {
-      // 20回は通過（バリデーションエラーだがレート制限ではない）
-      for (let i = 0; i < 20; i++) {
+      // 150回は通過（バリデーションエラーだがレート制限ではない）
+      for (let i = 0; i < 150; i++) {
         const res = await emitWithCallback<{ success: boolean; error?: string }>(
           client, "joinRoom", { roomCode: "abcd", nickname: "test" },
         );
         expect(res.error).not.toBe("リクエストが多すぎます。しばらくしてから再試行してください");
       }
-      // 21回目はレート制限
+      // 151回目はレート制限
       const res = await emitWithCallback<{ success: boolean; error?: string }>(
         client, "joinRoom", { roomCode: "abcd", nickname: "test" },
       );
       expect(res.success).toBe(false);
       expect(res.error).toBe("リクエストが多すぎます。しばらくしてから再試行してください");
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("joinRoomとwatchRoomのレート制限バケットは独立している", async () => {
+    // joinRoomの大量送信がwatchRoom（プロジェクター/ホスト画面）を巻き込まないこと
+    const client = await connectClient();
+    try {
+      for (let i = 0; i < 30; i++) {
+        await emitWithCallback<{ success: boolean }>(
+          client, "joinRoom", { roomCode: "abcd", nickname: "test" },
+        );
+      }
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "watchRoom", { roomCode: "abcd" },
+      );
+      expect(res.error).not.toBe("リクエストが多すぎます。しばらくしてから再試行してください");
     } finally {
       client.disconnect();
     }
@@ -430,6 +457,320 @@ describe("socket rate limiting", () => {
       expect(res.error).toBe("リクエストが多すぎます。しばらくしてから再試行してください");
     } finally {
       client.disconnect();
+    }
+  });
+});
+
+// ========== ゲーム進行イベント（本番当日の主要フロー） ==========
+
+function waitForEvent<T>(client: TypedClientSocket, event: string, timeoutMs = 2000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timeout waiting for ${event}`)), timeoutMs);
+    (client as unknown as { once: (ev: string, cb: (data: T) => void) => void }).once(event, (data) => {
+      clearTimeout(timer);
+      resolve(data);
+    });
+  });
+}
+
+// ホストがnextQuestionで問題を配信し、サーバー側のactiveQuestionsを設定する
+async function startQuestion(roomCode: string, questionId: number): Promise<TypedClientSocket> {
+  const host = await connectClient();
+  vi.mocked(quizService.verifyHostSecret).mockResolvedValue({ id: 1 } as never);
+  vi.mocked(quizService.getNextQuestion).mockResolvedValue({
+    questionId,
+    questionText: "テスト問題",
+    choices: ["a", "b", "c", "d"],
+    timeLimitSeconds: 30,
+    questionIndex: 0,
+    totalQuestions: 5,
+  } as never);
+  const res = await emitWithCallback<{ success: boolean }>(
+    host, "nextQuestion", { roomCode, hostSecret: "secret" },
+  );
+  expect(res.success).toBe(true);
+  return host;
+}
+
+// 参加者としてjoinRoomし、socketMetaを設定する
+async function joinParticipant(
+  client: TypedClientSocket,
+  roomCode: string,
+  participantId = 10,
+): Promise<void> {
+  vi.mocked(quizService.joinRoom).mockResolvedValue({
+    participant: { id: participantId, token: `tok-${participantId}` },
+    reconnect: false,
+  } as never);
+  vi.mocked(quizService.getParticipant).mockResolvedValue({
+    id: participantId,
+    nickname: "太郎",
+    selfie_file_name: null,
+  } as never);
+  vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+    id: 1,
+    status: "in_progress",
+    team_mode: false,
+    current_question_index: 0,
+  } as never);
+  vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([] as never);
+  const res = await emitWithCallback<{ success: boolean }>(
+    client, "joinRoom", { roomCode, nickname: "太郎" },
+  );
+  expect(res.success).toBe(true);
+}
+
+describe("submitAnswer（ゲーム進行）", () => {
+  it("タイマー有効時に回答を受理し経過時間をサービスに渡す", async () => {
+    const roomCode = "210001";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      vi.mocked(timerService.getElapsedMs).mockReturnValue(5000);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(25);
+      vi.mocked(quizService.submitAnswer).mockResolvedValue({ id: 1 } as never);
+
+      const res = await emitWithCallback<{ success: boolean }>(
+        client, "submitAnswer", { questionId: 99, choiceIndex: 2 },
+      );
+      expect(res.success).toBe(true);
+      expect(quizService.submitAnswer).toHaveBeenCalledWith(10, 99, 2, 5000);
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+
+  it("タイマー不在（サーバー再起動相当）の回答は拒否し満点バグを防ぐ", async () => {
+    const roomCode = "210002";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      vi.mocked(timerService.getElapsedMs).mockReturnValue(null);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(null);
+
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "submitAnswer", { questionId: 99, choiceIndex: 1 },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("この問題の回答期間は終了しました");
+      expect(quizService.submitAnswer).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+
+  it("残り時間0の滑り込み回答は拒否する", async () => {
+    const roomCode = "210003";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      vi.mocked(timerService.getElapsedMs).mockReturnValue(30500);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(0);
+
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "submitAnswer", { questionId: 99, choiceIndex: 1 },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("この問題の回答期間は終了しました");
+      expect(quizService.submitAnswer).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+
+  it("アクティブでない問題への回答は拒否する", async () => {
+    const roomCode = "210004";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "submitAnswer", { questionId: 98, choiceIndex: 1 },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("この問題の回答期間は終了しました");
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+
+  it("二重回答（既に回答済み）はsuccess:trueで吸収する", async () => {
+    const roomCode = "210005";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      vi.mocked(timerService.getElapsedMs).mockReturnValue(5000);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(25);
+      vi.mocked(quizService.submitAnswer).mockResolvedValue({ error: "既に回答済みです" } as never);
+
+      const res = await emitWithCallback<{ success: boolean }>(
+        client, "submitAnswer", { questionId: 99, choiceIndex: 1 },
+      );
+      expect(res.success).toBe(true);
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+
+  it("回答成功後にanswerCountUpdateがスロットリング配信される", async () => {
+    const roomCode = "210006";
+    const host = await startQuestion(roomCode, 99);
+    const client = await connectClient();
+    try {
+      await joinParticipant(client, roomCode, 10);
+      vi.mocked(timerService.getElapsedMs).mockReturnValue(5000);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(25);
+      vi.mocked(quizService.submitAnswer).mockResolvedValue({ id: 1 } as never);
+
+      const countPromise = waitForEvent<{ count: number }>(client, "answerCountUpdate");
+      const res = await emitWithCallback<{ success: boolean }>(
+        client, "submitAnswer", { questionId: 99, choiceIndex: 2 },
+      );
+      expect(res.success).toBe(true);
+      const update = await countPromise;
+      expect(update.count).toBe(1);
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+});
+
+describe("nextQuestion 二重押し防止", () => {
+  it("処理中の二重送信は拒否され、問題は1回だけ配信される", async () => {
+    const roomCode = "210007";
+    const host = await connectClient();
+    try {
+      // verifyHostSecretを遅延させて2つのリクエストを並走させる
+      vi.mocked(quizService.verifyHostSecret).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ id: 1 } as never), 50)),
+      );
+      vi.mocked(quizService.getNextQuestion).mockResolvedValue({
+        questionId: 50,
+        questionText: "Q",
+        choices: ["a", "b", "c", "d"],
+        timeLimitSeconds: 30,
+        questionIndex: 0,
+        totalQuestions: 5,
+      } as never);
+
+      const [res1, res2] = await Promise.all([
+        emitWithCallback<{ success: boolean; error?: string }>(
+          host, "nextQuestion", { roomCode, hostSecret: "secret" },
+        ),
+        emitWithCallback<{ success: boolean; error?: string }>(
+          host, "nextQuestion", { roomCode, hostSecret: "secret" },
+        ),
+      ]);
+
+      const successes = [res1, res2].filter((r) => r.success);
+      const rejected = [res1, res2].filter((r) => !r.success);
+      expect(successes).toHaveLength(1);
+      expect(rejected).toHaveLength(1);
+      expect(rejected[0].error).toBe("問題の配信中です");
+      expect(quizService.getNextQuestion).toHaveBeenCalledTimes(1);
+    } finally {
+      host.disconnect();
+    }
+  });
+});
+
+describe("参加者の再接続", () => {
+  it("reconnectedにタイマー残り時間と回答済みフラグが含まれる", async () => {
+    const roomCode = "210008";
+    const host = await startQuestion(roomCode, 77);
+    const client = await connectClient();
+    try {
+      vi.mocked(quizService.joinRoom).mockResolvedValue({
+        participant: { id: 11, token: "tok-11" },
+        reconnect: true,
+      } as never);
+      vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+        id: 1,
+        status: "in_progress",
+        team_mode: false,
+        current_question_index: 0,
+      } as never);
+      vi.mocked(quizService.getReconnectQuestionData).mockResolvedValue({
+        questionId: 77,
+        questionText: "テスト問題",
+        choices: ["a", "b", "c", "d"],
+        timeLimitSeconds: 30,
+        questionIndex: 0,
+        totalQuestions: 5,
+      } as never);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(12);
+      vi.mocked(quizService.hasParticipantAnswered).mockResolvedValue(true);
+
+      const reconnectedPromise = waitForEvent<{
+        participantId: number;
+        quizStatus: string;
+        timerRemaining?: number;
+        hasAnswered?: boolean;
+      }>(client, "reconnected");
+
+      const res = await emitWithCallback<{ success: boolean }>(
+        client, "joinRoom", { roomCode, nickname: "太郎", token: "tok-11" },
+      );
+      expect(res.success).toBe(true);
+
+      const data = await reconnectedPromise;
+      expect(data.quizStatus).toBe("in_progress");
+      expect(data.timerRemaining).toBe(12);
+      expect(data.hasAnswered).toBe(true);
+    } finally {
+      client.disconnect();
+      host.disconnect();
+    }
+  });
+});
+
+describe("watchRoom 状態復元", () => {
+  it("出題中のルームではゲーム状態がコールバックに含まれる", async () => {
+    const roomCode = "210009";
+    const host = await startQuestion(roomCode, 55);
+    const viewer = await connectClient();
+    try {
+      vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+        id: 1,
+        status: "in_progress",
+        team_mode: false,
+        current_question_index: 0,
+      } as never);
+      vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([] as never);
+      vi.mocked(quizService.getReconnectQuestionData).mockResolvedValue({
+        questionId: 55,
+        questionText: "テスト問題",
+        choices: ["a", "b", "c", "d"],
+        timeLimitSeconds: 30,
+        questionIndex: 0,
+        totalQuestions: 5,
+      } as never);
+      vi.mocked(timerService.getRemainingSeconds).mockReturnValue(7);
+
+      const res = await emitWithCallback<{
+        success: boolean;
+        quizStatus?: string;
+        currentQuestionData?: { questionId: number } | null;
+        timerRemaining?: number;
+      }>(viewer, "watchRoom", { roomCode });
+
+      expect(res.success).toBe(true);
+      expect(res.quizStatus).toBe("in_progress");
+      expect(res.currentQuestionData?.questionId).toBe(55);
+      expect(res.timerRemaining).toBe(7);
+    } finally {
+      viewer.disconnect();
+      host.disconnect();
     }
   });
 });

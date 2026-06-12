@@ -51,7 +51,7 @@ app.use(
   cors({
     origin: corsOrigins,
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Participant-Token"],
   })
 );
 
@@ -76,6 +76,9 @@ function isPublicRoute(method: string, path: string): boolean {
 
   // 参加者用: 自撮りアップロード
   if (method === "POST" && path === "/api/media/selfie") return true;
+
+  // 参加者用: 自身のデータ削除（本人性は X-Participant-Token で担保）
+  if (method === "DELETE" && path === "/api/quizzes/participants/me") return true;
 
   // メディア配信
   if (method === "GET" && /^\/api\/media\/[^/]+$/.test(path)) return true;
@@ -122,6 +125,15 @@ app.get("/api/health", (c) => c.json({ status: "ok" }));
 // ADMIN_PIN未設定警告（production）
 if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PIN) {
   logger.warn("ADMIN_PIN が未設定です。管理画面へのログインが拒否されます");
+}
+
+// TRUSTED_PROXY未設定警告（production）
+// リバースプロキシ配下で未設定だと x-forwarded-for を読まず、
+// 全クライアントが同一IPに見えてレート制限が共有バケット化する
+if (process.env.NODE_ENV === "production" && process.env.TRUSTED_PROXY !== "true") {
+  logger.warn(
+    "TRUSTED_PROXY が未設定です。リバースプロキシ配下ではクライアントIPを判別できず、レート制限が全クライアント共有になります"
+  );
 }
 
 // Start HTTP server

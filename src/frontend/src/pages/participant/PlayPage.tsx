@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo, TeamInfo } from "../../types";
-import { uploadSelfie, getRoomInfo } from "../../services/api";
+import { uploadSelfie, getRoomInfo, deleteMyParticipantData } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
@@ -15,7 +15,7 @@ type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" |
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { emit, on, isConnected } = useSocket();
+  const { emit, on, isConnected, connectionError } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("profile");
   const [participantId, setParticipantId] = useState<number | null>(null);
@@ -32,6 +32,7 @@ export function PlayPage() {
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
   const [roomNotFound, setRoomNotFound] = useState(false);
+  const [myDataDeleted, setMyDataDeleted] = useState(false);
 
   // ルーム情報取得（存在チェック + チームモード判定）
   useEffect(() => {
@@ -56,6 +57,13 @@ export function PlayPage() {
   });
 
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // アンマウント時に保留中の結果遷移タイマーを破棄
+  useEffect(() => {
+    return () => {
+      if (resultTimeoutRef.current) clearTimeout(resultTimeoutRef.current);
+    };
+  }, []);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -122,7 +130,10 @@ export function PlayPage() {
         setIsJoining(false);
         if (data.quizStatus === "in_progress" && data.currentQuestionData) {
           setCurrentQuestion(data.currentQuestionData);
-          setHasAnswered(false);
+          // タイマー残り時間と回答済み状態をサーバーから復元する。
+          // hasAnsweredをfalse固定にすると回答済みの参加者に回答ボタンが再表示される
+          setTimeRemaining(data.timerRemaining ?? 0);
+          setHasAnswered(data.hasAnswered ?? false);
           setPhase("answer");
         } else if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
           setPhase("waiting");
@@ -160,13 +171,18 @@ export function PlayPage() {
 
       const token = sessionStorage.getItem(`quiz_token_${roomCode}`) || undefined;
 
-      // タイムアウト: 10秒以内にサーバーから応答がなければエラー
+      // タイムアウト: 10秒以内にサーバーから応答がなければエラー。
+      // タイムアウト後に遅延コールバックが届いても無視する（ユーザーが
+      // 失敗と判断した後に勝手にwaiting画面へ遷移するのを防ぐ）
+      let timedOut = false;
       const joinTimeout = setTimeout(() => {
+        timedOut = true;
         setAnswerError("サーバーからの応答がありません。ページを再読み込みしてください。");
         setIsJoining(false);
       }, 10000);
 
       emit("joinRoom", { roomCode, nickname, selfieData: selfieFileName, token, teamId }, (res) => {
+        if (timedOut) return;
         clearTimeout(joinTimeout);
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
@@ -180,6 +196,23 @@ export function PlayPage() {
     },
     [roomCode, emit, isJoining]
   );
+
+  // 自身のデータ削除（プライバシーポリシー記載の自己データ削除）
+  const handleDeleteMyData = useCallback(async () => {
+    if (!roomCode) return;
+    const token = sessionStorage.getItem(`quiz_token_${roomCode}`);
+    if (!token) {
+      setAnswerError("削除用のトークンが見つかりません");
+      return;
+    }
+    try {
+      await deleteMyParticipantData(token);
+      sessionStorage.removeItem(`quiz_token_${roomCode}`);
+      setMyDataDeleted(true);
+    } catch (e) {
+      setAnswerError(e instanceof Error ? e.message : "データの削除に失敗しました");
+    }
+  }, [roomCode]);
 
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
   const questionId = currentQuestion?.questionId;
@@ -239,6 +272,13 @@ export function PlayPage() {
     case "profile":
       return (
         <>
+          {/* 参加前でも接続できていないことが分かるようにする。
+              分からないと参加ボタンを押して10秒のタイムアウトを待つことになる */}
+          {connectionError && !isConnected ? (
+            <div role="alert" className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-amber-500 text-white text-sm text-center">
+              サーバーに接続できていません。再接続中…
+            </div>
+          ) : null}
           {errorBanner}
           <ProfilePage onJoin={handleJoin} isJoining={isJoining} teams={roomTeams} />
         </>
@@ -264,7 +304,19 @@ export function PlayPage() {
     case "ranking":
       return <>{disconnectBanner}<ParticipantRankingPage data={rankingData} participantId={participantId} /></>;
     case "final":
-      return <>{disconnectBanner}<ParticipantFinalPage data={finalData} participantId={participantId} resultsRevealed={resultsRevealed} /></>;
+      return (
+        <>
+          {disconnectBanner}
+          {errorBanner}
+          <ParticipantFinalPage
+            data={finalData}
+            participantId={participantId}
+            resultsRevealed={resultsRevealed}
+            onDeleteMyData={handleDeleteMyData}
+            dataDeleted={myDataDeleted}
+          />
+        </>
+      );
     case "closed":
       return <ThankYouScreen participants={closedParticipants} />;
   }

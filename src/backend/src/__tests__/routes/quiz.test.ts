@@ -23,6 +23,7 @@ function isPublicRoute(method: string, path: string): boolean {
   if (path.startsWith("/api/auth/")) return true;
   if (method === "GET" && /^\/api\/quizzes\/room\/[^/]+\/info$/.test(path)) return true;
   if (method === "POST" && path === "/api/media/selfie") return true;
+  if (method === "DELETE" && path === "/api/quizzes/participants/me") return true;
   if (method === "GET" && /^\/api\/media\/[^/]+$/.test(path)) return true;
   return false;
 }
@@ -651,6 +652,54 @@ describe("app.route() 経由のルーティング", () => {
     expect(qRes.status).toBe(200);
     const quizData = await qRes.json();
     expect(quizData.title).toBe("テストクイズ");
+  });
+
+  it("DELETE /api/quizzes/participants/me → トークンで自己データ削除（admin認証不要）", async () => {
+    const quiz = await createTestQuiz();
+    const question = await createTestQuestion(quiz.id);
+    const p = await createTestParticipant(quiz.id, { nickname: "太郎", token: "self-delete-token-1" });
+    await createTestAnswer({
+      questionId: question.id,
+      participantId: p.id,
+      choiceIndex: 1,
+      isCorrect: true,
+      responseTimeMs: 1000,
+    });
+
+    // Authorizationヘッダなし＝参加者本人のトークンのみで削除できること
+    const res = await app.request("/api/quizzes/participants/me", {
+      method: "DELETE",
+      headers: { "X-Participant-Token": "self-delete-token-1" },
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+
+    // 参加者と回答が消えていること
+    const remaining = await db.query.participants.findFirst({
+      where: eq(schema.participants.id, p.id),
+    });
+    expect(remaining).toBeUndefined();
+    const answers = await db
+      .select()
+      .from(schema.answers)
+      .where(eq(schema.answers.participant_id, p.id));
+    expect(answers).toHaveLength(0);
+  });
+
+  it("DELETE /api/quizzes/participants/me → トークンなしは401", async () => {
+    const res = await app.request("/api/quizzes/participants/me", {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("DELETE /api/quizzes/participants/me → 不明なトークンは404", async () => {
+    const res = await app.request("/api/quizzes/participants/me", {
+      method: "DELETE",
+      headers: { "X-Participant-Token": "no-such-token" },
+    });
+    expect(res.status).toBe(404);
   });
 
   it("DELETE /api/quizzes/:id/participants/:participantId → 個別削除", async () => {

@@ -21,22 +21,54 @@ const activeQuestions = new Map<string, number>();
 // nextQuestion の二重押し防止
 const advancingRooms = new Set<string>();
 
+// roomCode → 現在の問題の回答数（answerCountUpdate配信用インメモリカウンタ）。
+// 回答ごとにDBのCOUNTクエリ＋即時ブロードキャストすると、100人の一斉回答で
+// クエリとメッセージの洪水になりACKタイムアウトを誘発するため、
+// カウンタはメモリで持ちスロットリングして配信する
+const answerCounts = new Map<string, number>();
+const answerCountTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const ANSWER_COUNT_THROTTLE_MS = 300;
+
+function scheduleAnswerCountBroadcast(io: QuizIO, roomCode: string): void {
+  if (answerCountTimers.has(roomCode)) return;
+  const timer = setTimeout(() => {
+    answerCountTimers.delete(roomCode);
+    const count = answerCounts.get(roomCode);
+    if (count !== undefined) {
+      io.to(roomCode).emit("answerCountUpdate", { count });
+    }
+  }, ANSWER_COUNT_THROTTLE_MS);
+  answerCountTimers.set(roomCode, timer);
+}
+
+function resetAnswerCount(roomCode: string): void {
+  answerCounts.set(roomCode, 0);
+  const pending = answerCountTimers.get(roomCode);
+  if (pending) {
+    clearTimeout(pending);
+    answerCountTimers.delete(roomCode);
+  }
+}
+
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
-// IP単位のソケットイベントレート制限
+// IP単位のソケットイベントレート制限。
+// 会場Wi-FiのNATでは全参加者が同一グローバルIPに見えるため、
+// joinRoomは100人規模の一斉参加を許容する上限にし、イベント種別ごとにバケットを分離する
 const SOCKET_RATE_LIMIT_WINDOW_MS = 60_000; // 1分
-const SOCKET_RATE_LIMIT_MAX = 20; // 1分あたり最大20回
+const SOCKET_RATE_LIMIT_MAX = 20; // 1分あたり最大20回（通常イベント）
+const JOIN_RATE_LIMIT_MAX = 150; // joinRoom: NAT環境での一斉参加＋再試行を許容
 const socketRateMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkSocketRateLimit(ip: string): boolean {
+function checkSocketRateLimit(key: string, max: number = SOCKET_RATE_LIMIT_MAX): boolean {
   const now = Date.now();
-  const entry = socketRateMap.get(ip);
+  const entry = socketRateMap.get(key);
   if (!entry || now >= entry.resetAt) {
-    socketRateMap.set(ip, { count: 1, resetAt: now + SOCKET_RATE_LIMIT_WINDOW_MS });
+    socketRateMap.set(key, { count: 1, resetAt: now + SOCKET_RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  if (entry.count >= SOCKET_RATE_LIMIT_MAX) return false;
+  if (entry.count >= max) return false;
   entry.count++;
   return true;
 }
@@ -153,7 +185,7 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("joinRoom", async (data, callback) => {
       try {
         const joinIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(joinIp)) {
+        if (!checkSocketRateLimit(`join:${joinIp}`, JOIN_RATE_LIMIT_MAX)) {
           logger.warn("joinRoom rate limited", { ip: joinIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
@@ -219,12 +251,18 @@ export function setupQuizSocket(io: QuizIO) {
           const quiz = await quizService.getQuizByRoom(data.roomCode);
           const quizStatus = (quiz?.status ?? "lobby") as QuizStatus;
 
-          // in_progress中の再接続: 現在出題中の問題があれば復元データを送信
+          // in_progress中の再接続: 現在出題中の問題があれば復元データを送信。
+          // タイマー残り時間と回答済みフラグも復元しないと、カウントダウンが
+          // 0表示になり回答ボタンも再有効化されて参加者が混乱する
           let currentQuestionData = null;
+          let timerRemaining = 0;
+          let hasAnswered = false;
           if (quizStatus === "in_progress") {
             const activeQuestionId = activeQuestions.get(data.roomCode);
             if (activeQuestionId && quiz) {
               currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+              timerRemaining = getRemainingSeconds(`question_${data.roomCode}`) ?? 0;
+              hasAnswered = await quizService.hasParticipantAnswered(participant.id, activeQuestionId);
             }
           }
 
@@ -239,6 +277,8 @@ export function setupQuizSocket(io: QuizIO) {
             quizStatus,
             currentQuestionData,
             finalData,
+            timerRemaining,
+            hasAnswered,
           });
         } else {
           // 新規参加を全員に通知
@@ -308,8 +348,21 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        // 回答時間を計算（タイマー開始からの経過時間）
-        const elapsedMs = getElapsedMs(`question_${meta.roomCode}`) ?? 0;
+        // 回答時間を計算（タイマー開始からの経過時間）。
+        // タイマー不在（サーバー再起動・状態消失時）は経過0ms=満点扱いになるため拒否。
+        // 残り0秒以下はonEnd発火までの猶予窓（最大約1秒）に滑り込んだ回答なので拒否
+        const timerKey = `question_${meta.roomCode}`;
+        const elapsedMs = getElapsedMs(timerKey);
+        const remainingSeconds = getRemainingSeconds(timerKey);
+        if (elapsedMs === null || remainingSeconds === null || remainingSeconds <= 0) {
+          logger.warn("submitAnswer rejected: timer missing or expired", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+            questionId: data.questionId,
+          });
+          callback({ success: false, error: "この問題の回答期間は終了しました" });
+          return;
+        }
 
         const result = await quizService.submitAnswer(
           meta.participantId,
@@ -336,9 +389,9 @@ export function setupQuizSocket(io: QuizIO) {
 
         callback({ success: true });
 
-        // 回答数を更新通知（ホスト向け）
-        const count = await quizService.getAnswerCount(data.questionId);
-        io.to(meta.roomCode).emit("answerCountUpdate", { count });
+        // 回答数を更新通知（インメモリカウンタ＋スロットリング配信）
+        answerCounts.set(meta.roomCode, (answerCounts.get(meta.roomCode) ?? 0) + 1);
+        scheduleAnswerCountBroadcast(io, meta.roomCode);
       } catch (e) {
         const meta = socketMeta.get(socket.id);
         const err = e instanceof Error ? e.message : String(e);
@@ -481,6 +534,7 @@ export function setupQuizSocket(io: QuizIO) {
         }
 
         activeQuestions.set(data.roomCode, question.questionId);
+        resetAnswerCount(data.roomCode);
         advancingRooms.delete(data.roomCode);
         io.to(data.roomCode).emit("questionStarted", question);
 
@@ -731,7 +785,7 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("watchRoom", async (data, callback) => {
       try {
         const watchIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(watchIp)) {
+        if (!checkSocketRateLimit(`watch:${watchIp}`)) {
           logger.warn("watchRoom rate limited", { ip: watchIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
@@ -767,7 +821,29 @@ export function setupQuizSocket(io: QuizIO) {
 
         logger.info("viewer joined", { roomCode: data.roomCode });
 
-        callback({ success: true });
+        // ゲーム進行中の状態を返す。プロジェクター画面が瞬断から再接続したとき、
+        // これがないとロビー表示に戻ったまま復元できない
+        let currentQuestionData = null;
+        let timerRemaining = 0;
+        if (quiz.status === "in_progress") {
+          const activeQuestionId = activeQuestions.get(data.roomCode);
+          if (activeQuestionId) {
+            currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+            timerRemaining = getRemainingSeconds(`question_${data.roomCode}`) ?? 0;
+          }
+        }
+        let finalData = null;
+        if (quiz.status === "finished") {
+          finalData = await quizService.getFinalResult(data.roomCode);
+        }
+
+        callback({
+          success: true,
+          quizStatus: quiz.status as QuizStatus,
+          currentQuestionData,
+          timerRemaining,
+          finalData,
+        });
       } catch (e) {
         const err = e instanceof Error ? e.message : String(e);
         logger.error("watchRoom error", { error: err, roomCode: data.roomCode });

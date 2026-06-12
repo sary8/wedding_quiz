@@ -168,11 +168,27 @@ export function DisplayPage() {
     return () => clearTimeout(timer);
   }, [phase, countdownValue]);
 
-  // watchRoom でルームに参加（read-only）
+  // watchRoom でルームに参加（read-only）。
+  // 瞬断からの再接続時もここを通るため、レスポンスのゲーム状態から
+  // フェーズを復元する（復元しないとロビー表示に戻ったまま固まる）
   useEffect(() => {
     if (!isConnected || !roomCode) return;
     emit("watchRoom", { roomCode }, (res) => {
-      if (!res.success) setError(res.error || "ルームへの接続に失敗しました");
+      if (!res.success) {
+        setError(res.error || "ルームへの接続に失敗しました");
+        return;
+      }
+      if (res.quizStatus === "in_progress" && res.currentQuestionData) {
+        setCurrentQuestion(res.currentQuestionData);
+        setTimeRemaining(res.timerRemaining ?? 0);
+        setQuestionResult(null);
+        setPhase("question");
+      } else if (res.quizStatus === "finished" && res.finalData) {
+        setFinalData(res.finalData);
+        setPhase("final");
+      }
+      // lobby / 出題間（in_progressだがアクティブ問題なし）はロビー表示のまま。
+      // 後続のイベント（questionStarted等）で追従する
     });
   }, [isConnected, roomCode, emit]);
 
