@@ -308,8 +308,21 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
-        // 回答時間を計算（タイマー開始からの経過時間）
-        const elapsedMs = getElapsedMs(`question_${meta.roomCode}`) ?? 0;
+        // 回答時間を計算（タイマー開始からの経過時間）。
+        // タイマー不在（サーバー再起動・状態消失時）は経過0ms=満点扱いになるため拒否。
+        // 残り0秒以下はonEnd発火までの猶予窓（最大約1秒）に滑り込んだ回答なので拒否
+        const timerKey = `question_${meta.roomCode}`;
+        const elapsedMs = getElapsedMs(timerKey);
+        const remainingSeconds = getRemainingSeconds(timerKey);
+        if (elapsedMs === null || remainingSeconds === null || remainingSeconds <= 0) {
+          logger.warn("submitAnswer rejected: timer missing or expired", {
+            roomCode: meta.roomCode,
+            participantId: meta.participantId,
+            questionId: data.questionId,
+          });
+          callback({ success: false, error: "この問題の回答期間は終了しました" });
+          return;
+        }
 
         const result = await quizService.submitAnswer(
           meta.participantId,
