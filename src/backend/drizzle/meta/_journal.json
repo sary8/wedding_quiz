@@ -57,6 +57,13 @@
       "when": 1772441136619,
       "tag": "0007_shocking_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1781274611276,
+      "tag": "0008_sticky_wendell_rand",
+      "breakpoints": true
     }
   ]
 }
