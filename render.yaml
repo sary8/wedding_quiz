@@ -1,0 +1,34 @@
+# Render Blueprint: 無料枠でのお試しデプロイ用（バックエンドのみ）
+# フロントエンドは Vercel に別途デプロイする（docs/deployment-trial.md 参照）
+#
+# 無料プランの制約:
+# - 15分間アクセスがないとスリープし、次のアクセスで起動に1分弱かかる
+# - ディスクはエフェメラル。再起動・再デプロイで SQLite とアップロード画像は消える
+#   （お試し用途専用。本番は Azure 構成を使うこと）
+services:
+  - type: web
+    name: wedding-quiz-api
+    runtime: node
+    plan: free
+    rootDir: src/backend
+    # NODE_ENV=production だと npm ci が devDependencies（typescript, drizzle-kit）を
+    # スキップしてビルドできないため、明示的に含める
+    buildCommand: npm ci --include=dev && npm run build
+    # エフェメラルディスクなので起動のたびにマイグレーションでDBを構築する。
+    # 新規コンテナには ./data が存在しないため先に作成する
+    startCommand: mkdir -p data && npm run db:migrate && npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Renderはリバースプロキシ配下なので必須。
+      # 未設定だとレート制限が全クライアント共有バケットになる
+      - key: TRUSTED_PROXY
+        value: "true"
+      # フロントエンド（Vercel）のURL。初回デプロイ後にダッシュボードで設定する。
+      # 未設定だと本番モードでは起動を拒否する（fail-closed）
+      - key: CORS_ORIGIN
+        sync: false
+      # 管理画面ログイン用PIN。ダッシュボードで任意の値を設定する
+      - key: ADMIN_PIN
+        sync: false
