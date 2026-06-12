@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo, TeamInfo } from "../../types";
-import { uploadSelfie, getRoomInfo } from "../../services/api";
+import { uploadSelfie, getRoomInfo, deleteMyParticipantData } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
@@ -32,6 +32,7 @@ export function PlayPage() {
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
   const [roomNotFound, setRoomNotFound] = useState(false);
+  const [myDataDeleted, setMyDataDeleted] = useState(false);
 
   // ルーム情報取得（存在チェック + チームモード判定）
   useEffect(() => {
@@ -184,6 +185,23 @@ export function PlayPage() {
     [roomCode, emit, isJoining]
   );
 
+  // 自身のデータ削除（プライバシーポリシー記載の自己データ削除）
+  const handleDeleteMyData = useCallback(async () => {
+    if (!roomCode) return;
+    const token = sessionStorage.getItem(`quiz_token_${roomCode}`);
+    if (!token) {
+      setAnswerError("削除用のトークンが見つかりません");
+      return;
+    }
+    try {
+      await deleteMyParticipantData(token);
+      sessionStorage.removeItem(`quiz_token_${roomCode}`);
+      setMyDataDeleted(true);
+    } catch (e) {
+      setAnswerError(e instanceof Error ? e.message : "データの削除に失敗しました");
+    }
+  }, [roomCode]);
+
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
   const questionId = currentQuestion?.questionId;
 
@@ -267,7 +285,19 @@ export function PlayPage() {
     case "ranking":
       return <>{disconnectBanner}<ParticipantRankingPage data={rankingData} participantId={participantId} /></>;
     case "final":
-      return <>{disconnectBanner}<ParticipantFinalPage data={finalData} participantId={participantId} resultsRevealed={resultsRevealed} /></>;
+      return (
+        <>
+          {disconnectBanner}
+          {errorBanner}
+          <ParticipantFinalPage
+            data={finalData}
+            participantId={participantId}
+            resultsRevealed={resultsRevealed}
+            onDeleteMyData={handleDeleteMyData}
+            dataDeleted={myDataDeleted}
+          />
+        </>
+      );
     case "closed":
       return <ThankYouScreen participants={closedParticipants} />;
   }

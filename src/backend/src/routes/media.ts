@@ -51,6 +51,12 @@ async function getStorageUsage(): Promise<number> {
   return total;
 }
 
+// ルーム単位のセルフィー容量上限。
+// /selfie は未認証で叩けるため、roomCodeを知る攻撃者がストレージ全体
+// （MAX_STORAGE_BYTES）を埋めて正規参加者の保存を妨害できないよう影響範囲を限定する
+const ROOM_SELFIE_BYTES_MAX = (Number(process.env.ROOM_SELFIE_MB) || 50) * 1024 * 1024;
+const roomSelfieBytes = new Map<string, number>();
+
 // IP単位のレート制限（アップロード用）
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1分
 const RATE_LIMIT_MAX = 20; // 1分あたり最大20リクエスト
@@ -142,6 +148,8 @@ mediaRoutes.post("/upload", async (c) => {
   const filepath = join(UPLOAD_DIR, filename);
 
   await writeFile(filepath, buffer);
+  // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
+  if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
 
   return c.json({ url: `/api/media/${filename}` }, 201);
 });
@@ -196,6 +204,12 @@ mediaRoutes.post("/selfie", async (c) => {
     return c.json({ error: "画像データの内容が形式と一致しません" }, 400);
   }
 
+  // ルーム単位の容量上限チェック
+  const roomUsed = roomSelfieBytes.get(body.roomCode) ?? 0;
+  if (roomUsed + buffer.length > ROOM_SELFIE_BYTES_MAX) {
+    return c.json({ error: "このルームのアップロード容量上限に達しました" }, 413);
+  }
+
   // ストレージ上限チェック
   const usage = await getStorageUsage();
   if (usage + buffer.length > MAX_STORAGE_BYTES) {
@@ -206,6 +220,9 @@ mediaRoutes.post("/selfie", async (c) => {
   const filename = `selfie_${nanoid(16)}.${ext}`;
   const filepath = join(UPLOAD_DIR, filename);
   await writeFile(filepath, buffer);
+  roomSelfieBytes.set(body.roomCode, roomUsed + buffer.length);
+  // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
+  if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
 
   return c.json({ url: `/api/media/${filename}`, filename }, 201);
 });

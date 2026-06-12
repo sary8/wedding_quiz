@@ -51,7 +51,7 @@ app.use(
   cors({
     origin: corsOrigins,
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Participant-Token"],
   })
 );
 
@@ -76,6 +76,9 @@ function isPublicRoute(method: string, path: string): boolean {
 
   // 参加者用: 自撮りアップロード
   if (method === "POST" && path === "/api/media/selfie") return true;
+
+  // 参加者用: 自身のデータ削除（本人性は X-Participant-Token で担保）
+  if (method === "DELETE" && path === "/api/quizzes/participants/me") return true;
 
   // メディア配信
   if (method === "GET" && /^\/api\/media\/[^/]+$/.test(path)) return true;
