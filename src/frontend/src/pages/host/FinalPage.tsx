@@ -121,6 +121,27 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
   const participantResultsSentRef = useRef(false);
   const prevRevealTriggerRef = useRef(revealTrigger ?? 0);
 
+  // 演出用タイマーの一元管理。ネストしたsetTimeoutを個別にクリーンアップするのは
+  // 漏れやすく、アンマウント後に紙吹雪やフェーズ遷移が発火する事故につながるため、
+  // すべてここを経由させてアンマウント時に一括破棄する
+  const pendingTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const scheduleTimeout = useCallback((fn: () => void, ms: number) => {
+    const timers = pendingTimersRef.current;
+    const t = setTimeout(() => {
+      timers.delete(t);
+      fn();
+    }, ms);
+    timers.add(t);
+    return t;
+  }, []);
+  useEffect(() => {
+    const timers = pendingTimersRef.current;
+    return () => {
+      for (const t of timers) clearTimeout(t);
+      timers.clear();
+    };
+  }, []);
+
   const { rankings, batches, finalEntries } = useMemo(() => {
     const r = data?.rankings ?? [];
     return {
@@ -148,7 +169,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           if (!prefersReducedMotion) {
             fireConfetti({ particleCount: 150, spread: 100, colors: ["#ffd700", "#ffec8b", "#f59e0b"] });
           }
-          setTimeout(() => {
+          scheduleTimeout(() => {
             if (!cancelled) setPhase("batchScroll");
           }, 3000);
         }
@@ -156,12 +177,12 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       }
       setTeamRevealIndex(i);
       i++;
-      setTimeout(showNext, 2500);
+      scheduleTimeout(showNext, 2500);
     }
 
-    const initTimer = setTimeout(showNext, 500);
-    return () => { cancelled = true; clearTimeout(initTimer); };
-  }, [phase, sortedTeams, prefersReducedMotion]);
+    scheduleTimeout(showNext, 500);
+    return () => { cancelled = true; };
+  }, [phase, sortedTeams, prefersReducedMotion, scheduleTimeout]);
 
   // --- バッチスクロールフェーズ ---
   useEffect(() => {
@@ -191,10 +212,10 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       if (idx >= total) {
         // 全員表示完了 → 2秒停止 → フェードアウト → 次のバッチ
-        setTimeout(() => {
+        scheduleTimeout(() => {
           if (cancelled) return;
           setBatchFading(true);
-          setTimeout(() => {
+          scheduleTimeout(() => {
             if (cancelled) return;
             const nextIdx = currentBatchIndex + 1;
             if (nextIdx < batches.length) {
@@ -211,12 +232,12 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
 
       idx++;
       setVisibleCount(idx);
-      setTimeout(showNextPerson, batch.speed);
+      scheduleTimeout(showNextPerson, batch.speed);
     }
 
-    const initTimer = setTimeout(showNextPerson, 300);
-    return () => { cancelled = true; clearTimeout(initTimer); };
-  }, [phase, currentBatchIndex, batches, finalEntries.length]);
+    scheduleTimeout(showNextPerson, 300);
+    return () => { cancelled = true; };
+  }, [phase, currentBatchIndex, batches, finalEntries.length, scheduleTimeout]);
 
   // finalReveal: 自動スクロール部分（6〜10位）の数
   const autoCount = useMemo(
@@ -239,12 +260,12 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
       if (count >= autoCount) return;
       count++;
       setFinalVisibleCount(count);
-      setTimeout(showNext, 1500);
+      scheduleTimeout(showNext, 1500);
     }
 
-    const initTimer = setTimeout(showNext, 300);
-    return () => { cancelled = true; clearTimeout(initTimer); };
-  }, [phase, autoCount]);
+    scheduleTimeout(showNext, 300);
+    return () => { cancelled = true; };
+  }, [phase, autoCount, scheduleTimeout]);
 
   // --- finalReveal: ホストクリックで1個めくる ---
   const revealNextFinal = useCallback(() => {
@@ -260,21 +281,21 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     const entry = finalEntries[nextIdx];
     if (entry) {
       onSpotlightRef.current?.(entry.rank);
-      fireRankConfetti(entry.rank, prefersReducedMotion);
+      fireRankConfetti(entry.rank, prefersReducedMotion, scheduleTimeout);
 
       // 1位の追加演出: 画面フラッシュ
       if (entry.rank === 1 && !prefersReducedMotion) {
         setFlashVisible(true);
-        setTimeout(() => setFlashVisible(false), 300);
+        scheduleTimeout(() => setFlashVisible(false), 300);
       }
     }
 
     const nextCount = finalVisibleCount + 1;
     setFinalVisibleCount(nextCount);
     if (nextCount >= finalEntries.length) {
-      setTimeout(() => setPhase("done"), 3000);
+      scheduleTimeout(() => setPhase("done"), 3000);
     }
-  }, [phase, finalVisibleCount, autoCount, finalEntries, prefersReducedMotion]);
+  }, [phase, finalVisibleCount, autoCount, finalEntries, prefersReducedMotion, scheduleTimeout]);
 
   // --- finalReveal: ホストのボタンクリック（ローカル） ---
   const handleRevealClick = useCallback(() => {
@@ -568,7 +589,11 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
 
 // ========== 紙吹雪ヘルパー ==========
 
-function fireRankConfetti(rank: number, prefersReducedMotion: boolean | null) {
+function fireRankConfetti(
+  rank: number,
+  prefersReducedMotion: boolean | null,
+  schedule: (fn: () => void, ms: number) => void
+) {
   if (prefersReducedMotion) return;
   if (rank === 3) {
     fireConfetti({ particleCount: 50, spread: 60, colors: ["#cd7f32", "#b87333"] });
@@ -576,10 +601,10 @@ function fireRankConfetti(rank: number, prefersReducedMotion: boolean | null) {
     fireConfetti({ particleCount: 100, spread: 80, colors: ["#c0c0c0", "#d4d4d4"] });
   } else if (rank === 1) {
     fireConfetti({ particleCount: 200, spread: 120, colors: ["#ffd700", "#ffec8b", "#ff6347"] });
-    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
-    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
-    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.3, y: 0.3 } }), 1500);
-    setTimeout(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.7, y: 0.3 } }), 2000);
+    schedule(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.2 } }), 500);
+    schedule(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.8 } }), 1000);
+    schedule(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.3, y: 0.3 } }), 1500);
+    schedule(() => fireConfetti({ particleCount: 150, spread: 100, origin: { x: 0.7, y: 0.3 } }), 2000);
   }
 }
 
