@@ -124,6 +124,15 @@ if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PIN) {
   logger.warn("ADMIN_PIN が未設定です。管理画面へのログインが拒否されます");
 }
 
+// TRUSTED_PROXY未設定警告（production）
+// リバースプロキシ配下で未設定だと x-forwarded-for を読まず、
+// 全クライアントが同一IPに見えてレート制限が共有バケット化する
+if (process.env.NODE_ENV === "production" && process.env.TRUSTED_PROXY !== "true") {
+  logger.warn(
+    "TRUSTED_PROXY が未設定です。リバースプロキシ配下ではクライアントIPを判別できず、レート制限が全クライアント共有になります"
+  );
+}
+
 // Start HTTP server
 const PORT = Number(process.env.PORT) || 3001;
 const server = serve({ fetch: app.fetch, port: PORT }, (info) => {

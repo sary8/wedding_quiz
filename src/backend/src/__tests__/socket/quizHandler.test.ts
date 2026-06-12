@@ -393,23 +393,42 @@ describe("showParticipantResults", () => {
 });
 
 describe("socket rate limiting", () => {
-  it("joinRoom 21回目でレート制限エラー", async () => {
-    // joinRoom は roomCode バリデーション前にレート制限チェック
+  it("joinRoom 151回目でレート制限エラー（NAT会場の一斉参加を許容）", async () => {
+    // joinRoom は roomCode バリデーション前にレート制限チェック。
+    // 会場Wi-FiのNATで全員が同一IPになるケースを想定し、上限は150回/分
     const client = await connectClient();
     try {
-      // 20回は通過（バリデーションエラーだがレート制限ではない）
-      for (let i = 0; i < 20; i++) {
+      // 150回は通過（バリデーションエラーだがレート制限ではない）
+      for (let i = 0; i < 150; i++) {
         const res = await emitWithCallback<{ success: boolean; error?: string }>(
           client, "joinRoom", { roomCode: "abcd", nickname: "test" },
         );
         expect(res.error).not.toBe("リクエストが多すぎます。しばらくしてから再試行してください");
       }
-      // 21回目はレート制限
+      // 151回目はレート制限
       const res = await emitWithCallback<{ success: boolean; error?: string }>(
         client, "joinRoom", { roomCode: "abcd", nickname: "test" },
       );
       expect(res.success).toBe(false);
       expect(res.error).toBe("リクエストが多すぎます。しばらくしてから再試行してください");
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("joinRoomとwatchRoomのレート制限バケットは独立している", async () => {
+    // joinRoomの大量送信がwatchRoom（プロジェクター/ホスト画面）を巻き込まないこと
+    const client = await connectClient();
+    try {
+      for (let i = 0; i < 30; i++) {
+        await emitWithCallback<{ success: boolean }>(
+          client, "joinRoom", { roomCode: "abcd", nickname: "test" },
+        );
+      }
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "watchRoom", { roomCode: "abcd" },
+      );
+      expect(res.error).not.toBe("リクエストが多すぎます。しばらくしてから再試行してください");
     } finally {
       client.disconnect();
     }

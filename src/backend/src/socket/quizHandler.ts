@@ -24,19 +24,22 @@ const advancingRooms = new Set<string>();
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
-// IP単位のソケットイベントレート制限
+// IP単位のソケットイベントレート制限。
+// 会場Wi-FiのNATでは全参加者が同一グローバルIPに見えるため、
+// joinRoomは100人規模の一斉参加を許容する上限にし、イベント種別ごとにバケットを分離する
 const SOCKET_RATE_LIMIT_WINDOW_MS = 60_000; // 1分
-const SOCKET_RATE_LIMIT_MAX = 20; // 1分あたり最大20回
+const SOCKET_RATE_LIMIT_MAX = 20; // 1分あたり最大20回（通常イベント）
+const JOIN_RATE_LIMIT_MAX = 150; // joinRoom: NAT環境での一斉参加＋再試行を許容
 const socketRateMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkSocketRateLimit(ip: string): boolean {
+function checkSocketRateLimit(key: string, max: number = SOCKET_RATE_LIMIT_MAX): boolean {
   const now = Date.now();
-  const entry = socketRateMap.get(ip);
+  const entry = socketRateMap.get(key);
   if (!entry || now >= entry.resetAt) {
-    socketRateMap.set(ip, { count: 1, resetAt: now + SOCKET_RATE_LIMIT_WINDOW_MS });
+    socketRateMap.set(key, { count: 1, resetAt: now + SOCKET_RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  if (entry.count >= SOCKET_RATE_LIMIT_MAX) return false;
+  if (entry.count >= max) return false;
   entry.count++;
   return true;
 }
@@ -153,7 +156,7 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("joinRoom", async (data, callback) => {
       try {
         const joinIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(joinIp)) {
+        if (!checkSocketRateLimit(`join:${joinIp}`, JOIN_RATE_LIMIT_MAX)) {
           logger.warn("joinRoom rate limited", { ip: joinIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
@@ -744,7 +747,7 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("watchRoom", async (data, callback) => {
       try {
         const watchIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(watchIp)) {
+        if (!checkSocketRateLimit(`watch:${watchIp}`)) {
           logger.warn("watchRoom rate limited", { ip: watchIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
