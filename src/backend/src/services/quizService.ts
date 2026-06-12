@@ -281,6 +281,20 @@ export async function getAnswerCount(questionId: number): Promise<number> {
   return result[0]?.count ?? 0;
 }
 
+// 参加者が指定問題に回答済みか（再接続時の状態復元用）
+export async function hasParticipantAnswered(
+  participantId: number,
+  questionId: number
+): Promise<boolean> {
+  const row = await db.query.answers.findFirst({
+    where: and(
+      eq(schema.answers.participant_id, participantId),
+      eq(schema.answers.question_id, questionId)
+    ),
+  });
+  return !!row;
+}
+
 // 問題結果生成
 export async function getQuestionResult(
   questionId: number,

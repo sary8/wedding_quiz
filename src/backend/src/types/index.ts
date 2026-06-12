@@ -42,7 +42,14 @@ export type ServerToClientEvents = {
   rankingUpdate: (data: RankingData) => void;
   gameEnded: (data: FinalResultData) => void;
   error: (data: { message: string }) => void;
-  reconnected: (data: { participantId: number; quizStatus: QuizStatus; currentQuestionData?: QuestionData | null; finalData?: FinalResultData | null }) => void;
+  reconnected: (data: {
+    participantId: number;
+    quizStatus: QuizStatus;
+    currentQuestionData?: QuestionData | null;
+    finalData?: FinalResultData | null;
+    timerRemaining?: number;
+    hasAnswered?: boolean;
+  }) => void;
   quizReset: () => void;
   hostReconnected: (data: {
     quizStatus: QuizStatus;
@@ -97,7 +104,14 @@ export type ClientToServerEvents = {
   ) => void;
   watchRoom: (
     data: { roomCode: string },
-    callback: (res: { success: boolean; error?: string }) => void
+    callback: (res: {
+      success: boolean;
+      error?: string;
+      quizStatus?: QuizStatus;
+      currentQuestionData?: QuestionData | null;
+      timerRemaining?: number;
+      finalData?: FinalResultData | null;
+    }) => void
   ) => void;
   replayQuiz: (
     data: { roomCode: string; hostSecret: string },

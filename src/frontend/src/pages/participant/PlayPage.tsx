@@ -122,7 +122,10 @@ export function PlayPage() {
         setIsJoining(false);
         if (data.quizStatus === "in_progress" && data.currentQuestionData) {
           setCurrentQuestion(data.currentQuestionData);
-          setHasAnswered(false);
+          // タイマー残り時間と回答済み状態をサーバーから復元する。
+          // hasAnsweredをfalse固定にすると回答済みの参加者に回答ボタンが再表示される
+          setTimeRemaining(data.timerRemaining ?? 0);
+          setHasAnswered(data.hasAnswered ?? false);
           setPhase("answer");
         } else if (data.quizStatus === "lobby" || data.quizStatus === "in_progress") {
           setPhase("waiting");

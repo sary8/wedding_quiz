@@ -222,12 +222,18 @@ export function setupQuizSocket(io: QuizIO) {
           const quiz = await quizService.getQuizByRoom(data.roomCode);
           const quizStatus = (quiz?.status ?? "lobby") as QuizStatus;
 
-          // in_progress中の再接続: 現在出題中の問題があれば復元データを送信
+          // in_progress中の再接続: 現在出題中の問題があれば復元データを送信。
+          // タイマー残り時間と回答済みフラグも復元しないと、カウントダウンが
+          // 0表示になり回答ボタンも再有効化されて参加者が混乱する
           let currentQuestionData = null;
+          let timerRemaining = 0;
+          let hasAnswered = false;
           if (quizStatus === "in_progress") {
             const activeQuestionId = activeQuestions.get(data.roomCode);
             if (activeQuestionId && quiz) {
               currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+              timerRemaining = getRemainingSeconds(`question_${data.roomCode}`) ?? 0;
+              hasAnswered = await quizService.hasParticipantAnswered(participant.id, activeQuestionId);
             }
           }
 
@@ -242,6 +248,8 @@ export function setupQuizSocket(io: QuizIO) {
             quizStatus,
             currentQuestionData,
             finalData,
+            timerRemaining,
+            hasAnswered,
           });
         } else {
           // 新規参加を全員に通知
@@ -783,7 +791,29 @@ export function setupQuizSocket(io: QuizIO) {
 
         logger.info("viewer joined", { roomCode: data.roomCode });
 
-        callback({ success: true });
+        // ゲーム進行中の状態を返す。プロジェクター画面が瞬断から再接続したとき、
+        // これがないとロビー表示に戻ったまま復元できない
+        let currentQuestionData = null;
+        let timerRemaining = 0;
+        if (quiz.status === "in_progress") {
+          const activeQuestionId = activeQuestions.get(data.roomCode);
+          if (activeQuestionId) {
+            currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
+            timerRemaining = getRemainingSeconds(`question_${data.roomCode}`) ?? 0;
+          }
+        }
+        let finalData = null;
+        if (quiz.status === "finished") {
+          finalData = await quizService.getFinalResult(data.roomCode);
+        }
+
+        callback({
+          success: true,
+          quizStatus: quiz.status as QuizStatus,
+          currentQuestionData,
+          timerRemaining,
+          finalData,
+        });
       } catch (e) {
         const err = e instanceof Error ? e.message : String(e);
         logger.error("watchRoom error", { error: err, roomCode: data.roomCode });
