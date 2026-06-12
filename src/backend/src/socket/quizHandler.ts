@@ -21,6 +21,35 @@ const activeQuestions = new Map<string, number>();
 // nextQuestion の二重押し防止
 const advancingRooms = new Set<string>();
 
+// roomCode → 現在の問題の回答数（answerCountUpdate配信用インメモリカウンタ）。
+// 回答ごとにDBのCOUNTクエリ＋即時ブロードキャストすると、100人の一斉回答で
+// クエリとメッセージの洪水になりACKタイムアウトを誘発するため、
+// カウンタはメモリで持ちスロットリングして配信する
+const answerCounts = new Map<string, number>();
+const answerCountTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const ANSWER_COUNT_THROTTLE_MS = 300;
+
+function scheduleAnswerCountBroadcast(io: QuizIO, roomCode: string): void {
+  if (answerCountTimers.has(roomCode)) return;
+  const timer = setTimeout(() => {
+    answerCountTimers.delete(roomCode);
+    const count = answerCounts.get(roomCode);
+    if (count !== undefined) {
+      io.to(roomCode).emit("answerCountUpdate", { count });
+    }
+  }, ANSWER_COUNT_THROTTLE_MS);
+  answerCountTimers.set(roomCode, timer);
+}
+
+function resetAnswerCount(roomCode: string): void {
+  answerCounts.set(roomCode, 0);
+  const pending = answerCountTimers.get(roomCode);
+  if (pending) {
+    clearTimeout(pending);
+    answerCountTimers.delete(roomCode);
+  }
+}
+
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
@@ -360,9 +389,9 @@ export function setupQuizSocket(io: QuizIO) {
 
         callback({ success: true });
 
-        // 回答数を更新通知（ホスト向け）
-        const count = await quizService.getAnswerCount(data.questionId);
-        io.to(meta.roomCode).emit("answerCountUpdate", { count });
+        // 回答数を更新通知（インメモリカウンタ＋スロットリング配信）
+        answerCounts.set(meta.roomCode, (answerCounts.get(meta.roomCode) ?? 0) + 1);
+        scheduleAnswerCountBroadcast(io, meta.roomCode);
       } catch (e) {
         const meta = socketMeta.get(socket.id);
         const err = e instanceof Error ? e.message : String(e);
@@ -505,6 +534,7 @@ export function setupQuizSocket(io: QuizIO) {
         }
 
         activeQuestions.set(data.roomCode, question.questionId);
+        resetAnswerCount(data.roomCode);
         advancingRooms.delete(data.roomCode);
         io.to(data.roomCode).emit("questionStarted", question);
 
