@@ -44,8 +44,17 @@ quizRoutes.post("/", async (c) => {
           room_code: roomCode,
           host_secret: hostSecret,
           title: body.title.trim(),
+          team_mode: true,
         })
         .returning();
+
+      // デフォルトチーム(A〜D)を自動作成
+      await db.insert(schema.teams).values([
+        { quiz_id: result[0].id, name: "A", order_index: 0 },
+        { quiz_id: result[0].id, name: "B", order_index: 1 },
+        { quiz_id: result[0].id, name: "C", order_index: 2 },
+        { quiz_id: result[0].id, name: "D", order_index: 3 },
+      ]);
 
       return c.json(result[0], 201);
     } catch (e) {
@@ -354,8 +363,8 @@ quizRoutes.put("/:id/teams", async (c) => {
     return c.json({ error: "クイズが見つかりません" }, 404);
   }
 
-  if (!Array.isArray(body.teams) || body.teams.length < 2 || body.teams.length > 10) {
-    return c.json({ error: "チームは2〜10個で設定してください" }, 400);
+  if (!Array.isArray(body.teams) || body.teams.length < 2 || body.teams.length > 26) {
+    return c.json({ error: "チームは2〜26個で設定してください" }, 400);
   }
 
   for (const t of body.teams) {
@@ -386,6 +395,12 @@ quizRoutes.put("/:id/teams", async (c) => {
     .insert(schema.teams)
     .values(values)
     .returning();
+
+  // team_mode を true に更新（常にチーム戦）
+  await db
+    .update(schema.quizzes)
+    .set({ team_mode: true })
+    .where(eq(schema.quizzes.id, id));
 
   return c.json(inserted.map((t) => ({ id: t.id, name: t.name, orderIndex: t.order_index })));
 });
