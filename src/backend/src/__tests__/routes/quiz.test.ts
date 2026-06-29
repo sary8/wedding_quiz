@@ -63,6 +63,26 @@ describe("quiz routes", () => {
       expect(data.status).toBe("draft");
     });
 
+    it("作成後: team_mode=true かつ既定チーム(A〜D)が自動作成される", async () => {
+      const res = await quizRoutes.request("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "チームクイズ" }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.team_mode).toBe(true);
+
+      const teamsRes = await quizRoutes.request(`/${data.id}/teams`, { method: "GET" });
+      expect(teamsRes.status).toBe(200);
+      const teams = await teamsRes.json();
+      expect(teams).toHaveLength(4);
+      expect(teams[0].name).toBe("A");
+      expect(teams[1].name).toBe("B");
+      expect(teams[2].name).toBe("C");
+      expect(teams[3].name).toBe("D");
+    });
+
     it("タイトル空 → 400", async () => {
       const res = await quizRoutes.request("/", {
         method: "POST",
@@ -936,15 +956,47 @@ describe("team routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("11チーム → 400（最大10チーム）", async () => {
+    it("26チーム → 成功（最大26チーム）", async () => {
       const quiz = await createTestQuiz();
-      const teams = Array.from({ length: 11 }, (_, i) => ({ name: `チーム${i + 1}` }));
+      const teams = Array.from({ length: 26 }, (_, i) => ({ name: String.fromCharCode(65 + i) }));
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveLength(26);
+      expect(data[0].name).toBe("A");
+      expect(data[25].name).toBe("Z");
+    });
+
+    it("27チーム → 400（最大26チーム）", async () => {
+      const quiz = await createTestQuiz();
+      const teams = Array.from({ length: 27 }, (_, i) => ({ name: `チーム${i + 1}` }));
       const res = await quizRoutes.request(`/${quiz.id}/teams`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teams }),
       });
       expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("2〜26");
+    });
+
+    it("チーム保存後 → quiz.team_mode が true になる", async () => {
+      const quiz = await createTestQuiz();
+      // createTestQuiz はデフォルト team_mode=false
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "A" }, { name: "B" }] }),
+      });
+      expect(res.status).toBe(200);
+
+      const updated = await db.query.quizzes.findFirst({ where: eq(schema.quizzes.id, quiz.id) });
+      expect(updated!.team_mode).toBe(true);
     });
 
     it("空のチーム名 → 400", async () => {
