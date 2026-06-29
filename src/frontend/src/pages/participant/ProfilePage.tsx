@@ -82,7 +82,10 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
         {/* チーム選択 */}
         {hasTeams && (
           <div className="w-full">
-            <p className="text-sm font-semibold text-sage-text mb-2">チームを選択</p>
+            <p className="text-sm font-semibold text-sage-text mb-2">
+              チームを選択
+              <span className="ml-1 text-xs font-normal text-red-500">（必須）</span>
+            </p>
             <div className="flex flex-wrap gap-2">
               {teams.map((team) => (
                 <button
@@ -90,10 +93,10 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
                   type="button"
                   onClick={() => setSelectedTeamId(team.id)}
                   className={[
-                    "px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 min-h-[44px] cursor-pointer",
+                    "w-14 h-14 rounded-xl text-xl font-bold transition-all duration-200 cursor-pointer flex items-center justify-center",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     selectedTeamId === team.id
-                      ? "bg-primary text-white ring-2 ring-primary shadow-md"
+                      ? "bg-primary text-white ring-2 ring-primary shadow-md scale-105"
                       : "bg-primary/10 text-primary hover:bg-primary/20",
                   ].join(" ")}
                 >

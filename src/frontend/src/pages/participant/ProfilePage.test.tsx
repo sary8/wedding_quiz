@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfilePage } from "./ProfilePage";
+import type { TeamInfo } from "../../types";
 
 // capturedImageをテストごとに切り替え可能にする
 let mockCapturedImage: string | null = null;
@@ -130,5 +131,59 @@ describe("ProfilePage", () => {
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
 
     expect(screen.getByText("アイコンを撮る")).toBeInTheDocument();
+  });
+});
+
+describe("ProfilePage チーム選択", () => {
+  const mockTeams: TeamInfo[] = [
+    { id: 1, name: "A", orderIndex: 0 },
+    { id: 2, name: "B", orderIndex: 1 },
+    { id: 3, name: "C", orderIndex: 2 },
+    { id: 4, name: "D", orderIndex: 3 },
+  ];
+
+  it("teamsがある場合にチーム選択ボタンが表示される", () => {
+    mockCapturedImage = null;
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "D" })).toBeInTheDocument();
+  });
+
+  it("チーム未選択では参加ボタンが無効", async () => {
+    mockCapturedImage = null;
+    const user = userEvent.setup();
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
+    await user.click(screen.getByRole("checkbox"));
+
+    expect(screen.getByRole("button", { name: "参加する" })).toBeDisabled();
+  });
+
+  it("チーム選択後に参加ボタンが有効", async () => {
+    mockCapturedImage = null;
+    const user = userEvent.setup();
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "A" }));
+
+    expect(screen.getByRole("button", { name: "参加する" })).toBeEnabled();
+  });
+
+  it("チーム選択でonJoinにteamIdが渡される", async () => {
+    mockCapturedImage = null;
+    const handleJoin = vi.fn();
+    const user = userEvent.setup();
+    render(<ProfilePage onJoin={handleJoin} isJoining={false} teams={mockTeams} />);
+
+    await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "B" }));
+    await user.click(screen.getByRole("button", { name: "参加する" }));
+
+    expect(handleJoin).toHaveBeenCalledWith("テスト", undefined, 2);
   });
 });
