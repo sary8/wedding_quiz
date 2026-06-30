@@ -280,13 +280,6 @@ export function importBankToQuiz(quizId: number, bankQuestionIds: number[]) {
 }
 
 // Team
-export function updateTeamMode(quizId: number, enabled: boolean) {
-  return request<{ success: boolean; teamMode: boolean }>(`/quizzes/${quizId}/team-mode`, {
-    method: "PUT",
-    body: JSON.stringify({ enabled }),
-  });
-}
-
 export function listTeams(quizId: number) {
   return request<TeamInfo[]>(`/quizzes/${quizId}/teams`);
 }

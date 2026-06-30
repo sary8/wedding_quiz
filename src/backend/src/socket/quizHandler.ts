@@ -213,6 +213,13 @@ export function setupQuizSocket(io: QuizIO) {
           return;
         }
 
+        // teamId が指定されている場合は正の整数であることを検証
+        if (data.teamId != null && (!Number.isInteger(data.teamId) || data.teamId <= 0)) {
+          logger.warn("joinRoom validation failed: invalid teamId", { roomCode: data.roomCode, teamId: data.teamId });
+          callback({ success: false, error: "チームの選択が不正です" });
+          return;
+        }
+
         const result = await quizService.joinRoom(
           data.roomCode,
           nickname,

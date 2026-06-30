@@ -38,25 +38,29 @@ quizRoutes.post("/", async (c) => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const roomCode = generateRoomCode();
     try {
-      const result = await db
-        .insert(schema.quizzes)
-        .values({
-          room_code: roomCode,
-          host_secret: hostSecret,
-          title: body.title.trim(),
-          team_mode: true,
-        })
-        .returning();
+      const quiz = await db.transaction(async (tx) => {
+        const result = await tx
+          .insert(schema.quizzes)
+          .values({
+            room_code: roomCode,
+            host_secret: hostSecret,
+            title: body.title.trim(),
+            team_mode: true,
+          })
+          .returning();
 
-      // デフォルトチーム(A〜D)を自動作成
-      await db.insert(schema.teams).values([
-        { quiz_id: result[0].id, name: "A", order_index: 0 },
-        { quiz_id: result[0].id, name: "B", order_index: 1 },
-        { quiz_id: result[0].id, name: "C", order_index: 2 },
-        { quiz_id: result[0].id, name: "D", order_index: 3 },
-      ]);
+        // デフォルトチーム(A〜D)を自動作成
+        await tx.insert(schema.teams).values([
+          { quiz_id: result[0].id, name: "A", order_index: 0 },
+          { quiz_id: result[0].id, name: "B", order_index: 1 },
+          { quiz_id: result[0].id, name: "C", order_index: 2 },
+          { quiz_id: result[0].id, name: "D", order_index: 3 },
+        ]);
 
-      return c.json(result[0], 201);
+        return result[0];
+      });
+
+      return c.json(quiz, 201);
     } catch (e) {
       const err = e as Error;
       if (err.message?.includes("UNIQUE constraint failed") && attempt < maxRetries - 1) {
@@ -311,6 +315,11 @@ quizRoutes.put("/:id/team-mode", async (c) => {
     return c.json({ error: "リクエストの形式が不正です" }, 400);
   }
 
+  // チーム戦は常に有効。無効化は許可しない
+  if (body.enabled === false) {
+    return c.json({ error: "チーム戦は常に有効です。無効化はできません" }, 400);
+  }
+
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.id, id),
   });
@@ -361,6 +370,11 @@ quizRoutes.put("/:id/teams", async (c) => {
   });
   if (!quiz) {
     return c.json({ error: "クイズが見つかりません" }, 404);
+  }
+
+  // ゲーム開始後はチーム構成を変更できない
+  if (quiz.status !== "draft") {
+    return c.json({ error: "ゲーム開始後はチーム構成を変更できません" }, 409);
   }
 
   if (!Array.isArray(body.teams) || body.teams.length < 2 || body.teams.length > 26) {
