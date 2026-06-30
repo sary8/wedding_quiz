@@ -207,7 +207,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                         {entry.nickname?.[0] || "?"}
                       </div>
                     )}
-                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
+                    <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
                     <div className="w-[40%] h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden shrink-0">
@@ -237,7 +237,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 return (
                   <div key={team.teamId} className="flex items-center gap-3">
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
-                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
+                    <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
                     <div className="w-[40%] h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}
@@ -276,7 +276,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                         {entry.nickname?.[0] || "?"}
                       </div>
                     )}
-                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
+                    <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
                     <div className="w-[40%] h-14 lg:h-16 bg-primary-light rounded-lg overflow-hidden shrink-0">
@@ -323,7 +323,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 return (
                   <div key={team.teamId} className="flex items-center gap-3">
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(team.rank)}`}>{team.rank}</span>
-                    <span className="w-[8.5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
+                    <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">{team.teamName}</span>
                     <div className="w-[40%] h-14 lg:h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
                       <motion.div
                         initial={prefersReducedMotion ? false : MOTION_BAR_INITIAL}

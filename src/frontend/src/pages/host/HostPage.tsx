@@ -422,6 +422,7 @@ export function HostPage() {
               question={currentQuestion}
               onShowRanking={handleShowRanking}
               onNextQuestion={handleNextQuestion}
+              onEndGame={handleEndGame}
             />
           </>
         );

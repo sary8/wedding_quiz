@@ -146,8 +146,8 @@ describe("ProfilePage チーム選択", () => {
     mockCapturedImage = null;
     render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
 
-    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "D" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "チームA" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "チームD" })).toBeInTheDocument();
   });
 
   it("チーム未選択では参加ボタンが無効", async () => {
@@ -168,7 +168,7 @@ describe("ProfilePage チーム選択", () => {
 
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: "A" }));
+    await user.click(screen.getByRole("radio", { name: "チームA" }));
 
     expect(screen.getByRole("button", { name: "参加する" })).toBeEnabled();
   });
@@ -181,9 +181,69 @@ describe("ProfilePage チーム選択", () => {
 
     await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: "B" }));
+    await user.click(screen.getByRole("radio", { name: "チームB" }));
     await user.click(screen.getByRole("button", { name: "参加する" }));
 
     expect(handleJoin).toHaveBeenCalledWith("テスト", undefined, 2);
+  });
+});
+
+describe("ProfilePage L7 チームなし互換", () => {
+  it("teamsが未定義でもエラーなくレンダリングされチーム選択が表示されない", () => {
+    mockCapturedImage = null;
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} />);
+
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByText("チームを選択")).not.toBeInTheDocument();
+  });
+
+  it("teamsなしでニックネームと同意のみで参加できる", async () => {
+    mockCapturedImage = null;
+    const handleJoin = vi.fn();
+    const user = userEvent.setup();
+    render(<ProfilePage onJoin={handleJoin} isJoining={false} />);
+
+    await user.type(screen.getByLabelText(/ニックネーム/), "テスト");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "参加する" }));
+
+    expect(handleJoin).toHaveBeenCalledWith("テスト", undefined, undefined);
+  });
+});
+
+describe("ProfilePage M4 チームARIA属性", () => {
+  const mockTeams: TeamInfo[] = [
+    { id: 1, name: "A", orderIndex: 0 },
+    { id: 2, name: "B", orderIndex: 1 },
+    { id: 3, name: "C", orderIndex: 2 },
+    { id: 4, name: "D", orderIndex: 3 },
+  ];
+
+  it("チームあり: コンテナにrole=radiogroupとaria-labelが付与される", () => {
+    mockCapturedImage = null;
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    expect(screen.getByRole("radiogroup", { name: "チームを選択" })).toBeInTheDocument();
+  });
+
+  it("チームあり: 各チームボタンにrole=radioが付与される", () => {
+    mockCapturedImage = null;
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(4);
+  });
+
+  it("チームあり: 選択前はaria-checked=falseで選択後にaria-checked=trueに変わる", async () => {
+    mockCapturedImage = null;
+    const user = userEvent.setup();
+    render(<ProfilePage onJoin={vi.fn()} isJoining={false} teams={mockTeams} />);
+
+    const teamA = screen.getByRole("radio", { name: "チームA" });
+    expect(teamA).toHaveAttribute("aria-checked", "false");
+
+    await user.click(teamA);
+    expect(teamA).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "チームB" })).toHaveAttribute("aria-checked", "false");
   });
 });

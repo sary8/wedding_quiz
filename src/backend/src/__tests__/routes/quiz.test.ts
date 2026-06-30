@@ -14,6 +14,14 @@ vi.mock("../../db/index.js", async () => {
 
 const { quizRoutes, participantRoutes } = await import("../../routes/quiz.js");
 
+// libsqlのclient.transaction()はin-memory SQLite使用時に内部DBコネクションを
+// nullにし、次回から新しい空のDBが作られてしまうため、テスト環境では
+// db.transaction()をfakeに差し替えてトランザクション内の処理を直接実行する
+vi.spyOn(db, "transaction").mockImplementation(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async (fn: Parameters<typeof db.transaction>[0]) => fn(db as any)
+);
+
 // メインアプリと同じ構成で app.route() マウントしたテスト用アプリ（adminAuthミドルウェア付き）
 const app = new Hono();
 
@@ -857,7 +865,7 @@ describe("team routes", () => {
       expect(updated!.team_mode).toBe(true);
     });
 
-    it("team_mode OFF → 成功", async () => {
+    it("team_mode OFF → 400 (無効化不可)", async () => {
       const quiz = await createTestQuiz();
       await db.update(schema.quizzes).set({ team_mode: true }).where(eq(schema.quizzes.id, quiz.id));
 
@@ -866,9 +874,9 @@ describe("team routes", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: false }),
       });
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(400);
       const data = await res.json();
-      expect(data.teamMode).toBe(false);
+      expect(data.error).toContain("無効化");
     });
 
     it("存在しないid → 404", async () => {
@@ -1016,6 +1024,25 @@ describe("team routes", () => {
         body: JSON.stringify({ teams: [{ name: "A" }, { name: "B" }] }),
       });
       expect(res.status).toBe(404);
+    });
+
+    it("ゲーム開始後 → 409 (チーム変更不可)、参加者の team_id はリセットされない", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      const team = await createTestTeam(quiz.id, { name: "チームA", orderIndex: 0 });
+      await createTestParticipant(quiz.id, { nickname: "太郎", teamId: team.id });
+
+      const res = await quizRoutes.request(`/${quiz.id}/teams`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams: [{ name: "新A" }, { name: "新B" }] }),
+      });
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.error).toContain("ゲーム開始後");
+
+      // 参加者の team_id はリセットされていない
+      const p = await db.query.participants.findFirst({ where: eq(schema.participants.quiz_id, quiz.id) });
+      expect(p!.team_id).toBe(team.id);
     });
   });
 

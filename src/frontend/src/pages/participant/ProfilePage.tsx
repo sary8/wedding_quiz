@@ -33,6 +33,7 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
   }, [capture]);
 
   const hasTeams = teams && teams.length > 0;
+  const teamButtonSize = (teams && teams.length > 10) ? "w-10 h-10 text-base" : "w-14 h-14 text-xl";
 
   function handleSubmit() {
     const trimmed = nickname.trim();
@@ -86,14 +87,17 @@ export function ProfilePage({ onJoin, isJoining, teams }: Props) {
               チームを選択
               <span className="ml-1 text-xs font-normal text-red-500">（必須）</span>
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="チームを選択">
               {teams.map((team) => (
                 <button
                   key={team.id}
                   type="button"
+                  role="radio"
+                  aria-checked={selectedTeamId === team.id}
+                  aria-label={`チーム${team.name}`}
                   onClick={() => setSelectedTeamId(team.id)}
                   className={[
-                    "w-14 h-14 rounded-xl text-xl font-bold transition-all duration-200 cursor-pointer flex items-center justify-center",
+                    `${teamButtonSize} rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center justify-center`,
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     selectedTeamId === team.id
                       ? "bg-primary text-white ring-2 ring-primary shadow-md scale-105"

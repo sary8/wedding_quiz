@@ -734,6 +734,76 @@ describe("参加者の再接続", () => {
   });
 });
 
+describe("joinRoom teamId バリデーション (M6)", () => {
+  it("teamId=0 → 不正エラー（quizService.joinRoom は呼ばれない）", async () => {
+    const client = await connectClient();
+    try {
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "joinRoom", { roomCode: "123456", nickname: "テスト", teamId: 0 },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("チームの選択が不正です");
+      expect(quizService.joinRoom).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("teamId=-1 → 不正エラー", async () => {
+    const client = await connectClient();
+    try {
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "joinRoom", { roomCode: "123456", nickname: "テスト", teamId: -1 },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("チームの選択が不正です");
+      expect(quizService.joinRoom).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("teamId=1.5（小数） → 不正エラー", async () => {
+    const client = await connectClient();
+    try {
+      const res = await emitWithCallback<{ success: boolean; error?: string }>(
+        client, "joinRoom", { roomCode: "123456", nickname: "テスト", teamId: 1.5 as never },
+      );
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("チームの選択が不正です");
+      expect(quizService.joinRoom).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+    }
+  });
+
+  it("teamId=undefined → バリデーションをスキップしてサービスに渡す", async () => {
+    // teamId 未指定の場合は従来通り quizService.joinRoom に委ねる
+    vi.mocked(quizService.joinRoom).mockResolvedValue({
+      participant: { id: 1, token: "tok-1" },
+      reconnect: false,
+    } as never);
+    vi.mocked(quizService.getParticipant).mockResolvedValue({
+      id: 1, nickname: "テスト", selfie_file_name: null,
+    } as never);
+    vi.mocked(quizService.getQuizByRoom).mockResolvedValue({
+      id: 1, status: "lobby", team_mode: false, current_question_index: -1,
+    } as never);
+    vi.mocked(quizService.getLobbyParticipants).mockResolvedValue([] as never);
+
+    const client = await connectClient();
+    try {
+      const res = await emitWithCallback<{ success: boolean }>(
+        client, "joinRoom", { roomCode: "123456", nickname: "テスト" },
+      );
+      expect(res.success).toBe(true);
+      expect(quizService.joinRoom).toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+    }
+  });
+});
+
 describe("watchRoom 状態復元", () => {
   it("出題中のルームではゲーム状態がコールバックに含まれる", async () => {
     const roomCode = "210009";

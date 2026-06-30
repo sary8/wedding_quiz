@@ -122,7 +122,7 @@ test.describe("完全ゲームフロー @integration", () => {
         await p1Page.getByLabel("ニックネーム（8文字以内）").fill("テスト花子");
         // チーム選択は必須（既定チーム A〜D が自動作成される）
         await p1Page.getByRole("button", { name: "A", exact: true }).click();
-        await p1Page.getByRole("checkbox").check();
+        await p1Page.getByRole("checkbox", { name: /データの収集/ }).check();
         await p1Page.getByRole("button", { name: "参加する" }).click();
       }
 
@@ -134,7 +134,7 @@ test.describe("完全ゲームフロー @integration", () => {
         await p2Page.getByLabel("ニックネーム（8文字以内）").fill("テスト太郎");
         // チーム選択は必須（既定チーム A〜D が自動作成される）
         await p2Page.getByRole("button", { name: "B", exact: true }).click();
-        await p2Page.getByRole("checkbox").check();
+        await p2Page.getByRole("checkbox", { name: /データの収集/ }).check();
         await p2Page.getByRole("button", { name: "参加する" }).click();
       }
 

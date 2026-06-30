@@ -61,7 +61,7 @@ function generateMockData(count: number, teamMode: boolean): FinalResultData {
   const result: FinalResultData = { rankings };
 
   if (teamMode) {
-    const teamNames = ["チーム新郎", "チーム新婦", "チーム大学", "チーム会社", "チーム親族"];
+    const teamNames = ["A", "B", "C", "D", "E"];
     const teamRankings: TeamRankingEntry[] = teamNames.map((name, i) => ({
       teamId: i + 1,
       teamName: name,

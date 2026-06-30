@@ -8,6 +8,7 @@ type Props = {
   question: QuestionData | null;
   onShowRanking: () => void;
   onNextQuestion: () => void;
+  onEndGame?: () => void;
   isDisplay?: boolean;
 };
 
@@ -34,7 +35,10 @@ const TF_BAR_CLASSES = ["bg-green-500", "bg-rose-500"];
 const TF_BAR_DIM_CLASSES = ["bg-green-500/50", "bg-rose-500/50"];
 const TF_BAR_TRACK_CLASSES = ["bg-green-500/25", "bg-rose-500/25"];
 
-export function ResultsPage({ result, question, onShowRanking, onNextQuestion, isDisplay = false }: Props) {
+export function ResultsPage({ result, question, onShowRanking, onNextQuestion, onEndGame, isDisplay = false }: Props) {
+  const hideRanking = result?.hideRanking ?? (question ? question.questionIndex >= question.totalQuestions - 5 : false);
+  const isLastQuestion = question ? question.questionIndex >= question.totalQuestions - 1 : false;
+
   const { totalAnswers, maxCount } = useMemo(() => {
     if (!result?.distribution) return { totalAnswers: 0, maxCount: 1 };
     let total = 0;
@@ -53,20 +57,35 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
         <p className="text-xl text-sage-text/60 font-serif-wedding tracking-wider">Loading Results…</p>
         {!isDisplay && (
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onShowRanking}
-              className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-lg font-bold min-h-[44px] hover:bg-accent/20 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-            >
-              ランキング表示
-            </button>
-            <button
-              type="button"
-              onClick={onNextQuestion}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              次の問題
-            </button>
+            {!hideRanking && (
+              <button
+                type="button"
+                onClick={onShowRanking}
+                className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-lg font-bold min-h-[44px] hover:bg-accent/20 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+              >
+                ランキング表示
+              </button>
+            )}
+            {hideRanking && isLastQuestion
+              ? onEndGame && (
+                  <button
+                    type="button"
+                    onClick={onEndGame}
+                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    最終結果発表
+                  </button>
+                )
+              : (
+                  <button
+                    type="button"
+                    onClick={onNextQuestion}
+                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-lg font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    次の問題
+                  </button>
+                )
+            }
           </div>
         )}
       </div>
@@ -133,20 +152,35 @@ export function ResultsPage({ result, question, onShowRanking, onNextQuestion, i
 
       {!isDisplay && (
         <div className="flex gap-3 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-          <button
-            type="button"
-            onClick={onShowRanking}
-            className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-xl font-bold hover:bg-accent/20 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-          >
-            ランキング表示
-          </button>
-          <button
-            type="button"
-            onClick={onNextQuestion}
-            className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            次の問題
-          </button>
+          {!hideRanking && (
+            <button
+              type="button"
+              onClick={onShowRanking}
+              className="px-8 py-4 rounded-xl bg-accent/10 text-accent text-xl font-bold hover:bg-accent/20 transition-colors duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+            >
+              ランキング表示
+            </button>
+          )}
+          {hideRanking && isLastQuestion
+            ? onEndGame && (
+                <button
+                  type="button"
+                  onClick={onEndGame}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  最終結果発表
+                </button>
+              )
+            : (
+                <button
+                  type="button"
+                  onClick={onNextQuestion}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xl font-bold hover:opacity-90 transition-opacity duration-200 min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  次の問題
+                </button>
+              )
+          }
         </div>
       )}
     </div>

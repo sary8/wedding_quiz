@@ -18,6 +18,12 @@ import type {
   QuestionRankingData,
 } from "../types/index.js";
 
+// 終盤5問（最後の5問）は順位を非表示にする。
+// 総問題数が5以下なら全問が対象。
+export function isRankingHidden(currentQuestionIndex: number, totalQuestions: number): boolean {
+  return currentQuestionIndex >= totalQuestions - 5;
+}
+
 // ルーム認証
 export async function verifyHostSecret(roomCode: string, hostSecret: string) {
   const quiz = await db.query.quizzes.findFirst({
@@ -97,6 +103,11 @@ export async function joinRoom(
     if (!team) {
       return { error: "指定されたチームが見つかりません" };
     }
+  }
+
+  // ニックネーム長さチェック（サービス側でも防御的に検証）
+  if (nickname.trim().length > 8) {
+    return { error: "ニックネームは8文字以内で入力してください" };
   }
 
   // ニックネーム重複チェック
@@ -317,6 +328,13 @@ export async function getQuestionResult(
   ]);
   if (!question) throw new Error("Question not found");
 
+  // クイズの総問題数を取得（終盤ブラックアウト判定用）
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, question.quiz_id));
+  const totalQuestions = countResult[0]?.count ?? 0;
+
   // 回答分布
   const distribution = [0, 0, 0, 0];
   for (const a of allAnswers) {
@@ -329,6 +347,7 @@ export async function getQuestionResult(
     questionId,
     correctChoice: question.correct_choice,
     distribution,
+    hideRanking: isRankingHidden(question.order_index, totalQuestions),
   };
 
   // 参加者個別の結果
@@ -373,6 +392,14 @@ export async function getQuestionResultBatch(
   ]);
   if (!question) throw new Error("Question not found");
 
+  // クイズの総問題数を取得（終盤ブラックアウト判定用）
+  const batchCountResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, question.quiz_id));
+  const totalQuestions = batchCountResult[0]?.count ?? 0;
+  const hideRanking = isRankingHidden(question.order_index, totalQuestions);
+
   const distribution = [0, 0, 0, 0];
   for (const a of allAnswers) {
     if (a.choice_index >= 1 && a.choice_index <= 4) {
@@ -388,6 +415,7 @@ export async function getQuestionResultBatch(
       questionId,
       correctChoice: question.correct_choice,
       distribution,
+      hideRanking,
     };
     const myAnswer = allAnswers.find((a) => a.participant_id === pid);
     if (myAnswer) {
