@@ -1,5 +1,6 @@
 import { db, testSchema as schema } from "./testDb.js";
 
+// デフォルトは team_mode: false。チームモードのテストには teamMode: true を渡す
 export async function createTestQuiz(overrides: Partial<{
   roomCode: string;
   hostSecret: string;
@@ -8,6 +9,7 @@ export async function createTestQuiz(overrides: Partial<{
   currentQuestionIndex: number;
   finishedAt: string | null;
   createdAt: string;
+  teamMode: boolean;
 }> = {}) {
   const result = await db
     .insert(schema.quizzes)
@@ -19,6 +21,7 @@ export async function createTestQuiz(overrides: Partial<{
       current_question_index: overrides.currentQuestionIndex ?? -1,
       finished_at: overrides.finishedAt ?? null,
       created_at: overrides.createdAt ?? new Date().toISOString(),
+      team_mode: overrides.teamMode ?? false,
     })
     .returning();
   return result[0];

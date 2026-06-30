@@ -29,6 +29,7 @@ const {
   submitAnswer,
   getAnswerCount,
   getQuestionResult,
+  getQuestionResultBatch,
   calculateRanking,
   calculateTeamRanking,
   calculateQuestionRanking,
@@ -39,6 +40,7 @@ const {
   getParticipant,
   replayQuiz,
   deleteQuizCompletely,
+  isRankingHidden,
 } = await import("../../services/quizService.js");
 
 import { eq } from "drizzle-orm";
@@ -1417,6 +1419,198 @@ describe("quizService", () => {
     it("存在しないクイズIDの場合はfalseを返す", async () => {
       const result = await deleteQuizCompletely(99999);
       expect(result).toBe(false);
+    });
+  });
+
+  // ============================================================
+  // isRankingHidden ユニットテスト
+  // ============================================================
+
+  describe("isRankingHidden", () => {
+    it("total=10 → index 4 は非表示にならない", () => {
+      expect(isRankingHidden(4, 10)).toBe(false);
+    });
+
+    it("total=10 → index 5 は非表示（最後の5問に入る）", () => {
+      expect(isRankingHidden(5, 10)).toBe(true);
+    });
+
+    it("total=10 → index 9 は非表示", () => {
+      expect(isRankingHidden(9, 10)).toBe(true);
+    });
+
+    it("total=5 → index 0 は非表示（全問が対象）", () => {
+      expect(isRankingHidden(0, 5)).toBe(true);
+    });
+
+    it("total=3 → index 0 は非表示（全問が対象）", () => {
+      expect(isRankingHidden(0, 3)).toBe(true);
+    });
+  });
+
+  // ============================================================
+  // getQuestionResult / getQuestionResultBatch の hideRanking テスト
+  // ============================================================
+
+  describe("getQuestionResult hideRanking", () => {
+    it("10問クイズの index 4 → hideRanking=false", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 10; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      // order_index=4 の問題を取得
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q4 = rows.find((q) => q.order_index === 4)!;
+
+      const result = await getQuestionResult(q4.id);
+      expect(result.hideRanking).toBe(false);
+    });
+
+    it("10問クイズの index 5 → hideRanking=true", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 10; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q5 = rows.find((q) => q.order_index === 5)!;
+
+      const result = await getQuestionResult(q5.id);
+      expect(result.hideRanking).toBe(true);
+    });
+
+    it("10問クイズの index 9 → hideRanking=true", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 10; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q9 = rows.find((q) => q.order_index === 9)!;
+
+      const result = await getQuestionResult(q9.id);
+      expect(result.hideRanking).toBe(true);
+    });
+
+    it("3問クイズの index 0 → hideRanking=true（全問が対象）", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 3; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q0 = rows.find((q) => q.order_index === 0)!;
+
+      const result = await getQuestionResult(q0.id);
+      expect(result.hideRanking).toBe(true);
+    });
+  });
+
+  describe("getQuestionResultBatch hideRanking", () => {
+    it("10問クイズの index 4 → 全結果で hideRanking=false", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 10; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q4 = rows.find((q) => q.order_index === 4)!;
+
+      const p = await createTestParticipant(quiz.id, { token: "batch-hide-token-4" });
+      const resultMap = await getQuestionResultBatch(q4.id, [p.id]);
+      expect(resultMap.get(p.id)!.hideRanking).toBe(false);
+    });
+
+    it("10問クイズの index 5 → 全結果で hideRanking=true", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 10; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q5 = rows.find((q) => q.order_index === 5)!;
+
+      const p1 = await createTestParticipant(quiz.id, { token: "batch-hide-token-5a" });
+      const p2 = await createTestParticipant(quiz.id, { token: "batch-hide-token-5b" });
+      const resultMap = await getQuestionResultBatch(q5.id, [p1.id, p2.id]);
+      expect(resultMap.get(p1.id)!.hideRanking).toBe(true);
+      expect(resultMap.get(p2.id)!.hideRanking).toBe(true);
+    });
+
+    it("3問クイズの index 0 → hideRanking=true（全問が対象）", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress" });
+      for (let i = 0; i < 3; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
+      const rows = await db
+        .select()
+        .from(schema.questions)
+        .where(eq(schema.questions.quiz_id, quiz.id));
+      const q0 = rows.find((q) => q.order_index === 0)!;
+
+      const p = await createTestParticipant(quiz.id, { token: "batch-hide-token-0" });
+      const resultMap = await getQuestionResultBatch(q0.id, [p.id]);
+      expect(resultMap.get(p.id)!.hideRanking).toBe(true);
+    });
+  });
+
+  // ============================================================
+  // M3: createTestQuiz({ teamMode: true }) のラウンドトリップ
+  // ============================================================
+
+  describe("createTestQuiz teamMode round-trip", () => {
+    it("teamMode: true でクイズ作成し joinRoom にチームIDを渡すと参加者に team_id が設定される", async () => {
+      const quiz = await createTestQuiz({ status: "lobby", teamMode: true });
+      expect(quiz.team_mode).toBe(true);
+
+      const team = await createTestTeam(quiz.id, { name: "テストチーム" });
+
+      const result = await joinRoom(
+        quiz.room_code,
+        "ゲスト",
+        null,
+        "conn-m3-1",
+        undefined,
+        team.id
+      );
+      expect(result).not.toHaveProperty("error");
+      const { participant } = result as { participant: { id: number; token: string }; reconnect: boolean };
+
+      const p = await db.query.participants.findFirst({
+        where: eq(schema.participants.id, participant.id),
+      });
+      expect(p!.team_id).toBe(team.id);
+    });
+  });
+
+  // ============================================================
+  // L1: joinRoom でニックネーム長さ制限（サービス側防御検証）
+  // ============================================================
+
+  describe("joinRoom nickname length validation (service)", () => {
+    it("9文字のニックネーム → error", async () => {
+      await createTestQuiz({ status: "lobby" });
+      const result = await joinRoom("123456", "123456789", null, "conn-l1-1");
+      expect(result).toHaveProperty("error", "ニックネームは8文字以内で入力してください");
+    });
+
+    it("8文字のニックネーム → 成功", async () => {
+      await createTestQuiz({ status: "lobby" });
+      const result = await joinRoom("123456", "12345678", null, "conn-l1-2");
+      expect(result).not.toHaveProperty("error");
     });
   });
 });

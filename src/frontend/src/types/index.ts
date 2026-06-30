@@ -69,6 +69,8 @@ export type QuestionResultData = {
   questionId: number;
   correctChoice: number;
   distribution: number[];
+  // 終盤5問は順位を隠す
+  hideRanking?: boolean;
   yourAnswer?: {
     choiceIndex: number;
     isCorrect: boolean;

@@ -180,6 +180,8 @@ export type QuestionResultData = {
   questionId: number;
   correctChoice: number; // 1-4
   distribution: number[]; // [count1, count2, count3, count4]
+  // 終盤5問は順位を隠す（個人順位・チーム順位の両方）
+  hideRanking?: boolean;
   // 参加者個別結果（参加者のみ受信）
   yourAnswer?: {
     choiceIndex: number;

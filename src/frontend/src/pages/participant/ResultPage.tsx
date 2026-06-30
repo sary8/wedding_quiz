@@ -8,6 +8,8 @@ type Props = {
 };
 
 export function ResultPage({ result, question }: Props) {
+  const hideRanking = result?.hideRanking ?? (question ? question.questionIndex >= question.totalQuestions - 5 : false);
+
   const correctAnswerText =
     result && question && result.correctChoice >= 1 && result.correctChoice <= question.choices.length
       ? question.choices[result.correctChoice - 1]
@@ -84,9 +86,11 @@ export function ResultPage({ result, question }: Props) {
         <div className="flex flex-col gap-2 text-sm text-sage-text/70 [font-variant-numeric:tabular-nums]">
           <p>回答速度: {(yourAnswer.responseTimeMs / 1000).toFixed(2)}秒</p>
           <p>累計スコア: {yourAnswer.totalScore.toLocaleString()}点</p>
-          <p className="text-lg font-bold text-sage-text mt-2">
-            現在 <span className="text-accent">第{yourAnswer.currentRank}位</span>
-          </p>
+          {!hideRanking && (
+            <p className="text-lg font-bold text-sage-text mt-2">
+              現在 <span className="text-accent">第{yourAnswer.currentRank}位</span>
+            </p>
+          )}
         </div>
       </div>
 
