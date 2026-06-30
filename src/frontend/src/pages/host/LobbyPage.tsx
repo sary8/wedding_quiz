@@ -51,21 +51,23 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
         <h2 className="text-lg font-serif-wedding tracking-wider mb-4 text-sage-text/70">
           Players <span className="text-accent font-bold text-2xl ml-2 [font-variant-numeric:tabular-nums]">{participants.length}</span>
         </h2>
-        {participants.length > 0 ? (
-          teams && teams.length > 0 ? (
-            <TeamGroupedParticipants participants={participants} teams={teams} />
+        <div className="max-h-[35vh] overflow-y-auto">
+          {participants.length > 0 ? (
+            teams && teams.length > 0 ? (
+              <TeamGroupedParticipants participants={participants} teams={teams} />
+            ) : (
+              <ul className="flex flex-wrap gap-3 justify-center" aria-label="参加者一覧">
+                {participants.map((p) => (
+                  <li key={p.id} className="cv-auto">
+                    <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
+                  </li>
+                ))}
+              </ul>
+            )
           ) : (
-            <ul className="flex flex-wrap gap-3 justify-center" aria-label="参加者一覧">
-              {participants.map((p) => (
-                <li key={p.id} className="cv-auto">
-                  <ParticipantChip nickname={p.nickname} selfieUrl={p.selfieUrl} variant="light" />
-                </li>
-              ))}
-            </ul>
-          )
-        ) : (
-          <p className="text-gray-600 text-base">Waiting for players…</p>
-        )}
+            <p className="text-gray-600 text-base">Waiting for players…</p>
+          )}
+        </div>
       </section>
 
       {!isDisplay && (

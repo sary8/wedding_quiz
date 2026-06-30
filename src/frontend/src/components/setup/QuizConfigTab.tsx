@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Quiz } from "../../types";
 import { updateQuiz, deleteQuiz, setTeams as setTeamsApi } from "../../services/api";
@@ -38,6 +38,15 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
     return existing.length >= 2 ? existing.length : 4;
   });
   const [isSavingTeams, setIsSavingTeams] = useState(false);
+  const [teamCountInput, setTeamCountInput] = useState(String(teamCount));
+  const [teamsSaved, setTeamsSaved] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const questionCount = quiz.questions?.length ?? 0;
   const canStartLobby = questionCount > 0;
@@ -68,11 +77,18 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
   async function handleSaveTeams() {
     setIsSavingTeams(true);
     setError("");
+    setTeamsSaved(false);
     try {
       const teams = Array.from({ length: teamCount }, (_, i) => ({
         name: String.fromCharCode(65 + i),
       }));
       await setTeamsApi(quiz.id, teams);
+      setTeamsSaved(true);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        setTeamsSaved(false);
+        saveTimerRef.current = null;
+      }, 3000);
     } catch {
       setError("チームの保存に失敗しました");
     } finally {
@@ -161,7 +177,13 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
         <div className="flex items-center gap-3 mb-4">
           <button
             type="button"
-            onClick={() => setTeamCount((n) => Math.max(2, n - 1))}
+            onClick={() => {
+              setTeamCount((n) => {
+                const next = Math.max(2, n - 1);
+                setTeamCountInput(String(next));
+                return next;
+              });
+            }}
             disabled={teamCount <= 2}
             aria-label="チーム数を減らす"
             className={cn(
@@ -176,17 +198,26 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
             type="number"
             min={2}
             max={26}
-            value={teamCount}
-            onChange={(e) => {
-              const v = Math.floor(Number(e.target.value));
-              if (v >= 2 && v <= 26) setTeamCount(v);
+            value={teamCountInput}
+            onChange={(e) => setTeamCountInput(e.target.value)}
+            onBlur={() => {
+              const n = Math.floor(Number(teamCountInput));
+              const clamped = Number.isFinite(n) ? Math.min(26, Math.max(2, n)) : teamCount;
+              setTeamCount(clamped);
+              setTeamCountInput(String(clamped));
             }}
             aria-label="チーム数"
             className="w-16 px-2 py-2 rounded-lg border border-gray-200 text-center text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent"
           />
           <button
             type="button"
-            onClick={() => setTeamCount((n) => Math.min(26, n + 1))}
+            onClick={() => {
+              setTeamCount((n) => {
+                const next = Math.min(26, n + 1);
+                setTeamCountInput(String(next));
+                return next;
+              });
+            }}
             disabled={teamCount >= 26}
             aria-label="チーム数を増やす"
             className={cn(
@@ -204,18 +235,23 @@ export function QuizConfigTab({ quiz, onTitleSaved, onStartLobby, onChangeQuiz, 
           {" "}の {teamCount} 個のチームを作成
         </p>
 
-        <button
-          type="button"
-          onClick={handleSaveTeams}
-          disabled={isSavingTeams}
-          className={cn(
-            "px-4 py-2 rounded-lg text-sm font-bold text-white bg-accent hover:bg-accent/90 transition-colors duration-150 min-h-[44px] cursor-pointer",
-            btnFocus,
-            isSavingTeams && "opacity-60 cursor-not-allowed",
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSaveTeams}
+            disabled={isSavingTeams}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-bold text-white bg-accent hover:bg-accent/90 transition-colors duration-150 min-h-[44px] cursor-pointer",
+              btnFocus,
+              isSavingTeams && "opacity-60 cursor-not-allowed",
+            )}
+          >
+            {isSavingTeams ? "保存中…" : "チームを保存"}
+          </button>
+          {teamsSaved && !isSavingTeams && (
+            <span className="text-sm text-green-600 font-medium">✓ 保存しました</span>
           )}
-        >
-          {isSavingTeams ? "保存中…" : "チームを保存"}
-        </button>
+        </div>
       </div>
 
       {/* プレビュー / リハーサル */}
