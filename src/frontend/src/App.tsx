@@ -1,11 +1,13 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NotFoundPage } from "./pages/NotFoundPage";
+// 参加者入口（最頻ページ）は lazy にせず初期バンドルに含めて
+// 「index.js → チャンク」の2段ロードを避ける（LCP短縮、gzip +1.7KB）
+import { JoinPage } from "./pages/participant/JoinPage";
 
 const SetupPage = lazy(() => import("./pages/host/SetupPage").then((m) => ({ default: m.SetupPage })));
 const HostPage = lazy(() => import("./pages/host/HostPage").then((m) => ({ default: m.HostPage })));
 const DisplayPage = lazy(() => import("./pages/host/DisplayPage").then((m) => ({ default: m.DisplayPage })));
-const JoinPage = lazy(() => import("./pages/participant/JoinPage").then((m) => ({ default: m.JoinPage })));
 const PlayPage = lazy(() => import("./pages/participant/PlayPage").then((m) => ({ default: m.PlayPage })));
 const PreviewPage = lazy(() => import("./pages/host/PreviewPage").then((m) => ({ default: m.PreviewPage })));
 const FinalDemoPage = lazy(() => import("./pages/host/FinalDemoPage").then((m) => ({ default: m.FinalDemoPage })));

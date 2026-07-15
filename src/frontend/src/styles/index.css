@@ -91,7 +91,8 @@
 
 @layer base {
   html {
-    font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+    /* 日本語はシステムフォント: Android=Noto Sans CJK / iOS,macOS=ヒラギノ / Windows=游ゴシック */
+    font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Meiryo", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* 300msタップ遅延を除去（クイズ回答速度に直結） */
