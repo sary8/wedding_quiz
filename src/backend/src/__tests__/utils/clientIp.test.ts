@@ -9,6 +9,7 @@ describe("clientIp", () => {
     } else {
       process.env.TRUSTED_PROXY = originalEnv;
     }
+    delete process.env.TRUSTED_PROXY_HOPS;
     vi.resetModules();
   });
 
@@ -28,10 +29,19 @@ describe("clientIp", () => {
       expect(getClientIp(c)).toBe("203.0.113.1");
     });
 
-    it("TRUSTED_PROXY=true + 複数IP → 最初のIPを返す", async () => {
+    it("TRUSTED_PROXY=true + 複数IP → 右端（プロキシ付与の実クライアントIP）を返す", async () => {
       process.env.TRUSTED_PROXY = "true";
       const { getClientIp } = await import("../../utils/clientIp.js");
+      // 最左端はクライアントが詐称可能。デフォルト1段では右端を採用する（H-1）
       const c = createMockContext({ "x-forwarded-for": "203.0.113.1, 10.0.0.1, 172.16.0.1" });
+      expect(getClientIp(c)).toBe("172.16.0.1");
+    });
+
+    it("TRUSTED_PROXY_HOPS=2 → 右から2番目を採用し前置の詐称値を無視する", async () => {
+      process.env.TRUSTED_PROXY = "true";
+      process.env.TRUSTED_PROXY_HOPS = "2";
+      const { getClientIp } = await import("../../utils/clientIp.js");
+      const c = createMockContext({ "x-forwarded-for": "spoofed, 203.0.113.1, 10.0.0.1" });
       expect(getClientIp(c)).toBe("203.0.113.1");
     });
 
@@ -74,11 +84,11 @@ describe("clientIp", () => {
       expect(getSocketClientIp(socket)).toBe("203.0.113.1");
     });
 
-    it("TRUSTED_PROXY=true + 複数IP → 最初のIPを返す", async () => {
+    it("TRUSTED_PROXY=true + 複数IP → 右端（プロキシ付与の実クライアントIP）を返す", async () => {
       process.env.TRUSTED_PROXY = "true";
       const { getSocketClientIp } = await import("../../utils/clientIp.js");
       const socket = createMockSocket("127.0.0.1", { "x-forwarded-for": "203.0.113.1, 10.0.0.1" });
-      expect(getSocketClientIp(socket)).toBe("203.0.113.1");
+      expect(getSocketClientIp(socket)).toBe("10.0.0.1");
     });
 
     it("TRUSTED_PROXY=true + x-forwarded-for なし → リモートアドレスフォールバック", async () => {

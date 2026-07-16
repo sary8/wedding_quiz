@@ -126,6 +126,8 @@ export function useSocket() {
   const socketRef = useRef<TypedSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  // 自動再接続の全試行を使い切って諦めた状態（H-4）。UIで手動リロードを促すために使う。
+  const [reconnectFailed, setReconnectFailed] = useState(false);
 
   useEffect(() => {
     // polling は WebSocket がプロキシ等で遮断された会場向けのフォールバック。
@@ -142,11 +144,18 @@ export function useSocket() {
     socket.on("connect", () => {
       setIsConnected(true);
       setConnectionError(null);
+      setReconnectFailed(false);
     });
     socket.on("disconnect", () => setIsConnected(false));
     socket.on("connect_error", (err) => {
       setConnectionError(`接続エラー: ${err.message}`);
     });
+    // 再接続の全試行が尽きたとき（reconnectionAttempts 到達）に発火する Manager レベルのイベント。
+    // これがないと諦めた後も「再接続中…」表示が残り続け、手動リロードに気づけない。
+    (socket.io as unknown as { on: (event: string, handler: () => void) => void }).on(
+      "reconnect_failed",
+      () => setReconnectFailed(true)
+    );
 
     socketRef.current = socket;
 
@@ -217,7 +226,7 @@ export function useSocket() {
   );
 
   return useMemo(
-    () => ({ socket: socketRef, isConnected, connectionError, emit, emitWithTimeout, on }),
-    [isConnected, connectionError, emit, emitWithTimeout, on],
+    () => ({ socket: socketRef, isConnected, connectionError, reconnectFailed, emit, emitWithTimeout, on }),
+    [isConnected, connectionError, reconnectFailed, emit, emitWithTimeout, on],
   );
 }

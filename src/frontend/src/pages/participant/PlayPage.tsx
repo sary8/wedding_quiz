@@ -15,7 +15,7 @@ type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" |
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { emit, emitWithTimeout, on, isConnected, connectionError } = useSocket();
+  const { emit, emitWithTimeout, on, isConnected, connectionError, reconnectFailed } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("profile");
   const [participantId, setParticipantId] = useState<number | null>(null);
@@ -280,7 +280,7 @@ export function PlayPage() {
 
   const disconnectBanner = !isConnected && phase !== "profile" ? (
     <div role="alert" className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-amber-500 text-white text-sm text-center">
-      接続が切れました。再接続中…
+      {reconnectFailed ? "再接続できませんでした。ページを再読み込みしてください。" : "接続が切れました。再接続中…"}
     </div>
   ) : null;
 
