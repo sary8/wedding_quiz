@@ -129,4 +129,19 @@ describe("timerService", () => {
     vi.advanceTimersByTime(2000);
     expect(onEnd2).toHaveBeenCalledTimes(1);
   });
+
+  it("onEndが例外を投げてもタイマーは停止し、例外がtick外に伝播しない（C-4対策）", () => {
+    const onTick = vi.fn();
+    const onEnd = vi.fn(() => {
+      throw new Error("boom");
+    });
+    startTimer("test", 1, onTick, onEnd);
+
+    mockNs = BigInt(1_000_000_000);
+    // setInterval コールバックの外に例外が漏れないこと
+    expect(() => vi.advanceTimersByTime(1000)).not.toThrow();
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    // 満了時にタイマーは停止済みであること
+    expect(getElapsedMs("test")).toBeNull();
+  });
 });

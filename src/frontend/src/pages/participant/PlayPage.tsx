@@ -15,7 +15,7 @@ type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" |
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { emit, on, isConnected, connectionError } = useSocket();
+  const { emit, emitWithTimeout, on, isConnected, connectionError } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("profile");
   const [participantId, setParticipantId] = useState<number | null>(null);
@@ -33,6 +33,13 @@ export function PlayPage() {
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
   const [roomNotFound, setRoomNotFound] = useState(false);
   const [myDataDeleted, setMyDataDeleted] = useState(false);
+
+  // 瞬断→自動再接続時に joinRoom を再送するための情報。参加時の nickname/teamId を
+  // 保持しておく（サーバーは token で参加者を特定するが、joinRoom 入口の
+  // nickname バリデーションを通すために有効な値が必要）。
+  const rejoinInfoRef = useRef<{ nickname: string; teamId?: number } | null>(null);
+  // 参加後に一度でも切断を経験したか。初回接続で再joinを走らせないためのフラグ。
+  const hasDisconnectedRef = useRef(false);
 
   // ルーム情報取得（存在チェック + チームモード判定）
   useEffect(() => {
@@ -153,6 +160,27 @@ export function PlayPage() {
     return () => unsubs.forEach((u) => u());
   }, [on]);
 
+  // 瞬断からの自動再join（C-1対策）。参加後に切断を経験し、再接続したときだけ
+  // sessionStorage の token で joinRoom を再送する。これがないと再接続後は
+  // サーバー側の socketMeta が失われたままで submitAnswer が「セッションが
+  // 見つかりません」になり、questionStarted 等のブロードキャストも届かなくなる。
+  useEffect(() => {
+    if (!isConnected) {
+      if (participantId !== null) hasDisconnectedRef.current = true;
+      return;
+    }
+    if (participantId === null || !roomCode || !hasDisconnectedRef.current) return;
+    const token = sessionStorage.getItem(`quiz_token_${roomCode}`) || undefined;
+    const info = rejoinInfoRef.current;
+    if (!token || !info) return;
+    hasDisconnectedRef.current = false;
+    emit("joinRoom", { roomCode, nickname: info.nickname, token, teamId: info.teamId }, (res) => {
+      if (!res.success) {
+        setAnswerError(res.error || "再接続に失敗しました。ページを再読み込みしてください。");
+      }
+    });
+  }, [isConnected, participantId, roomCode, emit]);
+
   const handleJoin = useCallback(
     async (nickname: string, selfieData?: string, teamId?: number) => {
       if (!roomCode || isJoining) return;
@@ -187,6 +215,7 @@ export function PlayPage() {
         if (res.success && res.participantId && res.token) {
           setParticipantId(res.participantId);
           sessionStorage.setItem(`quiz_token_${roomCode}`, res.token);
+          rejoinInfoRef.current = { nickname, teamId };
           setPhase("waiting");
         } else {
           setAnswerError(res.error || "参加に失敗しました");
@@ -222,14 +251,14 @@ export function PlayPage() {
       if (!questionId) return;
       setHasAnswered(true);
       setAnswerError(null);
-      emit("submitAnswer", { questionId, choiceIndex }, (res) => {
+      emitWithTimeout("submitAnswer", { questionId, choiceIndex }, (res) => {
         if (!res.success) {
           setAnswerError(res.error || "回答の送信に失敗しました");
           setHasAnswered(false);
         }
       });
     },
-    [questionId, emit]
+    [questionId, emitWithTimeout]
   );
 
   if (!roomCode) return <div>ルームコードが不正です</div>;

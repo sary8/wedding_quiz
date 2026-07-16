@@ -10,6 +10,7 @@ const CREATE_TABLES_SQL = [
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     current_question_index INTEGER NOT NULL DEFAULT -1,
+    active_question_started_at INTEGER,
     team_mode INTEGER NOT NULL DEFAULT 0,
     finished_at TEXT,
     created_at TEXT NOT NULL DEFAULT ''

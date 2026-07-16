@@ -41,6 +41,8 @@ const {
   replayQuiz,
   deleteQuizCompletely,
   isRankingHidden,
+  getInterruptedQuestion,
+  clearActiveQuestion,
 } = await import("../../services/quizService.js");
 
 import { eq } from "drizzle-orm";
@@ -329,6 +331,65 @@ describe("quizService", () => {
       const quiz = await createTestQuiz({ status: "lobby" });
       await createTestQuestion(quiz.id, { orderIndex: 0 });
       expect(await getNextQuestion("123456")).toBeNull();
+    });
+  });
+
+  describe("getInterruptedQuestion / clearActiveQuestion（C-3: 再起動復元）", () => {
+    it("in_progressで開始時刻ありなら残り時間つきで中断問題を返す", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
+      const q = await createTestQuestion(quiz.id, { orderIndex: 0, timeLimitSeconds: 20 });
+      // 5秒前に出題したと仮定
+      await db
+        .update(schema.quizzes)
+        .set({ active_question_started_at: Date.now() - 5000 })
+        .where(eq(schema.quizzes.id, quiz.id));
+
+      const result = await getInterruptedQuestion("123456");
+      expect(result).not.toBeNull();
+      expect(result!.questionId).toBe(q.id);
+      expect(result!.remainingSeconds).toBeGreaterThan(13);
+      expect(result!.remainingSeconds).toBeLessThanOrEqual(15);
+    });
+
+    it("開始時刻がnull（出題中でない）なら null", async () => {
+      await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
+      expect(await getInterruptedQuestion("123456")).toBeNull();
+    });
+
+    it("in_progress以外なら（開始時刻があっても）null", async () => {
+      const quiz = await createTestQuiz({ status: "lobby", currentQuestionIndex: 0 });
+      await db
+        .update(schema.quizzes)
+        .set({ active_question_started_at: Date.now() })
+        .where(eq(schema.quizzes.id, quiz.id));
+      expect(await getInterruptedQuestion("123456")).toBeNull();
+    });
+
+    it("制限時間を超過していたら remainingSeconds は 0", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
+      await createTestQuestion(quiz.id, { orderIndex: 0, timeLimitSeconds: 10 });
+      await db
+        .update(schema.quizzes)
+        .set({ active_question_started_at: Date.now() - 30000 })
+        .where(eq(schema.quizzes.id, quiz.id));
+
+      const result = await getInterruptedQuestion("123456");
+      expect(result).not.toBeNull();
+      expect(result!.remainingSeconds).toBe(0);
+    });
+
+    it("clearActiveQuestion で開始時刻がnullになり中断問題も返らなくなる", async () => {
+      const quiz = await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
+      await createTestQuestion(quiz.id, { orderIndex: 0 });
+      await db
+        .update(schema.quizzes)
+        .set({ active_question_started_at: Date.now() })
+        .where(eq(schema.quizzes.id, quiz.id));
+
+      await clearActiveQuestion("123456");
+      const updated = await db.query.quizzes.findFirst({ where: eq(schema.quizzes.id, quiz.id) });
+      expect(updated!.active_question_started_at).toBeNull();
+      expect(await getInterruptedQuestion("123456")).toBeNull();
     });
   });
 

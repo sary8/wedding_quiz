@@ -1,5 +1,6 @@
 // サーバーサイドタイマー管理
 // process.hrtime.bigint() で高精度タイミングを実現
+import { logger } from "../utils/logger.js";
 
 type TimerCallback = (remaining: number) => void;
 type TimerEndCallback = () => void;
@@ -27,14 +28,23 @@ export function startTimer(
   onTick(durationSeconds);
 
   const intervalId = setInterval(() => {
-    const elapsed = Number(process.hrtime.bigint() - startTime) / 1_000_000;
-    const remaining = Math.max(0, durationSeconds - elapsed / 1000);
+    try {
+      const elapsed = Number(process.hrtime.bigint() - startTime) / 1_000_000;
+      const remaining = Math.max(0, durationSeconds - elapsed / 1000);
 
-    if (remaining <= 0) {
-      stopTimer(key);
-      onEnd();
-    } else {
-      onTick(Math.ceil(remaining));
+      if (remaining <= 0) {
+        stopTimer(key);
+        // onEnd は async（結果配信）。同期・非同期どちらの例外も握りつぶさず
+        // ログするため Promise.resolve でラップして catch する。これがないと
+        // tick中の未捕捉例外/rejection でプロセス全体が落ち、全roomが消える。
+        Promise.resolve(onEnd()).catch((e) => {
+          logger.error("timer onEnd error", { key, error: e instanceof Error ? e.message : String(e) });
+        });
+      } else {
+        onTick(Math.ceil(remaining));
+      }
+    } catch (e) {
+      logger.error("timer tick error", { key, error: e instanceof Error ? e.message : String(e) });
     }
   }, 1000);
 

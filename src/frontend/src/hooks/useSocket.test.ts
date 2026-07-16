@@ -78,6 +78,26 @@ describe("useSocket", () => {
     expect(mockEmit).toHaveBeenCalled();
   });
 
+  it("emitWithTimeout がタイムアウト時にエラーコールバックを呼ぶ（C-2対策）", () => {
+    const { result } = renderHook(() => useSocket());
+    const cb = vi.fn();
+    result.current.emitWithTimeout("nextQuestion", { roomCode: "123456", hostSecret: "s" }, cb);
+    expect(mockTimeout).toHaveBeenCalledWith(10000);
+    // socket.timeout().emit に渡された内部コールバックを取り出して発火
+    const internalCb = mockEmit.mock.calls.at(-1)?.[2] as (err: Error | null, res: unknown) => void;
+    act(() => internalCb(new Error("timeout"), undefined));
+    expect(cb).toHaveBeenCalledWith({ success: false, error: "サーバーからの応答がタイムアウトしました" });
+  });
+
+  it("emitWithTimeout が成功時にサーバー応答をそのまま渡す", () => {
+    const { result } = renderHook(() => useSocket());
+    const cb = vi.fn();
+    result.current.emitWithTimeout("nextQuestion", { roomCode: "123456", hostSecret: "s" }, cb);
+    const internalCb = mockEmit.mock.calls.at(-1)?.[2] as (err: Error | null, res: unknown) => void;
+    act(() => internalCb(null, { success: true }));
+    expect(cb).toHaveBeenCalledWith({ success: true });
+  });
+
   it("on が登録解除関数を返す", () => {
     const { result } = renderHook(() => useSocket());
     const handler = vi.fn();

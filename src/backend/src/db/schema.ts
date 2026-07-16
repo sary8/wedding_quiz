@@ -10,6 +10,9 @@ export const quizzes = sqliteTable("quizzes", {
     .notNull()
     .default("draft"),
   current_question_index: integer("current_question_index").notNull().default(-1),
+  // 出題中の問題の開始時刻(epoch ms)。プロセス再起動後に中断問題を復元するために永続化する。
+  // null は「出題中でない（ロビー/結果表示/未開始）」を意味する。
+  active_question_started_at: integer("active_question_started_at"),
   team_mode: integer("team_mode", { mode: "boolean" }).notNull().default(false),
   finished_at: text("finished_at"),
   created_at: text("created_at")
