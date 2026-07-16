@@ -72,6 +72,8 @@ export function HostPage() {
   const [countdownValue, setCountdownValue] = useState(5);
   const countdownFiredRef = useRef(false);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 新問題開始後に前問の遅延 questionResult を割り込ませないためのガード（M-4）
+  const activeQuestionIdRef = useRef<number | null>(null);
 
   // Socket.ioイベント登録
   useEffect(() => {
@@ -84,6 +86,7 @@ export function HostPage() {
         playJoinChime();
       }),
       on("questionStarted", (data) => {
+        activeQuestionIdRef.current = data.questionId;
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setAnswerCount(0);
@@ -110,6 +113,8 @@ export function HostPage() {
         }, 5000);
       }),
       on("questionResult", (data) => {
+        // 既に次の問題が始まっている場合、前問の遅延結果は無視する（M-4）
+        if (activeQuestionIdRef.current !== null && data.questionId !== activeQuestionIdRef.current) return;
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;

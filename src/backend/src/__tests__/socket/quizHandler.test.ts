@@ -448,10 +448,10 @@ describe("socket rate limiting", () => {
     }
   });
 
-  it("watchRoom もレート制限が適用される", async () => {
+  it("watchRoom もレート制限が適用される（NAT会場向けに150へ緩和済み M-6）", async () => {
     const client = await connectClient();
     try {
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 150; i++) {
         await emitWithCallback<{ success: boolean }>(
           client, "watchRoom", { roomCode: "abcd" },
         );

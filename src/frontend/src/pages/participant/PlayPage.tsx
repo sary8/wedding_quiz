@@ -64,6 +64,9 @@ export function PlayPage() {
   });
 
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 現在アクティブな問題ID。新しい問題が始まった後に前問の遅延 questionResult が
+  // 届いても割り込ませないためのガードに使う（M-4）。
+  const activeQuestionIdRef = useRef<number | null>(null);
 
   // アンマウント時に保留中の結果遷移タイマーを破棄
   useEffect(() => {
@@ -78,6 +81,7 @@ export function PlayPage() {
       on("gameStarted", () => setPhase("waiting")),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionStarted", (data) => {
+        activeQuestionIdRef.current = data.questionId;
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setHasAnswered(false);
@@ -102,6 +106,8 @@ export function PlayPage() {
         }
       }),
       on("questionResult", (data) => {
+        // 既に次の問題が始まっている場合、前問の遅延結果は無視する（M-4）
+        if (activeQuestionIdRef.current !== null && data.questionId !== activeQuestionIdRef.current) return;
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;

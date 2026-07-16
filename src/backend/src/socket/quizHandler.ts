@@ -212,6 +212,27 @@ export function setupQuizSocket(io: QuizIO) {
   io.on("connection", (socket: QuizSocket) => {
     logger.info("socket connected", { socketId: socket.id });
 
+    // ホスト操作系イベントのレート制限（M-3）。join/watch/submitAnswer は参加者の
+    // 正当な高頻度イベントなので個別上限に委ね、ここでは対象外にする。
+    socket.use((packet, next) => {
+      const event = String(packet[0]);
+      if (event === "joinRoom" || event === "watchRoom" || event === "submitAnswer") {
+        return next();
+      }
+      const ip = getSocketClientIp(socket);
+      if (!checkSocketRateLimit(`host:${ip}`)) {
+        const ack = packet[packet.length - 1];
+        if (typeof ack === "function") {
+          (ack as (res: { success: boolean; error?: string }) => void)({
+            success: false,
+            error: "リクエストが多すぎます。しばらくしてから再試行してください",
+          });
+        }
+        return; // next を呼ばずハンドラ実行を止める
+      }
+      next();
+    });
+
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
       try {
@@ -573,7 +594,9 @@ export function setupQuizSocket(io: QuizIO) {
     // === ホスト: 次の問題 ===
     socket.on("nextQuestion", async (data, callback) => {
       try {
-        // 二重押し防止
+        // 二重押し防止（room ごとに配信を1つに制限）。認証を先に await すると
+        // その間のレースで二重押し防止が効かなくなるため、ガードは同期的にここで行う。
+        // 未認証者による連打は M-3 のホストイベントレート制限側で抑制する。
         if (advancingRooms.has(data.roomCode)) {
           callback({ success: false, error: "問題の配信中です" });
           return;
@@ -821,7 +844,8 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("watchRoom", async (data, callback) => {
       try {
         const watchIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(`watch:${watchIp}`)) {
+        // ホスト・プロジェクターが同一NAT IPから再接続を繰り返しても締め出されないよう緩和（M-6）
+        if (!checkSocketRateLimit(`watch:${watchIp}`, JOIN_RATE_LIMIT_MAX)) {
           logger.warn("watchRoom rate limited", { ip: watchIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
