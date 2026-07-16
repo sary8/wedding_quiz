@@ -53,6 +53,9 @@ function resetAnswerCount(roomCode: string): void {
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
+// selfieファイル名の安全性チェック（L-1: パストラバーサル・他人ファイルなりすまし対策）
+const SAFE_SELFIE_RE = /^[a-zA-Z0-9_.-]+$/;
+
 // IP単位のソケットイベントレート制限。
 // 会場Wi-FiのNATでは全参加者が同一グローバルIPに見えるため、
 // joinRoomは100人規模の一斉参加を許容する上限にし、イベント種別ごとにバケットを分離する
@@ -201,6 +204,19 @@ function startQuestionTimer(io: QuizIO, roomCode: string, questionId: number, se
   );
 }
 
+// クイズ削除時に room 関連の in-memory 状態をクリアする（L-7: 長期運用時のメモリリーク対策）
+export function clearRoomState(roomCode: string): void {
+  activeQuestions.delete(roomCode);
+  advancingRooms.delete(roomCode);
+  answerCounts.delete(roomCode);
+  const timer = answerCountTimers.get(roomCode);
+  if (timer) {
+    clearTimeout(timer);
+    answerCountTimers.delete(roomCode);
+  }
+  stopTimer(`question_${roomCode}`);
+}
+
 /** テスト用: ソケットレート制限をリセット */
 export function _resetSocketRateLimit() {
   socketRateMap.clear();
@@ -211,6 +227,27 @@ export function setupQuizSocket(io: QuizIO) {
 
   io.on("connection", (socket: QuizSocket) => {
     logger.info("socket connected", { socketId: socket.id });
+
+    // ホスト操作系イベントのレート制限（M-3）。join/watch/submitAnswer は参加者の
+    // 正当な高頻度イベントなので個別上限に委ね、ここでは対象外にする。
+    socket.use((packet, next) => {
+      const event = String(packet[0]);
+      if (event === "joinRoom" || event === "watchRoom" || event === "submitAnswer") {
+        return next();
+      }
+      const ip = getSocketClientIp(socket);
+      if (!checkSocketRateLimit(`host:${ip}`)) {
+        const ack = packet[packet.length - 1];
+        if (typeof ack === "function") {
+          (ack as (res: { success: boolean; error?: string }) => void)({
+            success: false,
+            error: "リクエストが多すぎます。しばらくしてから再試行してください",
+          });
+        }
+        return; // next を呼ばずハンドラ実行を止める
+      }
+      next();
+    });
 
     // === 参加者: ルーム参加 ===
     socket.on("joinRoom", async (data, callback) => {
@@ -248,6 +285,13 @@ export function setupQuizSocket(io: QuizIO) {
         if (data.teamId != null && (!Number.isInteger(data.teamId) || data.teamId <= 0)) {
           logger.warn("joinRoom validation failed: invalid teamId", { roomCode: data.roomCode, teamId: data.teamId });
           callback({ success: false, error: "チームの選択が不正です" });
+          return;
+        }
+
+        // selfieファイル名の検証（L-1: 他人のファイル名・パストラバーサルの混入を防ぐ）
+        if (data.selfieData != null && (typeof data.selfieData !== "string" || data.selfieData.length > 128 || !SAFE_SELFIE_RE.test(data.selfieData))) {
+          logger.warn("joinRoom validation failed: invalid selfieData", { roomCode: data.roomCode });
+          callback({ success: false, error: "自撮りデータが不正です" });
           return;
         }
 
@@ -354,6 +398,12 @@ export function setupQuizSocket(io: QuizIO) {
         if (!meta) {
           logger.warn("submitAnswer rejected: no session", { socketId: socket.id });
           callback({ success: false, error: "セッションが見つかりません" });
+          return;
+        }
+
+        // 回答連打のレート制限（L-8）。socket単位なのでNAT会場でも誤爆しない
+        if (!checkSocketRateLimit(`answer:${socket.id}`, 60)) {
+          callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
         }
 
@@ -573,7 +623,9 @@ export function setupQuizSocket(io: QuizIO) {
     // === ホスト: 次の問題 ===
     socket.on("nextQuestion", async (data, callback) => {
       try {
-        // 二重押し防止
+        // 二重押し防止（room ごとに配信を1つに制限）。認証を先に await すると
+        // その間のレースで二重押し防止が効かなくなるため、ガードは同期的にここで行う。
+        // 未認証者による連打は M-3 のホストイベントレート制限側で抑制する。
         if (advancingRooms.has(data.roomCode)) {
           callback({ success: false, error: "問題の配信中です" });
           return;
@@ -821,7 +873,8 @@ export function setupQuizSocket(io: QuizIO) {
     socket.on("watchRoom", async (data, callback) => {
       try {
         const watchIp = getSocketClientIp(socket);
-        if (!checkSocketRateLimit(`watch:${watchIp}`)) {
+        // ホスト・プロジェクターが同一NAT IPから再接続を繰り返しても締め出されないよう緩和（M-6）
+        if (!checkSocketRateLimit(`watch:${watchIp}`, JOIN_RATE_LIMIT_MAX)) {
           logger.warn("watchRoom rate limited", { ip: watchIp });
           callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;

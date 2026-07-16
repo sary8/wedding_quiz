@@ -35,6 +35,16 @@ async function verifyQuizExists(quizId: number) {
   return { quiz };
 }
 
+// 進行中クイズの問題を編集・削除・並べ替えすると、出題インデックスとスコア集計の
+// 整合が壊れるため拒否する（M-5）
+async function isQuizInProgress(quizId: number): Promise<boolean> {
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.id, quizId),
+    columns: { status: true },
+  });
+  return quiz?.status === "in_progress";
+}
+
 // 問題の並べ替え（/:id より前に定義しないとマッチしない）
 questionRoutes.put("/reorder", async (c) => {
   const body = await c.req.json<{
@@ -47,6 +57,9 @@ questionRoutes.put("/reorder", async (c) => {
 
   const check = await verifyQuizExists(body.quizId);
   if ("error" in check) return c.json({ error: check.error }, check.status);
+  if (check.quiz.status === "in_progress") {
+    return c.json({ error: "進行中のクイズの問題は並べ替えできません" }, 423);
+  }
 
   if (!Array.isArray(body.questionIds) || body.questionIds.length === 0) {
     return c.json({ error: "questionIdsは空でない配列で指定してください" }, 400);
@@ -251,6 +264,9 @@ questionRoutes.put("/:id", async (c) => {
     where: eq(schema.questions.id, id),
   });
   if (!question) return c.json({ error: "問題が見つかりません" }, 404);
+  if (await isQuizInProgress(question.quiz_id)) {
+    return c.json({ error: "進行中のクイズの問題は変更できません" }, 423);
+  }
 
   // バリデーション
   if (body.text !== undefined && body.text.length > 500) {
@@ -323,6 +339,9 @@ questionRoutes.delete("/:id", async (c) => {
     where: eq(schema.questions.id, id),
   });
   if (!question) return c.json({ error: "問題が見つかりません" }, 404);
+  if (await isQuizInProgress(question.quiz_id)) {
+    return c.json({ error: "進行中のクイズの問題は削除できません" }, 423);
+  }
 
   await db.delete(schema.questions).where(eq(schema.questions.id, id));
 

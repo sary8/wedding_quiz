@@ -8,10 +8,12 @@ const mockOff = vi.fn();
 const mockEmit = vi.fn();
 const mockDisconnect = vi.fn();
 const mockTimeout = vi.fn(() => ({ emit: mockEmit }));
+const mockManagerOn = vi.fn();
 
 let connectHandler: (() => void) | null = null;
 let disconnectHandler: (() => void) | null = null;
 let connectErrorHandler: ((err: Error) => void) | null = null;
+let reconnectFailedHandler: (() => void) | null = null;
 
 vi.mock("socket.io-client", () => ({
   io: vi.fn(() => ({
@@ -25,6 +27,12 @@ vi.mock("socket.io-client", () => ({
     emit: mockEmit,
     disconnect: mockDisconnect,
     timeout: mockTimeout,
+    io: {
+      on: vi.fn((event: string, handler: () => void) => {
+        if (event === "reconnect_failed") reconnectFailedHandler = handler;
+        mockManagerOn(event, handler);
+      }),
+    },
   })),
 }));
 
@@ -34,6 +42,7 @@ describe("useSocket", () => {
     connectHandler = null;
     disconnectHandler = null;
     connectErrorHandler = null;
+    reconnectFailedHandler = null;
   });
 
   it("初期状態で isConnected=false, connectionError=null", () => {
@@ -69,6 +78,15 @@ describe("useSocket", () => {
       connectErrorHandler?.(new Error("test error"));
     });
     expect(result.current.connectionError).toBe("接続エラー: test error");
+  });
+
+  it("reconnect_failed で reconnectFailed=true になる（H-4）", () => {
+    const { result } = renderHook(() => useSocket());
+    expect(result.current.reconnectFailed).toBe(false);
+    act(() => {
+      reconnectFailedHandler?.();
+    });
+    expect(result.current.reconnectFailed).toBe(true);
   });
 
   it("emit がソケットの emit に委譲される", () => {

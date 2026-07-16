@@ -359,8 +359,9 @@ export async function getQuestionResult(
         isCorrect: myAnswer.is_correct,
         scoreAwarded: myAnswer.score_awarded,
         responseTimeMs: myAnswer.response_time_ms,
-        currentRank: participant?.current_rank ?? 0,
-        totalScore: participant?.total_score ?? 0,
+        // 終盤ブラックアウト中は順位・累計をサーバー側でも隠す（devtools先読み防止 L-2）
+        currentRank: result.hideRanking ? 0 : (participant?.current_rank ?? 0),
+        totalScore: result.hideRanking ? 0 : (participant?.total_score ?? 0),
       };
     }
   }
@@ -425,8 +426,9 @@ export async function getQuestionResultBatch(
         isCorrect: myAnswer.is_correct,
         scoreAwarded: myAnswer.score_awarded,
         responseTimeMs: myAnswer.response_time_ms,
-        currentRank: participant?.current_rank ?? 0,
-        totalScore: participant?.total_score ?? 0,
+        // 終盤ブラックアウト中は順位・累計をサーバー側でも隠す（devtools先読み防止 L-2）
+        currentRank: hideRanking ? 0 : (participant?.current_rank ?? 0),
+        totalScore: hideRanking ? 0 : (participant?.total_score ?? 0),
       };
     }
     resultMap.set(pid, result);
@@ -953,6 +955,10 @@ export async function deleteQuizCompletely(quizId: number): Promise<boolean> {
     deletePromises.push(deleteMediaFile(q.choice4_image_url));
   }
   await Promise.all(deletePromises);
+
+  // in-memory の room 状態もクリアする（L-7）。循環 import を避けるため dynamic import で解決
+  const { clearRoomState } = await import("../socket/quizHandler.js");
+  clearRoomState(quiz.room_code);
 
   return true;
 }

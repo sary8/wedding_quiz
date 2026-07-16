@@ -53,7 +53,7 @@ export function HostPage() {
       }, { replace: true });
     }
   }, [urlKey, setSearchParams]);
-  const { emit, emitWithTimeout, on, isConnected, connectionError } = useSocket();
+  const { emit, emitWithTimeout, on, isConnected, connectionError, reconnectFailed } = useSocket();
   const { playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll, playFanfare } = useGameSounds();
   const bgm = useBgm();
 
@@ -72,10 +72,14 @@ export function HostPage() {
   const [countdownValue, setCountdownValue] = useState(5);
   const countdownFiredRef = useRef(false);
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 新問題開始後に前問の遅延 questionResult を割り込ませないためのガード（M-4）
+  const activeQuestionIdRef = useRef<number | null>(null);
 
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
+      // サーバーからの警告（別タブでホスト画面が開かれた等）を表示する（L-6）
+      on("error", (data) => setError(data.message)),
       on("lobbyUpdate", (data) => {
         setParticipants(data.participants);
         if (data.teams) setLobbyTeams(data.teams);
@@ -84,6 +88,7 @@ export function HostPage() {
         playJoinChime();
       }),
       on("questionStarted", (data) => {
+        activeQuestionIdRef.current = data.questionId;
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setAnswerCount(0);
@@ -110,6 +115,8 @@ export function HostPage() {
         }, 5000);
       }),
       on("questionResult", (data) => {
+        // 既に次の問題が始まっている場合、前問の遅延結果は無視する（M-4）
+        if (activeQuestionIdRef.current !== null && data.questionId !== activeQuestionIdRef.current) return;
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;
@@ -332,7 +339,7 @@ export function HostPage() {
   if (!roomCode) return <div>ルームコードが不正です</div>;
 
   // 接続エラー表示
-  if (connectionError && !isConnected) {
+  if ((connectionError || reconnectFailed) && !isConnected) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-botanical px-6">
         <div className="glass-card rounded-3xl p-10 flex flex-col items-center gap-4 animate-fade-up max-w-sm">
@@ -340,10 +347,23 @@ export function HostPage() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 0 1-12.73 0"/><path d="M5.64 6.64a9 9 0 0 0 12.73 0"/><circle cx="12" cy="12" r="1"/></svg>
           </div>
           <p className="text-lg font-bold text-sage-text">接続が切れました</p>
-          <div className="flex items-center gap-2 text-sm text-sage-text/60">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            再接続を試みています…
-          </div>
+          {reconnectFailed ? (
+            <>
+              <p className="text-sm text-sage-text/60 text-center">再接続できませんでした。ページを再読み込みしてください。</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold min-h-[44px] hover:opacity-90 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                再読み込み
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-sage-text/60">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+              再接続を試みています…
+            </div>
+          )}
         </div>
       </div>
     );

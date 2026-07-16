@@ -5,8 +5,37 @@ import { nanoid } from "nanoid";
 import { randomInt } from "crypto";
 import { deleteMediaFile } from "./media.js";
 import { deleteQuizCompletely } from "../services/quizService.js";
+import { getClientIp } from "../utils/clientIp.js";
 
 export const quizRoutes = new Hono();
+
+// ルーム情報取得のレート制限（M-1: 6桁コード列挙による参加者PII探索を抑制）。
+// 正当な参加者は自分のルームに数回アクセスするだけなので、緩めの上限で十分。
+const ROOM_INFO_RATE_WINDOW_MS = 60_000;
+const ROOM_INFO_RATE_MAX = 60;
+const roomInfoRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRoomInfoRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = roomInfoRateMap.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    roomInfoRateMap.set(ip, { count: 1, resetAt: now + ROOM_INFO_RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= ROOM_INFO_RATE_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+const roomInfoCleanup = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of roomInfoRateMap) {
+    if (now >= entry.resetAt) roomInfoRateMap.delete(ip);
+  }
+}, 60_000);
+if (typeof roomInfoCleanup === "object" && "unref" in roomInfoCleanup) {
+  roomInfoCleanup.unref();
+}
 
 function parseId(raw: string | undefined): number | null {
   const n = Number(raw);
@@ -283,6 +312,9 @@ quizRoutes.delete("/:id/participants", async (c) => {
 
 // ルーム情報取得（参加者がチーム選択用に取得）
 quizRoutes.get("/room/:roomCode/info", async (c) => {
+  if (!checkRoomInfoRateLimit(getClientIp(c))) {
+    return c.json({ error: "リクエストが多すぎます。しばらくしてから再試行してください" }, 429);
+  }
   const roomCode = c.req.param("roomCode");
   const quiz = await db.query.quizzes.findFirst({
     where: eq(schema.quizzes.room_code, roomCode),

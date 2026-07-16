@@ -26,8 +26,20 @@ const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://lo
   .split(",")
   .map((s) => s.trim());
 
-// H3: セキュリティヘッダ（全ルート）
-app.use(secureHeaders());
+// H3: セキュリティヘッダ（全ルート）+ CSP（L-4: 将来のXSS/依存汚染に対する多層防御）
+app.use(
+  secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  })
+);
 
 // M4: ボディサイズ制限（media用 10MB → その他 1MB の順で登録）
 app.use(

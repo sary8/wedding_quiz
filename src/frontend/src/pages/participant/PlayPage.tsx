@@ -15,7 +15,7 @@ type Phase = "profile" | "waiting" | "answer" | "result" | "ranking" | "final" |
 
 export function PlayPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { emit, emitWithTimeout, on, isConnected, connectionError } = useSocket();
+  const { emit, emitWithTimeout, on, isConnected, connectionError, reconnectFailed } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("profile");
   const [participantId, setParticipantId] = useState<number | null>(null);
@@ -64,6 +64,9 @@ export function PlayPage() {
   });
 
   const resultTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 現在アクティブな問題ID。新しい問題が始まった後に前問の遅延 questionResult が
+  // 届いても割り込ませないためのガードに使う（M-4）。
+  const activeQuestionIdRef = useRef<number | null>(null);
 
   // アンマウント時に保留中の結果遷移タイマーを破棄
   useEffect(() => {
@@ -75,9 +78,12 @@ export function PlayPage() {
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
+      // サーバーからの警告（別タブでホスト画面が開かれた等）を表示する（L-6）
+      on("error", (data) => setAnswerError(data.message)),
       on("gameStarted", () => setPhase("waiting")),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionStarted", (data) => {
+        activeQuestionIdRef.current = data.questionId;
         setCurrentQuestion(data);
         setTimeRemaining(data.timeLimitSeconds);
         setHasAnswered(false);
@@ -102,6 +108,8 @@ export function PlayPage() {
         }
       }),
       on("questionResult", (data) => {
+        // 既に次の問題が始まっている場合、前問の遅延結果は無視する（M-4）
+        if (activeQuestionIdRef.current !== null && data.questionId !== activeQuestionIdRef.current) return;
         if (resultTimeoutRef.current) {
           clearTimeout(resultTimeoutRef.current);
           resultTimeoutRef.current = null;
@@ -280,7 +288,7 @@ export function PlayPage() {
 
   const disconnectBanner = !isConnected && phase !== "profile" ? (
     <div role="alert" className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-amber-500 text-white text-sm text-center">
-      接続が切れました。再接続中…
+      {reconnectFailed ? "再接続できませんでした。ページを再読み込みしてください。" : "接続が切れました。再接続中…"}
     </div>
   ) : null;
 
