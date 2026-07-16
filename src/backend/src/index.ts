@@ -171,3 +171,15 @@ function gracefulShutdown(signal: string) {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// 未捕捉例外の安全網。進行中ゲームの状態は in-memory のため、例外1つで
+// プロセスを落とすと全roomが同時に失われる。ここではログのみ残して継続し、
+// 原因究明の手がかりを確保する（根本対策は各ハンドラ・タイマーの try/catch）。
+process.on("uncaughtException", (err) => {
+  logger.error("uncaught exception", { error: err.message, stack: err.stack });
+});
+process.on("unhandledRejection", (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  const stack = reason instanceof Error ? reason.stack : undefined;
+  logger.error("unhandled rejection", { error: message, stack });
+});

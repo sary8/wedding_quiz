@@ -53,7 +53,7 @@ export function HostPage() {
       }, { replace: true });
     }
   }, [urlKey, setSearchParams]);
-  const { emit, on, isConnected, connectionError } = useSocket();
+  const { emit, emitWithTimeout, on, isConnected, connectionError } = useSocket();
   const { playJoinChime, playQuestionStart, playTick, playBuzzer, playResultReveal, playRankingFanfare, playDrumRoll, playFanfare } = useGameSounds();
   const bgm = useBgm();
 
@@ -210,7 +210,7 @@ export function HostPage() {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
     setError(null);
-    emit("startGame", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("startGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) {
         setError(res.error || "ゲームの開始に失敗しました");
@@ -219,17 +219,17 @@ export function HostPage() {
       setCountdownValue(5);
       setPhase("countdown");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   const handleNextQuestion = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
     setError(null);
-    emit("nextQuestion", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("nextQuestion", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "問題の配信に失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   // カウントダウン: 5→4→3→2→1→0 → 最初の問題を配信
   useEffect(() => {
@@ -252,39 +252,39 @@ export function HostPage() {
   const handleCloseQuestion = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
-    emit("closeQuestion", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("closeQuestion", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "問題の締め切りに失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   const handleShowRanking = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
-    emit("showRanking", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("showRanking", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "ランキングの表示に失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   const handleEndGame = useCallback(() => {
     if (!roomCode || isProcessing) return;
     if (!window.confirm("ゲームを終了して最終結果を表示しますか？")) return;
     setIsProcessing(true);
-    emit("endGame", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("endGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "ゲーム終了に失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   const handleReplay = useCallback(() => {
     if (!roomCode || isProcessing) return;
     setIsProcessing(true);
-    emit("replayQuiz", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("replayQuiz", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "リプレイに失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   const handleRevealNext = useCallback(() => {
     if (!roomCode) return;
@@ -305,11 +305,11 @@ export function HostPage() {
     if (!roomCode || isProcessing) return;
     if (!window.confirm("ルームを閉じますか？参加者全員が切断されます。")) return;
     setIsProcessing(true);
-    emit("closeGame", { roomCode, hostSecret }, (res) => {
+    emitWithTimeout("closeGame", { roomCode, hostSecret }, (res) => {
       setIsProcessing(false);
       if (!res.success) setError(res.error || "ゲームの終了に失敗しました");
     });
-  }, [roomCode, hostSecret, emit, isProcessing]);
+  }, [roomCode, hostSecret, emitWithTimeout, isProcessing]);
 
   // リハーサルモード: 最終問題後に自動リプレイ
   useEffect(() => {
