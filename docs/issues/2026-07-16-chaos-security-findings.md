@@ -40,15 +40,15 @@ volt系サブエージェント2体（`security-auditor` / `chaos-engineer`, い
 - 該当: `src/backend/src/services/quizService.ts:202-235`（`getNextQuestion` は常に `current_question_index + 1`）/ `src/backend/src/socket/quizHandler.ts:19`（`activeQuestions` は in-memory）/ `src/frontend/src/pages/host/HostPage.tsx:456-489`（recovering画面は復元せず次へ進める）
 - シナリオ: 「出題中の問題ID・タイマー残り」はDB非永続。再起動後 `recovering` で「次の問題を配信」→ 中断問題を飛ばして次へ、結果は誰にも表示されず警告も出ない。Render無料枠はエフェメラルディスクのため再起動でDBごと全消失（`render.yaml:5-7`）
 - 影響: 全体（該当1問の結果発表が消滅、または全消失）
-- 対策: `quizzes` に `active_question_id`・`question_started_at` を永続化し、再起動時に `activeQuestions`/タイマーを再構築。最低限、中断問題の結果を配信してから次へ進む導線
-- **状態: 未対応（Plan で計画）**
+- 対策: `quizzes` に `active_question_started_at` を持たせてDB永続化し、再起動時に中断問題を残り時間で復元（タイマー再構築＋出題継続、残り時間切れは結果配信）
+- **状態: 本ブランチ `fix/chaos-security-c1-c2` で対応（0009マイグレーション＋openRoom復元）**
 
 ### C-4. タイマー経路が例外に無防備 + グローバル例外ハンドラ皆無
 - 該当: `src/backend/src/services/timerService.ts:29-39`（`setInterval` コールバックに try/catch なし）/ `:35`（`onEnd()` を `.catch()` せず呼ぶ）/ `src/backend/src/socket/quizHandler.ts:564-565`（`activeQuestions.delete`・`emit("questionClosed")` が try/catch 外）/ `src/backend/src/index.ts`（`process.on('uncaughtException'|'unhandledRejection')` が皆無）
 - シナリオ: 毎秒走る tick/onEnd のどこか1回の未捕捉例外でプロセス即死 → C-3 の状態消失が全roomに同時発生
 - 影響: 全体
 - 対策（根本）: `setInterval` コールバックと `onEnd()` を try/catch/.catch で保護。（安全網）`index.ts` に `uncaughtException`/`unhandledRejection` ハンドラを追加しログ+継続
-- **状態: 安全網（グローバルハンドラ）を本ブランチで対応。timerService の try/catch は Plan で計画**
+- **状態: 本ブランチ `fix/chaos-security-c1-c2` で対応（timerService の try/catch ＋ uncaughtException/unhandledRejection ハンドラ）**
 
 ---
 
@@ -118,5 +118,9 @@ volt系サブエージェント2体（`security-auditor` / `chaos-engineer`, い
 
 ## 修正計画
 
-- 本ブランチ `fix/chaos-security-c1-c2`: **C-1**（参加者自動再join）/ **C-2**（emitWithTimeout配線）/ **C-4の安全網**（グローバル例外ハンドラ）+ テスト
-- 残り（C-3, C-4根本, H-1〜H-4, M-1〜M-6, L-1〜L-8）は別途 Plan で優先順位と方針を策定
+- 本ブランチ `fix/chaos-security-c1-c2` で **Critical 4件すべて対応済み**:
+  - C-1: 参加者の自動再join（PlayPage）
+  - C-2: emitWithTimeout の全面配線（HostPage / PlayPage）
+  - C-3: `active_question_started_at` 永続化 ＋ openRoom での中断問題復元（タイマー起動を `startQuestionTimer` に共通化）
+  - C-4: timerService の try/catch ＋ `uncaughtException`/`unhandledRejection` ハンドラ
+- 残り（H-1〜H-4, M-1〜M-6, L-1〜L-8）は未対応。本ファイルに記録済みで、別途対応する
