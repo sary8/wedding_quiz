@@ -221,7 +221,7 @@ export async function getNextQuestion(roomCode: string): Promise<QuestionData | 
   // 無条件UPDATEだと二重実行でインデックスが2進み、問題が1つスキップされる
   const updated = await db
     .update(schema.quizzes)
-    .set({ current_question_index: nextIndex })
+    .set({ current_question_index: nextIndex, active_question_started_at: Date.now() })
     .where(
       and(
         eq(schema.quizzes.id, quiz.id),
@@ -777,7 +777,7 @@ export async function replayQuiz(quizId: number, hostSecret: string) {
   ops.push(
     db
       .update(schema.quizzes)
-      .set({ status: "lobby", current_question_index: -1, finished_at: null })
+      .set({ status: "lobby", current_question_index: -1, finished_at: null, active_question_started_at: null })
       .where(eq(schema.quizzes.id, quizId))
   );
 
@@ -873,6 +873,32 @@ export async function getReconnectQuestionData(
   const q = questions[currentQuestionIndex];
 
   return buildQuestionData(q, currentQuestionIndex, questions.length);
+}
+
+// 出題中フラグ（開始時刻）をクリアする。締切・タイマー満了時に呼ぶ。
+export async function clearActiveQuestion(roomCode: string): Promise<void> {
+  await db
+    .update(schema.quizzes)
+    .set({ active_question_started_at: null })
+    .where(eq(schema.quizzes.room_code, roomCode));
+}
+
+// プロセス再起動で揮発した「中断中の出題」をDBの開始時刻から復元するための情報を返す。
+// in_progress かつ active_question_started_at が非nullのときのみ中断問題ありと判定する。
+export async function getInterruptedQuestion(roomCode: string): Promise<{
+  questionId: number;
+  questionData: QuestionData;
+  remainingSeconds: number;
+} | null> {
+  const quiz = await db.query.quizzes.findFirst({
+    where: eq(schema.quizzes.room_code, roomCode),
+  });
+  if (!quiz || quiz.status !== "in_progress" || quiz.active_question_started_at == null) return null;
+  const questionData = await getReconnectQuestionData(quiz.id, quiz.current_question_index);
+  if (!questionData) return null;
+  const elapsedSec = (Date.now() - quiz.active_question_started_at) / 1000;
+  const remainingSeconds = Math.max(0, Math.ceil(questionData.timeLimitSeconds - elapsedSec));
+  return { questionId: questionData.questionId, questionData, remainingSeconds };
 }
 
 // quizIdからroomCode取得

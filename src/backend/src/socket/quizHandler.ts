@@ -170,6 +170,37 @@ async function distributeQuestionResult(
   }
 }
 
+// 出題タイマーを起動する。nextQuestion と、プロセス再起動後の openRoom 復元で共用する。
+// onEnd では activeQuestions と DB の開始時刻フラグの両方をクリアしてから結果を配信する。
+function startQuestionTimer(io: QuizIO, roomCode: string, questionId: number, seconds: number) {
+  startTimer(
+    `question_${roomCode}`,
+    seconds,
+    (remaining) => {
+      io.to(roomCode).emit("timeUpdate", { remaining });
+    },
+    async () => {
+      // closeQuestion で既に処理済みなら何もしない（二重実行ガード）
+      const stillActive = activeQuestions.get(roomCode);
+      if (stillActive !== questionId) return;
+      activeQuestions.delete(roomCode);
+      await quizService.clearActiveQuestion(roomCode);
+      io.to(roomCode).emit("questionClosed");
+      try {
+        await distributeQuestionResult(io, roomCode, questionId);
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        logger.error("timer auto-close result distribution error", { error: err, roomCode, questionId });
+        io.to(roomCode).emit("questionResult", {
+          questionId,
+          correctChoice: -1,
+          distribution: [0, 0, 0, 0],
+        });
+      }
+    }
+  );
+}
+
 /** テスト用: ソケットレート制限をリセット */
 export function _resetSocketRateLimit() {
   socketRateMap.clear();
@@ -454,7 +485,31 @@ export function setupQuizSocket(io: QuizIO) {
           let answerCount = 0;
           let timerRemaining = 0;
           if (quiz.status === "in_progress") {
-            const activeQuestionId = activeQuestions.get(roomCode);
+            let activeQuestionId = activeQuestions.get(roomCode);
+            // プロセス再起動で activeQuestions が揮発した場合、DBの開始時刻から中断問題を復元する（C-3対策）
+            if (!activeQuestionId) {
+              const interrupted = await quizService.getInterruptedQuestion(roomCode);
+              if (interrupted && interrupted.remainingSeconds > 0) {
+                // 残り時間があれば出題を継続。タイマーを再構築し全員へ再配信する
+                activeQuestions.set(roomCode, interrupted.questionId);
+                activeQuestionId = interrupted.questionId;
+                resetAnswerCount(roomCode);
+                startQuestionTimer(io, roomCode, interrupted.questionId, interrupted.remainingSeconds);
+                io.to(roomCode).emit("questionStarted", interrupted.questionData);
+                logger.info("interrupted question restored", { roomCode, questionId: interrupted.questionId, remainingSeconds: interrupted.remainingSeconds });
+              } else if (interrupted) {
+                // 残り時間切れ → 締切として結果を配信し、問題の無言スキップを防ぐ
+                await quizService.clearActiveQuestion(roomCode);
+                io.to(roomCode).emit("questionClosed");
+                try {
+                  await distributeQuestionResult(io, roomCode, interrupted.questionId, socket.id);
+                } catch (e) {
+                  const err = e instanceof Error ? e.message : String(e);
+                  logger.error("interrupted question result distribution error", { error: err, roomCode });
+                }
+                logger.info("interrupted question closed (time expired)", { roomCode, questionId: interrupted.questionId });
+              }
+            }
             if (activeQuestionId) {
               currentQuestionData = await quizService.getReconnectQuestionData(quiz.id, quiz.current_question_index);
               answerCount = await quizService.getAnswerCount(activeQuestionId);
@@ -548,34 +603,7 @@ export function setupQuizSocket(io: QuizIO) {
         logger.info("question started", { roomCode: data.roomCode, questionId: question.questionId });
 
         // サーバーサイドタイマー開始
-        const roomCode = data.roomCode;
-        const questionId = question.questionId;
-        startTimer(
-          `question_${roomCode}`,
-          question.timeLimitSeconds,
-          (remaining) => {
-            io.to(roomCode).emit("timeUpdate", { remaining });
-          },
-          async () => {
-            // タイムアップ時に自動クローズ + 結果配信
-            // closeQuestionで既に処理済みなら何もしない（二重実行ガード）
-            const stillActive = activeQuestions.get(roomCode);
-            if (stillActive !== questionId) return;
-            activeQuestions.delete(roomCode);
-            io.to(roomCode).emit("questionClosed");
-            try {
-              await distributeQuestionResult(io, roomCode, questionId);
-            } catch (e) {
-              const err = e instanceof Error ? e.message : String(e);
-              logger.error("timer auto-close result distribution error", { error: err, roomCode, questionId });
-              io.to(roomCode).emit("questionResult", {
-                questionId,
-                correctChoice: -1,
-                distribution: [0, 0, 0, 0],
-              });
-            }
-          }
-        );
+        startQuestionTimer(io, data.roomCode, question.questionId, question.timeLimitSeconds);
 
         callback({ success: true });
       } catch (e) {
@@ -599,6 +627,7 @@ export function setupQuizSocket(io: QuizIO) {
         stopTimer(`question_${data.roomCode}`);
         const questionId = activeQuestions.get(data.roomCode);
         activeQuestions.delete(data.roomCode);
+        await quizService.clearActiveQuestion(data.roomCode);
 
         if (questionId) {
           io.to(data.roomCode).emit("questionClosed");

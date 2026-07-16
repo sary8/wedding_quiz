@@ -1,0 +1,1 @@
+ALTER TABLE `quizzes` ADD `active_question_started_at` integer;
