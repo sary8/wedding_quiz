@@ -53,6 +53,9 @@ function resetAnswerCount(roomCode: string): void {
 // roomCode バリデーション: 6桁数字のみ許可
 const ROOM_CODE_RE = /^\d{6}$/;
 
+// selfieファイル名の安全性チェック（L-1: パストラバーサル・他人ファイルなりすまし対策）
+const SAFE_SELFIE_RE = /^[a-zA-Z0-9_.-]+$/;
+
 // IP単位のソケットイベントレート制限。
 // 会場Wi-FiのNATでは全参加者が同一グローバルIPに見えるため、
 // joinRoomは100人規模の一斉参加を許容する上限にし、イベント種別ごとにバケットを分離する
@@ -201,6 +204,19 @@ function startQuestionTimer(io: QuizIO, roomCode: string, questionId: number, se
   );
 }
 
+// クイズ削除時に room 関連の in-memory 状態をクリアする（L-7: 長期運用時のメモリリーク対策）
+export function clearRoomState(roomCode: string): void {
+  activeQuestions.delete(roomCode);
+  advancingRooms.delete(roomCode);
+  answerCounts.delete(roomCode);
+  const timer = answerCountTimers.get(roomCode);
+  if (timer) {
+    clearTimeout(timer);
+    answerCountTimers.delete(roomCode);
+  }
+  stopTimer(`question_${roomCode}`);
+}
+
 /** テスト用: ソケットレート制限をリセット */
 export function _resetSocketRateLimit() {
   socketRateMap.clear();
@@ -269,6 +285,13 @@ export function setupQuizSocket(io: QuizIO) {
         if (data.teamId != null && (!Number.isInteger(data.teamId) || data.teamId <= 0)) {
           logger.warn("joinRoom validation failed: invalid teamId", { roomCode: data.roomCode, teamId: data.teamId });
           callback({ success: false, error: "チームの選択が不正です" });
+          return;
+        }
+
+        // selfieファイル名の検証（L-1: 他人のファイル名・パストラバーサルの混入を防ぐ）
+        if (data.selfieData != null && (typeof data.selfieData !== "string" || data.selfieData.length > 128 || !SAFE_SELFIE_RE.test(data.selfieData))) {
+          logger.warn("joinRoom validation failed: invalid selfieData", { roomCode: data.roomCode });
+          callback({ success: false, error: "自撮りデータが不正です" });
           return;
         }
 
@@ -375,6 +398,12 @@ export function setupQuizSocket(io: QuizIO) {
         if (!meta) {
           logger.warn("submitAnswer rejected: no session", { socketId: socket.id });
           callback({ success: false, error: "セッションが見つかりません" });
+          return;
+        }
+
+        // 回答連打のレート制限（L-8）。socket単位なのでNAT会場でも誤爆しない
+        if (!checkSocketRateLimit(`answer:${socket.id}`, 60)) {
+          callback({ success: false, error: "リクエストが多すぎます。しばらくしてから再試行してください" });
           return;
         }
 

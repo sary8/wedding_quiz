@@ -78,6 +78,8 @@ export function PlayPage() {
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
+      // サーバーからの警告（別タブでホスト画面が開かれた等）を表示する（L-6）
+      on("error", (data) => setAnswerError(data.message)),
       on("gameStarted", () => setPhase("waiting")),
       on("answerCountUpdate", (data) => setAnswerCount(data.count)),
       on("questionStarted", (data) => {

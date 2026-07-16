@@ -715,6 +715,10 @@ describe("quizService", () => {
     it("calculateRanking後にgetQuestionResultを呼ぶとcurrent_rankが0以外になる", async () => {
       const quiz = await createTestQuiz({ status: "in_progress", currentQuestionIndex: 0 });
       const question = await createTestQuestion(quiz.id, { orderIndex: 0, correctChoice: 1 });
+      // hideRanking（終盤5問ブラックアウト）を避けるため総問題数を6にする（L-2対応）
+      for (let i = 1; i <= 5; i++) {
+        await createTestQuestion(quiz.id, { orderIndex: i });
+      }
       const p1 = await createTestParticipant(quiz.id, {
         nickname: "回答者A",
         totalScore: 0,

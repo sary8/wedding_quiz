@@ -78,6 +78,8 @@ export function HostPage() {
   // Socket.ioイベント登録
   useEffect(() => {
     const unsubs = [
+      // サーバーからの警告（別タブでホスト画面が開かれた等）を表示する（L-6）
+      on("error", (data) => setError(data.message)),
       on("lobbyUpdate", (data) => {
         setParticipants(data.participants);
         if (data.teams) setLobbyTeams(data.teams);
