@@ -1,22 +1,30 @@
 name: Azure Backend Deploy
 
-# このワークフローは手動実行のみ（Azure App Service 設定後に使用）
-# Azure設定が完了したら以下のコメントを外して push トリガーを有効化してください
-#
-# on:
-#   push:
-#     branches:
-#       - main
-#     paths:
-#       - 'src/backend/**'
-#       - '.github/workflows/azure-backend-deploy.yml'
-#   workflow_dispatch:
+# - main への push（src/backend 変更時）→ development に自動デプロイ
+# - 手動実行（workflow_dispatch）→ 選択した環境にデプロイ
+#   （production には GitHub Environments の Required reviewers による承認を設定すること）
+# 環境ごとの接続情報は GitHub Environments の Secrets / Variables から解決される:
+#   Secrets:   AZURE_WEBAPP_PUBLISH_PROFILE / DATABASE_URL / DATABASE_AUTH_TOKEN
+#   Variables: AZURE_WEBAPP_NAME
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/azure-backend-deploy.yml'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'デプロイ先環境'
+        type: choice
+        options:
+          - development
+          - production
+        default: development
 
 env:
-  AZURE_WEBAPP_NAME: wedding-quiz-backend  # Azure App Service のアプリ名に合わせて変更
   NODE_VERSION: '22'
 
 jobs:
@@ -50,7 +58,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     environment:
-      name: production
+      # push 起点は development 固定、手動実行は選択された環境
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'development' }}
       url: ${{ steps.deploy.outputs.webapp-url }}
     defaults:
       run:
@@ -70,7 +79,7 @@ jobs:
       - name: Install dependencies and build
         run: npm ci && npm run build
 
-      # マイグレーションはデプロイ時にCIからTurso（DATABASE_URL）へ適用する。
+      # マイグレーションはデプロイ時にCIから対象環境のTursoへ適用する。
       # drizzle-kit は devDependency のため、App Service 起動時には実行できない
       - name: Run database migrations
         run: npm run db:migrate
@@ -91,7 +100,7 @@ jobs:
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy-package.zip
           startup-command: 'npm start'

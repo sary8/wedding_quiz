@@ -7,7 +7,8 @@
 
 ## 進捗
 
-- [ ] Phase 0: 基盤デプロイ（Turso + SWA + App Service）
+- [ ] Phase 0: 基盤デプロイ（Turso + SWA + App Service）— dev環境は2026-07-17構築済み
+      （リージョンは Japan West。Japan East はサブスクリプションのVMクォータ0で作成不可だった）
 - [ ] Phase 1: Key Vault + Managed Identity
 - [ ] Phase 2: Application Insights
 - [ ] Phase 3: GitHub Actions OIDC
@@ -29,7 +30,7 @@
 3. Azure リソース作成（deployment.md 手順どおり）
    - Static Web Apps（Free）
    - App Service **F1で作成**（B1へは同一プランのスケール変更でいつでも上げ下げできる）
-   - App Service で WebSocket を有効化、環境変数を設定
+   - App Service の環境変数を設定（Linux は WebSocket 常時有効のため有効化操作は不要）
 4. GitHub Secrets 設定 → 各ワークフローでデプロイ
 5. 動作確認は **B1 に上げてから**行う（F1はWebSocket同時5接続・CPU 60分/日のため複数人テスト不可）
 
