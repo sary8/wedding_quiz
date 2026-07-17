@@ -90,11 +90,11 @@ jobs:
       - name: Reinstall production dependencies only
         run: npm ci --omit=dev
 
+      # zipのルート直下に package.json / dist / node_modules を配置する。
+      # App Service は wwwroot に展開してそのまま `npm start` を実行するため、
+      # ルートに backend/ ディレクトリを挟むと package.json が見つからず起動に失敗する
       - name: Create deployment package
-        run: |
-          cd ..
-          zip -r ../deploy-package.zip backend/dist/ backend/node_modules/ backend/drizzle/ backend/package.json backend/drizzle.config.ts
-        working-directory: src
+        run: zip -r ../../deploy-package.zip dist/ node_modules/ drizzle/ package.json drizzle.config.ts
 
       - name: Deploy to Azure App Service
         id: deploy
