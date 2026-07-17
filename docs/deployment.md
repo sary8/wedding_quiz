@@ -16,6 +16,8 @@ Wedding Quiz アプリは以下の構成でAzureにデプロイされます：
 
 Application Insights・Key Vault・Blob Storage移行・負荷テストなどの拡張計画は
 [azure-deployment-roadmap.md](azure-deployment-roadmap.md) を参照。
+本番の構成図は [prod-architecture.drawio](prod-architecture.drawio)
+（[app.diagrams.net](https://app.diagrams.net) または VS Code の draw.io 拡張で開く）。
 
 ## 必要な準備
 
