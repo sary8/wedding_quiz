@@ -7,8 +7,10 @@
 
 ## 進捗
 
-- [ ] Phase 0: 基盤デプロイ（Turso + SWA + App Service）— dev環境は2026-07-17構築済み
-      （リージョンは Japan West。Japan East はサブスクリプションのVMクォータ0で作成不可だった）
+- [ ] Phase 0: 基盤デプロイ（Turso + SWA + App Service）— **dev環境は完了**（2026-07-17、
+      スマホ実機のスモークテスト・CI自動デプロイ・CORS/CSP検証済み）。残りは prod 一式
+      （リージョンは Japan West。Japan East はサブスクリプションのVMクォータ0で作成不可だった。
+      prod構築時は `src/frontend/staticwebapp.config.json` の CSP に prod バックエンドのオリジン追記を忘れないこと）
 - [ ] Phase 1: Key Vault + Managed Identity
 - [ ] Phase 2: Application Insights
 - [ ] Phase 3: GitHub Actions OIDC
