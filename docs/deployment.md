@@ -14,6 +14,9 @@ Wedding Quiz アプリは以下の構成でAzureにデプロイされます：
 > コードは `@libsql/client` を使用しているため、Turso へは接続設定の変更のみで移行できる
 > （`docs/issues/2026-07-17-turso-migration.md` 参照）。
 
+Application Insights・Key Vault・Blob Storage移行・負荷テストなどの拡張計画は
+[azure-deployment-roadmap.md](azure-deployment-roadmap.md) を参照。
+
 ## 必要な準備
 
 ### 0. Turso データベースの作成
