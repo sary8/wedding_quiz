@@ -941,7 +941,20 @@ export async function deleteQuizCompletely(quizId: number): Promise<boolean> {
       .where(eq(schema.questions.quiz_id, quizId)),
   ]);
 
-  await db.delete(schema.quizzes).where(eq(schema.quizzes.id, quizId));
+  // FKカスケードに依存せず明示的に削除する。Turso等のリモート接続では
+  // PRAGMA foreign_keys のセッション設定が再接続で失われ得るため。
+  // db.batch は暗黙のトランザクションで実行され、途中失敗時は全体がロールバックされる
+  const quizQuestionIds = db
+    .select({ id: schema.questions.id })
+    .from(schema.questions)
+    .where(eq(schema.questions.quiz_id, quizId));
+  await db.batch([
+    db.delete(schema.answers).where(inArray(schema.answers.question_id, quizQuestionIds)),
+    db.delete(schema.participants).where(eq(schema.participants.quiz_id, quizId)),
+    db.delete(schema.teams).where(eq(schema.teams.quiz_id, quizId)),
+    db.delete(schema.questions).where(eq(schema.questions.quiz_id, quizId)),
+    db.delete(schema.quizzes).where(eq(schema.quizzes.id, quizId)),
+  ]);
 
   const deletePromises: Promise<void>[] = [];
   for (const p of participantsWithSelfie) {
