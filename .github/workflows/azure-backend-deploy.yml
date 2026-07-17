@@ -17,7 +17,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: wedding-quiz-backend  # Azure App Service のアプリ名に合わせて変更
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
 
 jobs:
   test:

@@ -56,7 +56,7 @@ Application Insights・Key Vault・Blob Storage移行・負荷テストなどの
 #### Backend (Azure App Service)
 
 1. Azure Portal で App Service (B1 Linux) を作成
-2. Node.js 20 ランタイムを選択
+2. Node.js 22 LTS ランタイムを選択（Node 20 は 2026-04 で EOL のため選択肢から削除済み）
 3. デプロイメント設定:
    - ソース: GitHub Actions
    - ブランチ: main
