@@ -19,7 +19,7 @@
     "exclude": ["/api/*", "/socket.io/*", "/*.{css,js,json,ico,png,jpg,jpeg,svg,gif,woff,woff2,ttf,eot}"]
   },
   "globalHeaders": {
-    "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net wss://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net; media-src 'self' https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net;",
+    "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net https://quiz-prod-crecgmeegmgdc8fd.japanwest-01.azurewebsites.net; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net wss://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net https://quiz-prod-crecgmeegmgdc8fd.japanwest-01.azurewebsites.net wss://quiz-prod-crecgmeegmgdc8fd.japanwest-01.azurewebsites.net; media-src 'self' https://quiz-dev-c6eug6hme3eja6ay.japanwest-01.azurewebsites.net https://quiz-prod-crecgmeegmgdc8fd.japanwest-01.azurewebsites.net;",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin"
