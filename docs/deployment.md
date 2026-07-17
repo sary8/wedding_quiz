@@ -30,10 +30,18 @@ Application Insights・Key Vault・Blob Storage移行・負荷テストなどの
    turso db tokens create wedding-quiz  # → DATABASE_AUTH_TOKEN に設定する値
    ```
 
-3. マイグレーションを適用（`src/backend` で実行。デプロイワークフローにも組み込み済み）:
+3. マイグレーションを適用（デプロイワークフローにも組み込み済み）。
+   `src/backend/.env` に接続情報を書くと `npm run db:migrate` が自動で読み込む
+   （`.env` は gitignore 済み。トークンをシェル履歴・チャットに残さないためこの方式を推奨）:
+
+   ```ini
+   # src/backend/.env
+   DATABASE_URL=libsql://<your-db>.turso.io
+   DATABASE_AUTH_TOKEN=<トークン>
+   ```
 
    ```bash
-   DATABASE_URL=libsql://<your-db>.turso.io DATABASE_AUTH_TOKEN=<トークン> npm run db:migrate
+   npm run db:migrate   # src/backend で実行
    ```
 
 ### 1. Azureリソースの作成
