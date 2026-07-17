@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import { Trophy } from "lucide-react";
 import type { RankingData } from "../../types";
 
@@ -105,7 +106,7 @@ export function ParticipantRankingPage({ data, participantId }: Props) {
                 </span>
                 {entry.selfieUrl ? (
                   <img
-                    src={entry.selfieUrl}
+                    src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
                     alt={entry.nickname}
                     width={32}
                     height={32}

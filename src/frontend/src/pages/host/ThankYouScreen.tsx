@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import { motion, useReducedMotion } from "framer-motion";
 import type { ParticipantInfo } from "../../types";
 
@@ -176,7 +177,7 @@ function AvatarBubble({ participant, index }: AvatarProps) {
   if (participant.selfieUrl) {
     return (
       <img
-        src={participant.selfieUrl}
+        src={sanitizeMediaUrl(participant.selfieUrl) ?? undefined}
         alt={`${participant.nickname}のアバター`}
         width={80}
         height={80}
