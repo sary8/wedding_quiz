@@ -281,11 +281,13 @@ mediaRoutes.get("/:filename", async (c) => {
   }
 
   // ファイル名にnanoidハッシュを含むためimmutableで長期キャッシュ可。
-  // Uint8Arrayへの変換は BodyInit の型制約（Buffer<ArrayBufferLike>非対応）のため
+  // Uint8Arrayへの変換は BodyInit の型制約（Buffer<ArrayBufferLike>非対応）のため。
+  // CORP: cross-origin は別オリジンのフロント（SWA）から <img> で埋め込むために必須
   return new Response(new Uint8Array(data), {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=31536000, immutable",
+      "Cross-Origin-Resource-Policy": "cross-origin",
     },
   });
 });

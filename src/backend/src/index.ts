@@ -30,6 +30,10 @@ const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://lo
 // H3: セキュリティヘッダ（全ルート）+ CSP（L-4: 将来のXSS/依存汚染に対する多層防御）
 app.use(
   secureHeaders({
+    // 既定の Cross-Origin-Resource-Policy: same-origin は、SWA（別オリジン）上の
+    // <img> によるメディア埋め込みをブラウザがブロックしてしまうため無効化する。
+    // メディア配信ルートが明示的に cross-origin を付与する（2026-07-17 メディアURL issue 追補）
+    crossOriginResourcePolicy: false,
     contentSecurityPolicy: {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:"],
