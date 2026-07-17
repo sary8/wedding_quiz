@@ -316,6 +316,8 @@ describe("media routes", () => {
       const getRes = await mediaRoutes.request(`/${filename}`);
       expect(getRes.status).toBe(200);
       expect(getRes.headers.get("Content-Type")).toBe("image/jpeg");
+      // 別オリジンのフロント（SWA）からの<img>埋め込みに必須
+      expect(getRes.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
     });
 
     it("kind=choice → c_ プレフィックス、quizIdなし → scope=bank", async () => {
