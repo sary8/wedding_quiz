@@ -14,6 +14,7 @@ import { setupQuizSocket } from "./socket/quizHandler.js";
 import { logger } from "./utils/logger.js";
 import { validateSession } from "./services/authService.js";
 import { startCleanupScheduler } from "./services/cleanupService.js";
+import { resolveDbConfig, isFileUrl } from "./db/config.js";
 
 const app = new Hono();
 
@@ -145,6 +146,15 @@ if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PIN) {
 if (process.env.NODE_ENV === "production" && process.env.TRUSTED_PROXY !== "true") {
   logger.warn(
     "TRUSTED_PROXY が未設定です。リバースプロキシ配下ではクライアントIPを判別できず、レート制限が全クライアント共有になります"
+  );
+}
+
+// DATABASE_URL未設定警告（production）
+// ローカルファイルSQLiteはコンテナ再起動でデータが消える。さらに App Service では
+// /home（ネットワーク共有）上で WAL が動作しないため、本番は Turso 等のリモートDBを推奨
+if (process.env.NODE_ENV === "production" && isFileUrl(resolveDbConfig(process.env).url)) {
+  logger.warn(
+    "DATABASE_URL が未設定（またはローカルファイルDB）です。データは再起動で失われる可能性があります"
   );
 }
 
