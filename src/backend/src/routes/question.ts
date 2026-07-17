@@ -343,7 +343,11 @@ questionRoutes.delete("/:id", async (c) => {
     return c.json({ error: "進行中のクイズの問題は削除できません" }, 423);
   }
 
-  await db.delete(schema.questions).where(eq(schema.questions.id, id));
+  // 回答→問題の順で明示削除（FKカスケード非依存。リモートDBではFKセッションが保証されないため）
+  await db.batch([
+    db.delete(schema.answers).where(eq(schema.answers.question_id, id)),
+    db.delete(schema.questions).where(eq(schema.questions.id, id)),
+  ]);
 
   // メディアファイル削除
   await Promise.all([

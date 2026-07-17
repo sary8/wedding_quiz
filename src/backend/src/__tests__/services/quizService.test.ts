@@ -45,7 +45,7 @@ const {
   clearActiveQuestion,
 } = await import("../../services/quizService.js");
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 describe("quizService", () => {
   beforeEach(async () => {
@@ -1484,6 +1484,39 @@ describe("quizService", () => {
     it("存在しないクイズIDの場合はfalseを返す", async () => {
       const result = await deleteQuizCompletely(99999);
       expect(result).toBe(false);
+    });
+
+    it("FK無効でも関連データが残らない（リモートDB相当の明示削除）", async () => {
+      // Turso等のリモート接続では PRAGMA foreign_keys のセッション設定が
+      // 失われ得るため、FKカスケードに頼らず削除できることを検証する
+      await db.run(sql`PRAGMA foreign_keys = OFF`);
+      try {
+        const quiz = await createTestQuiz({ status: "finished" });
+        const question = await createTestQuestion(quiz.id, { orderIndex: 0 });
+        const team = await createTestTeam(quiz.id);
+        const participant = await createTestParticipant(quiz.id, {
+          nickname: "FKオフ",
+          token: "fk-off-token",
+          teamId: team.id,
+        });
+        await createTestAnswer({
+          questionId: question.id,
+          participantId: participant.id,
+          choiceIndex: 1,
+          isCorrect: true,
+          responseTimeMs: 1000,
+        });
+
+        expect(await deleteQuizCompletely(quiz.id)).toBe(true);
+
+        expect(await db.select().from(schema.quizzes)).toHaveLength(0);
+        expect(await db.select().from(schema.questions)).toHaveLength(0);
+        expect(await db.select().from(schema.teams)).toHaveLength(0);
+        expect(await db.select().from(schema.participants)).toHaveLength(0);
+        expect(await db.select().from(schema.answers)).toHaveLength(0);
+      } finally {
+        await db.run(sql`PRAGMA foreign_keys = ON`);
+      }
     });
   });
 

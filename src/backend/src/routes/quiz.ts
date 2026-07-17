@@ -468,7 +468,15 @@ quizRoutes.delete("/:id/teams/:teamId", async (c) => {
     return c.json({ error: "チームが見つかりません" }, 404);
   }
 
-  await db.delete(schema.teams).where(eq(schema.teams.id, teamId));
+  // FKの SET NULL に依存せず、所属参加者の team_id を明示的に外してから削除
+  // （リモートDBではFKセッションが保証されないため）
+  await db.batch([
+    db
+      .update(schema.participants)
+      .set({ team_id: null })
+      .where(eq(schema.participants.team_id, teamId)),
+    db.delete(schema.teams).where(eq(schema.teams.id, teamId)),
+  ]);
   return c.json({ success: true });
 });
 
