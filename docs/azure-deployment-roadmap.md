@@ -19,7 +19,10 @@
       Live Metrics・KQL（requests集計）まで動作確認。health p95=9ms / DB読み取りp95=279ms を観測。
       手動アラートルールは無料枠方針によりスキップ — 既定有効の無料スマート検出（失敗異常の自動検知メール）で代替。
       Socket.ioフレーム単位の計装はSDK計装（発展課題）に持ち越し）
-- [ ] Phase 3: GitHub Actions OIDC
+- [x] Phase 3: GitHub Actions OIDC — **完了**（2026-07-17、**prodのみOIDC化**の方針で実施。
+      ユーザー割り当てマネージドID `id-quiz-deploy` + フェデレーション資格情報（environment:production）+
+      Web サイト共同作成者ロール。prodの発行プロファイルSecretを削除し、SCM基本認証もオフにした状態で
+      OIDCデプロイ成功を確認。**devは従来どおり発行プロファイル認証**（devの基本認証・Secretは削除しないこと））
 - [ ] Phase 4: アップロード画像の Blob Storage 移行
 - [ ] Phase 5: Azure Load Testing（本番前の負荷検証）
 
