@@ -74,21 +74,42 @@ describe("LocalStorageDriver", () => {
     expect(await driver.read("no_such_file.png")).toBeNull();
     await expect(driver.delete("no_such_file.png")).resolves.toBeUndefined();
   });
+
+  it("フォルダ付きキーの save/read/delete と再帰totalSize", async () => {
+    const key = `questions/999/test_nested_${Date.now()}.png`;
+    const data = Buffer.from("nested");
+    try {
+      await driver.save(key, data);
+
+      const read = await driver.read(key);
+      expect(read!.toString()).toBe("nested");
+
+      // サブフォルダ内のファイルも合計に含まれること
+      expect(await driver.totalSize()).toBeGreaterThanOrEqual(data.length);
+
+      await driver.delete(key);
+      expect(await driver.read(key)).toBeNull();
+    } finally {
+      await unlink(`./uploads/${key}`).catch(() => {});
+    }
+  });
 });
 
 describe("BlobStorageDriver", () => {
   function makeFakeContainer(blobs: Record<string, Buffer> = {}) {
     const createIfNotExists = vi.fn().mockResolvedValue(undefined);
-    const uploadData = vi.fn(async (data: Buffer) => data);
+    const uploadData = vi.fn(
+      async (data: Buffer, _options?: { metadata?: Record<string, string> }) => data
+    );
     const deleteIfExists = vi.fn().mockResolvedValue(undefined);
 
     const container: ContainerClientLike = {
       createIfNotExists,
       getBlockBlobClient(name: string): BlockBlobClientLike {
         return {
-          uploadData: async (data: Buffer) => {
+          uploadData: async (data: Buffer, options?: { metadata?: Record<string, string> }) => {
             blobs[name] = data;
-            return uploadData(data);
+            return uploadData(data, options);
           },
           downloadToBuffer: async () => {
             const found = blobs[name];
@@ -121,6 +142,20 @@ describe("BlobStorageDriver", () => {
 
     await driver.delete("a.png");
     expect(await driver.read("a.png")).toBeNull();
+  });
+
+  it("saveはメタデータをblobへ渡す（トレーサビリティ）", async () => {
+    const { container, uploadData } = makeFakeContainer();
+    const driver = new BlobStorageDriver(container);
+
+    await driver.save("questions/12/q_12_a.png", Buffer.from("x"), {
+      kind: "question",
+      quizid: "12",
+      originalname: "photo.png",
+    });
+    expect(uploadData).toHaveBeenCalledWith(expect.anything(), {
+      metadata: { kind: "question", quizid: "12", originalname: "photo.png" },
+    });
   });
 
   it("コンテナ作成は初回saveの一度だけ（メモ化）", async () => {

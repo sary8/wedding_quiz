@@ -8,7 +8,7 @@ vi.mock("../../services/quizService.js", () => ({
   getQuizByRoom: vi.fn(),
 }));
 
-import { mediaRoutes, deleteMediaFile } from "../../routes/media.js";
+import { mediaRoutes, deleteMediaFile, storageKeyFor } from "../../routes/media.js";
 import { getQuizByRoom } from "../../services/quizService.js";
 
 const mockGetQuizByRoom = vi.mocked(getQuizByRoom);
@@ -22,17 +22,34 @@ beforeAll(async () => {
 
 afterAll(async () => {
   for (const file of createdFiles) {
-    try {
-      await unlink(join(UPLOAD_DIR, file));
-    } catch {
-      // ignore
-    }
+    // フォルダ付きキーにも対応するため実装側の削除経路を使う
+    await deleteMediaFile(file).catch(() => {});
   }
 });
 
 function trackFile(filename: string) {
   createdFiles.push(filename);
 }
+
+describe("storageKeyFor", () => {
+  it("問題画像 → questions/{quizId}/", () => {
+    expect(storageKeyFor("q_12_abc.jpg")).toBe("questions/12/q_12_abc.jpg");
+    expect(storageKeyFor("q_bank_abc.png")).toBe("questions/bank/q_bank_abc.png");
+  });
+
+  it("選択肢画像 → choices/{quizId}/", () => {
+    expect(storageKeyFor("c_3_xyz.webp")).toBe("choices/3/c_3_xyz.webp");
+  });
+
+  it("セルフィー → selfies/{roomCode}/", () => {
+    expect(storageKeyFor("selfie_123456_abc.jpg")).toBe("selfies/123456/selfie_123456_abc.jpg");
+  });
+
+  it("旧形式はルート直下（後方互換）", () => {
+    expect(storageKeyFor("V1StGXR8z5jdHi.png")).toBe("V1StGXR8z5jdHi.png");
+    expect(storageKeyFor("selfie_V1StGXR8z5jdHi.jpg")).toBe("selfie_V1StGXR8z5jdHi.jpg");
+  });
+});
 
 describe("media routes", () => {
   describe("POST /selfie", () => {
@@ -59,6 +76,25 @@ describe("media routes", () => {
       expect(body.filename).toMatch(/^selfie_.*\.jpg$/);
       expect(body.url).toMatch(/^\/api\/media\/selfie_.*\.jpg$/);
       trackFile(body.filename);
+    });
+
+    it("セルフィーはルームコード入りの名前になり、そのまま配信できる", async () => {
+      mockGetQuizByRoom.mockResolvedValue({ status: "lobby" } as ReturnType<typeof getQuizByRoom> extends Promise<infer T> ? T : never);
+      const data = `data:image/jpeg;base64,${jpegBase64}`;
+
+      const res = await mediaRoutes.request("/selfie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data, roomCode: "123456" }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.filename).toMatch(/^selfie_123456_[A-Za-z0-9_-]+\.jpg$/);
+      trackFile(body.filename);
+
+      const getRes = await mediaRoutes.request(`/${body.filename}`);
+      expect(getRes.status).toBe(200);
     });
 
     it("正常なbase64 PNG + in_progress ルーム → 201", async () => {
@@ -259,6 +295,40 @@ describe("media routes", () => {
 
       const filename = body.url.replace("/api/media/", "");
       trackFile(filename);
+    });
+
+    it("kind=question + quizId → q_{quizId}_ 名になり、そのまま配信できる", async () => {
+      const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...Array(16).fill(0)]);
+      const formData = new FormData();
+      formData.append("file", new File([jpegBytes], "新郎の写真.jpg", { type: "image/jpeg" }));
+      formData.append("kind", "question");
+      formData.append("quizId", "12");
+
+      const res = await mediaRoutes.request("/upload", { method: "POST", body: formData });
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.url).toMatch(/^\/api\/media\/q_12_[A-Za-z0-9_-]+\.jpg$/);
+
+      const filename = body.url.replace("/api/media/", "");
+      trackFile(filename);
+
+      // フォルダ付きキーに保存されたファイルがURL経由で読めること（保存→導出→配信の往復）
+      const getRes = await mediaRoutes.request(`/${filename}`);
+      expect(getRes.status).toBe(200);
+      expect(getRes.headers.get("Content-Type")).toBe("image/jpeg");
+    });
+
+    it("kind=choice → c_ プレフィックス、quizIdなし → scope=bank", async () => {
+      const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...Array(16).fill(0)]);
+      const formData = new FormData();
+      formData.append("file", new File([jpegBytes], "choice.jpg", { type: "image/jpeg" }));
+      formData.append("kind", "choice");
+
+      const res = await mediaRoutes.request("/upload", { method: "POST", body: formData });
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.url).toMatch(/^\/api\/media\/c_bank_[A-Za-z0-9_-]+\.jpg$/);
+      trackFile(body.url.replace("/api/media/", ""));
     });
 
     it("許可されない拡張子 → 400", async () => {

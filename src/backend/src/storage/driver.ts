@@ -2,7 +2,8 @@
 // 実装は local（./uploads、従来挙動）と blob（Azure Blob Storage）の2種
 // （2026-07-17 Phase 4: docs/issues/2026-07-17-blob-storage-migration.md 参照）
 export interface StorageDriver {
-  save(filename: string, data: Buffer): Promise<void>;
+  /** metadata は blob 実装のみ保存（トレーサビリティ用）。local 実装は無視する */
+  save(filename: string, data: Buffer, metadata?: Record<string, string>): Promise<void>;
   /** 存在しない場合は null を返す */
   read(filename: string): Promise<Buffer | null>;
   /** 冪等: 存在しないファイルを指定してもエラーにしない */

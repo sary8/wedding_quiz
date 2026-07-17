@@ -3,7 +3,7 @@ import type { StorageDriver } from "./driver.js";
 // テスト容易性のため、@azure/storage-blob の ContainerClient のうち
 // 使用するメソッドだけを構造的型として受け取る（フェイク注入可能にする）
 export interface BlockBlobClientLike {
-  uploadData(data: Buffer): Promise<unknown>;
+  uploadData(data: Buffer, options?: { metadata?: Record<string, string> }): Promise<unknown>;
   downloadToBuffer(): Promise<Buffer>;
   deleteIfExists(): Promise<unknown>;
 }
@@ -37,9 +37,11 @@ export class BlobStorageDriver implements StorageDriver {
     return this.containerReady;
   }
 
-  async save(filename: string, data: Buffer): Promise<void> {
+  async save(filename: string, data: Buffer, metadata?: Record<string, string>): Promise<void> {
     await this.ensureContainer();
-    await this.container.getBlockBlobClient(filename).uploadData(data);
+    await this.container
+      .getBlockBlobClient(filename)
+      .uploadData(data, metadata ? { metadata } : undefined);
   }
 
   async read(filename: string): Promise<Buffer | null> {
