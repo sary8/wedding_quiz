@@ -96,6 +96,8 @@ jobs:
       - name: Create deployment package
         run: zip -r ../../deploy-package.zip dist/ node_modules/ drizzle/ package.json drizzle.config.ts
 
+      # startup-command は publish-profile 認証では指定不可のためここでは設定しない。
+      # スタートアップコマンド `npm start` は App Service 側（構成 → 全般設定）で設定する
       - name: Deploy to Azure App Service
         id: deploy
         uses: azure/webapps-deploy@v3
@@ -103,4 +105,3 @@ jobs:
           app-name: ${{ vars.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy-package.zip
-          startup-command: 'npm start'
