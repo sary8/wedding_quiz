@@ -23,7 +23,11 @@
       ユーザー割り当てマネージドID `id-quiz-deploy` + フェデレーション資格情報（environment:production）+
       Web サイト共同作成者ロール。prodの発行プロファイルSecretを削除し、SCM基本認証もオフにした状態で
       OIDCデプロイ成功を確認。**devは従来どおり発行プロファイル認証**（devの基本認証・Secretは削除しないこと））
-- [ ] Phase 4: アップロード画像の Blob Storage 移行
+- [x] Phase 4: アップロード画像の Blob Storage 移行 — **完了**（2026-07-18確認、prod対象。
+      ストレージアダプタ化（local/blob切替）、マネージドID認証、questions/{quizId}・choices/{quizId}・
+      selfies/{roomCode}のフォルダ構造 + blobメタデータ（元ファイル名等）、クライアント側5MB検証。
+      あわせて別オリジン構成の2バグ（相対メディアURL、secureHeadersのCORP same-origin）を修正 —
+      詳細: issues/2026-07-17-blob-storage-migration.md / issues/2026-07-17-media-url-cross-origin.md）
 - [ ] Phase 5: Azure Load Testing（本番前の負荷検証）
 
 ---
