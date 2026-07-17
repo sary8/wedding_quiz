@@ -10,7 +10,11 @@
 - [x] Phase 0: 基盤デプロイ（Turso + SWA + App Service）— **dev/prod両環境とも完了**（2026-07-17。
       health・CORS・CSP検証済み。main push→dev自動デプロイ、prodは承認ゲート付き手動デプロイで初稼働成功。
       リージョンは Japan West — Japan East はサブスクリプションのVMクォータ0で作成不可だった）
-- [ ] Phase 1: Key Vault + Managed Identity
+- [x] Phase 1: Key Vault + Managed Identity — **完了**（2026-07-17、prod対象。`kv-quiz-prod` に
+      ADMIN-PIN / DATABASE-AUTH-TOKEN を格納し、App Service はシステム割り当てマネージドID +
+      バージョンなしKey Vault参照で解決。アプリ設定から平文シークレットを排除。
+      今後のローテーションは「Vaultの値を更新 → App Service再起動」のみ。
+      ※日本語ポータルではロール名が「キー コンテナー シークレット責任者/ユーザー」表記な点に注意）
 - [ ] Phase 2: Application Insights
 - [ ] Phase 3: GitHub Actions OIDC
 - [ ] Phase 4: アップロード画像の Blob Storage 移行
