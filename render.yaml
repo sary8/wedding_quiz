@@ -40,3 +40,9 @@ services:
       # Turso の認証トークン（DATABASE_URL が libsql:// のとき必須）
       - key: DATABASE_AUTH_TOKEN
         sync: false
+      # アップロード画像を Azure Blob Storage に永続化する場合は
+      # STORAGE_DRIVER=blob と接続文字列を設定（未設定ならエフェメラルなローカルディスク）
+      - key: STORAGE_DRIVER
+        sync: false
+      - key: AZURE_STORAGE_CONNECTION_STRING
+        sync: false

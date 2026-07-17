@@ -104,7 +104,15 @@ DATABASE_AUTH_TOKEN=<Tursoの認証トークン>
 TRUSTED_PROXY=true
 CORS_ORIGIN=https://<your-static-web-app>.azurestaticapps.net
 ADMIN_PIN=<管理画面アクセス用PIN（任意）>
+# アップロード画像/動画を Azure Blob Storage に保存する場合（Phase 4。未設定ならローカルディスク）
+STORAGE_DRIVER=blob
+AZURE_STORAGE_ACCOUNT=<ストレージアカウント名>
+AZURE_STORAGE_CONTAINER=media
 ```
+
+> Blob利用時の認証は App Service のマネージドID（Phase 1で有効化済み）。ストレージアカウントの
+> IAM でそのIDに **ストレージ BLOB データ共同作成者** を付与する。接続文字列を使う場合は
+> `AZURE_STORAGE_CONNECTION_STRING` を設定（Render等のAzure外ホスト向け）。
 
 > ⚠️ `DATABASE_URL` を未設定（＝ローカルファイル）のままにしないこと。
 > データが再起動で消えるうえ、`/home` 上では WAL が動作しない（起動時に警告ログが出る）。
