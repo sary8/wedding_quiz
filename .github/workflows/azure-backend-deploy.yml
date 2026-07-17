@@ -57,10 +57,16 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # production の OIDC 認証（azure/login）に必要
+      contents: read
+    env:
+      # environment.name は env コンテキストを参照できないため式を二重に持つ（GitHub Actionsの制約）
+      DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'development' }}
     environment:
       # push 起点は development 固定、手動実行は選択された環境
       name: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'development' }}
-      url: ${{ steps.deploy.outputs.webapp-url }}
+      url: ${{ steps.deploy_oidc.outputs.webapp-url || steps.deploy_profile.outputs.webapp-url }}
     defaults:
       run:
         working-directory: src/backend
@@ -96,10 +102,29 @@ jobs:
       - name: Create deployment package
         run: zip -r ../../deploy-package.zip dist/ node_modules/ drizzle/ package.json drizzle.config.ts
 
-      # startup-command は publish-profile 認証では指定不可のためここでは設定しない。
+      # 認証方式は環境で分岐する（Phase 3: OIDC化は production のみの方針）:
+      # - production: フェデレーション資格情報による OIDC（長寿命シークレット不使用、基本認証もオフ）
+      # - development: 従来どおり発行プロファイル認証
       # スタートアップコマンド `npm start` は App Service 側（構成 → 全般設定）で設定する
-      - name: Deploy to Azure App Service
-        id: deploy
+      - name: Azure login (OIDC)
+        if: env.DEPLOY_ENV == 'production'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure App Service (OIDC)
+        if: env.DEPLOY_ENV == 'production'
+        id: deploy_oidc
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: deploy-package.zip
+
+      - name: Deploy to Azure App Service (publish profile)
+        if: env.DEPLOY_ENV != 'production'
+        id: deploy_profile
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_WEBAPP_NAME }}
