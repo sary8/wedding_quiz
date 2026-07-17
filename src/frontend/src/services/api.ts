@@ -319,9 +319,24 @@ export function uploadSelfie(base64Data: string, roomCode: string) {
   });
 }
 
-export async function uploadMedia(file: File): Promise<{ url: string }> {
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // バックエンドの5MB制限と同値
+
+export async function uploadMedia(
+  file: File,
+  opts: { kind: "question" | "choice"; quizId?: number }
+): Promise<{ url: string }> {
+  // サーバー往復せずその場で弾くクライアント側検証（サーバー側にも同じ検証あり）
+  if (file.size > MAX_UPLOAD_BYTES) {
+    const mb = (file.size / 1024 / 1024).toFixed(1);
+    throw new Error(`ファイルサイズが5MBを超えています（選択されたファイル: ${mb}MB）`);
+  }
+
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("kind", opts.kind);
+  if (opts.quizId != null) {
+    formData.append("quizId", String(opts.quizId));
+  }
 
   const headers: Record<string, string> = {};
   const token = getAdminToken();

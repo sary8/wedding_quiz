@@ -96,7 +96,10 @@ export function QuestionInlineForm(props: Props) {
     setUploadError(null);
     setIsUploading(true);
     try {
-      const result = await uploadMedia(file);
+      const result = await uploadMedia(file, {
+        kind: "question",
+        quizId: mode === "quiz" ? quizId : undefined,
+      });
       setMediaUrl(result.url);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "アップロードに失敗しました");
@@ -115,14 +118,18 @@ export function QuestionInlineForm(props: Props) {
       return next;
     });
     try {
-      const result = await uploadMedia(file);
+      const result = await uploadMedia(file, {
+        kind: "choice",
+        quizId: mode === "quiz" ? quizId : undefined,
+      });
       setChoiceImageUrls((prev) => {
         const next = [...prev];
         next[index] = result.url;
         return next;
       });
-    } catch {
-      setError(`選択肢${CHOICE_LABELS[index]}の画像アップロードに失敗しました`);
+    } catch (err) {
+      const reason = err instanceof Error ? `: ${err.message}` : "";
+      setError(`選択肢${CHOICE_LABELS[index]}の画像アップロードに失敗しました${reason}`);
     } finally {
       setChoiceImageUploading((prev) => {
         const next = [...prev];
