@@ -54,3 +54,32 @@ interface StorageDriver {
 ## 検証
 - vitest / build
 - デプロイ後: prod で画像アップロード→表示→クイズ削除で画像も消える、App Service再起動後も画像が残る
+
+---
+
+## 追補（同日）: フォルダ構造・トレーサビリティ・クライアント側サイズ検証
+
+初回デプロイ後のユーザーフィードバック:
+1. blobがコンテナ直下にフラットに置かれ、種別ごとに分けたい（問題画像/選択肢画像/セルフィー）
+2. ランダムファイル名だけでは「どのblobが何か」のトレーサビリティに欠ける
+3. 画像サイズはアップロード前にブラウザ側で弾いてほしい（現状はサーバー側5MB検証のみ）
+
+### 対応方針
+**命名にコンテキストを符号化し、ストレージキー導出でフォルダに展開**（URLは1階層のまま。
+ルーティング・CSP・DBスキーマ・削除ロジックの構造は不変。ランダム名による推測不可性も維持）:
+
+| 種別 | ファイル名 | ストレージキー |
+|---|---|---|
+| 問題画像/動画 | `q_{quizId or bank}_{nanoid}.ext` | `questions/{quizId}/...` |
+| 選択肢画像 | `c_{quizId or bank}_{nanoid}.ext` | `choices/{quizId}/...` |
+| セルフィー | `selfie_{roomCode}_{nanoid}.ext` | `selfies/{roomCode}/...` |
+| 旧形式（導出不可） | そのまま | ルート（後方互換） |
+
+- アップロードAPIに `kind`（question/choice）と `quizId` をフォームフィールドで追加。
+  フロント（QuestionInlineForm）が種別・quizIdを送る。バンク問題は scope=`bank`
+- **Blobメタデータ**に `originalname`（encodeURIComponent、Azureメタデータ値はASCII制約のため）/
+  `kind` / `quizid` or `roomcode` を記録 → ポータルのblobプロパティで元名と紐付け先が分かる。
+  厳密なトレーサビリティの正はDB（media_url / selfie_file_name）にある原則は不変
+- LocalStorageDriver: ネストキー対応（mkdir再帰・totalSizeの再帰走査）
+- フロント `uploadMedia` にクライアント側5MBチェック（fetch前にthrow → 即時エラー表示）
+
