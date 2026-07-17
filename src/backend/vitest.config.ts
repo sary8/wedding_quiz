@@ -10,6 +10,7 @@ export default defineConfig({
         "src/routes/**/*.ts",
         "src/socket/**/*.ts",
         "src/utils/**/*.ts",
+        "src/storage/**/*.ts",
       ],
       exclude: ["src/__tests__/**"],
       all: true,

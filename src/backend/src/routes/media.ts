@@ -1,15 +1,12 @@
 import { Hono } from "hono";
-import { existsSync } from "fs";
-import { writeFile, mkdir, readdir, stat, unlink } from "fs/promises";
-import { join, extname, basename } from "path";
+import { extname, basename } from "path";
 import { nanoid } from "nanoid";
-import { readFile } from "fs/promises";
 import { getClientIp } from "../utils/clientIp.js";
 import { getQuizByRoom } from "../services/quizService.js";
+import { storage } from "../storage/index.js";
 
 export const mediaRoutes = new Hono();
 
-const UPLOAD_DIR = "./uploads";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_STORAGE_BYTES = (Number(process.env.MAX_STORAGE_MB) || 500) * 1024 * 1024; // デフォルト500MB
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"]);
@@ -25,8 +22,7 @@ export async function deleteMediaFile(fileNameOrUrl: string | null): Promise<voi
   if (!fileNameOrUrl) return;
   const filename = basename(fileNameOrUrl);
   if (!filename || !SAFE_FILENAME_RE.test(filename)) return;
-  const filepath = join(UPLOAD_DIR, filename);
-  await unlink(filepath).catch(() => {});
+  await storage.delete(filename).catch(() => {});
 }
 
 // ストレージ使用量チェック（30秒キャッシュ）
@@ -39,13 +35,7 @@ async function getStorageUsage(): Promise<number> {
   if (cachedStorageUsage !== null && now - storageCacheTimestamp < STORAGE_CACHE_TTL) {
     return cachedStorageUsage;
   }
-  if (!existsSync(UPLOAD_DIR)) return 0;
-  const files = await readdir(UPLOAD_DIR);
-  let total = 0;
-  for (const file of files) {
-    const fileStat = await stat(join(UPLOAD_DIR, file)).catch(() => null);
-    if (fileStat?.isFile()) total += fileStat.size;
-  }
+  const total = await storage.totalSize();
   cachedStorageUsage = total;
   storageCacheTimestamp = now;
   return total;
@@ -143,11 +133,8 @@ mediaRoutes.post("/upload", async (c) => {
     return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
   const filename = `${nanoid(16)}${ext}`;
-  const filepath = join(UPLOAD_DIR, filename);
-
-  await writeFile(filepath, buffer);
+  await storage.save(filename, buffer);
   // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
   if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
 
@@ -216,10 +203,8 @@ mediaRoutes.post("/selfie", async (c) => {
     return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
   const filename = `selfie_${nanoid(16)}.${ext}`;
-  const filepath = join(UPLOAD_DIR, filename);
-  await writeFile(filepath, buffer);
+  await storage.save(filename, buffer);
   roomSelfieBytes.set(body.roomCode, roomUsed + buffer.length);
   // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
   if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
@@ -243,11 +228,6 @@ mediaRoutes.get("/:filename", async (c) => {
     return c.json({ error: "不正なファイル名です" }, 400);
   }
 
-  const filepath = join(UPLOAD_DIR, safe);
-  if (!existsSync(filepath)) {
-    return c.json({ error: "ファイルが見つかりません" }, 404);
-  }
-
   const ext = extname(safe).toLowerCase();
   const contentTypes: Record<string, string> = {
     ".jpg": "image/jpeg",
@@ -260,10 +240,14 @@ mediaRoutes.get("/:filename", async (c) => {
   };
 
   const contentType = contentTypes[ext] || "application/octet-stream";
-  const data = await readFile(filepath);
+  const data = await storage.read(safe);
+  if (!data) {
+    return c.json({ error: "ファイルが見つかりません" }, 404);
+  }
 
-  // ファイル名にnanoidハッシュを含むためimmutableで長期キャッシュ可
-  return new Response(data, {
+  // ファイル名にnanoidハッシュを含むためimmutableで長期キャッシュ可。
+  // Uint8Arrayへの変換は BodyInit の型制約（Buffer<ArrayBufferLike>非対応）のため
+  return new Response(new Uint8Array(data), {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=31536000, immutable",
