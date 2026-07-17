@@ -551,7 +551,7 @@ http://<サーバーURL>/host/<ルームコード>/screen
 ### バックエンド（Azure App Service B1 Linux）
 
 1. Azure Portal で「App Service」を新規作成
-   - ランタイム: Node.js 20 LTS
+   - ランタイム: Node.js 22 LTS
    - プラン: Basic B1（または S1）
    - OS: Linux
 2. デプロイメント設定（GitHub Actions または ZIP デプロイ）

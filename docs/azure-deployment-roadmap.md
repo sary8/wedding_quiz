@@ -67,7 +67,7 @@
 3. KQLを1つ書いてみる（例: 5分ごとのリクエスト数とp95）
 4. アラート1本: 5xx が5分で10件超えたらメール
 5. （発展）SDK計装に切替えて Socket.io イベントをカスタムテレメトリで送る
-   - Node 20 + ESM 環境のため `@azure/monitor-opentelemetry` を使うこと（旧 `applicationinsights` v2 はESM非対応）
+   - Node 22 + ESM 環境のため `@azure/monitor-opentelemetry` を使うこと（旧 `applicationinsights` v2 はESM非対応）
 
 **完了条件**: Live Metricsで自分のスマホ操作がリアルタイムに見える。アラート1本が発火テスト済み。
 
