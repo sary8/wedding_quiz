@@ -15,7 +15,10 @@
       バージョンなしKey Vault参照で解決。アプリ設定から平文シークレットを排除。
       今後のローテーションは「Vaultの値を更新 → App Service再起動」のみ。
       ※日本語ポータルではロール名が「キー コンテナー シークレット責任者/ユーザー」表記な点に注意）
-- [ ] Phase 2: Application Insights
+- [x] Phase 2: Application Insights — **完了**（2026-07-17、prod対象。自動計装ONで
+      Live Metrics・KQL（requests集計）まで動作確認。health p95=9ms / DB読み取りp95=279ms を観測。
+      手動アラートルールは無料枠方針によりスキップ — 既定有効の無料スマート検出（失敗異常の自動検知メール）で代替。
+      Socket.ioフレーム単位の計装はSDK計装（発展課題）に持ち越し）
 - [ ] Phase 3: GitHub Actions OIDC
 - [ ] Phase 4: アップロード画像の Blob Storage 移行
 - [ ] Phase 5: Azure Load Testing（本番前の負荷検証）
