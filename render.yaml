@@ -3,8 +3,9 @@
 #
 # 無料プランの制約:
 # - 15分間アクセスがないとスリープし、次のアクセスで起動に1分弱かかる
-# - ディスクはエフェメラル。再起動・再デプロイで SQLite とアップロード画像は消える
-#   （お試し用途専用。本番は Azure 構成を使うこと）
+# - ディスクはエフェメラル。アップロード画像は再起動・再デプロイで消える。
+#   DBは DATABASE_URL に Turso（無料）を設定すれば永続化される。
+#   未設定ならローカルSQLiteとなり再起動で消える（お試し用途専用）
 services:
   - type: web
     name: wedding-quiz-api
@@ -14,8 +15,8 @@ services:
     # NODE_ENV=production だと npm ci が devDependencies（typescript, drizzle-kit）を
     # スキップしてビルドできないため、明示的に含める
     buildCommand: npm ci --include=dev && npm run build
-    # エフェメラルディスクなので起動のたびにマイグレーションでDBを構築する。
-    # 新規コンテナには ./data が存在しないため先に作成する
+    # 起動のたびにマイグレーションを適用する（DATABASE_URL が Turso なら冪等に適用、
+    # 未設定ならエフェメラルなローカルDBを新規構築）。./data はローカルDB用
     startCommand: mkdir -p data && npm run db:migrate && npm run start
     healthCheckPath: /api/health
     envVars:
@@ -31,4 +32,11 @@ services:
         sync: false
       # 管理画面ログイン用PIN。ダッシュボードで任意の値を設定する
       - key: ADMIN_PIN
+        sync: false
+      # DB接続先。Turso を使う場合は libsql://... のURLを設定する。
+      # 未設定だとエフェメラルなローカルSQLite（再起動でデータ消失）
+      - key: DATABASE_URL
+        sync: false
+      # Turso の認証トークン（DATABASE_URL が libsql:// のとき必須）
+      - key: DATABASE_AUTH_TOKEN
         sync: false
