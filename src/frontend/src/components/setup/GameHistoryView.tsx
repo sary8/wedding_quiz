@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import type { QuizSummary, ParticipantSummary, Quiz } from "../../types";
 import { QuizStatus } from "../../types";
 import { getQuiz, listQuizParticipants, deleteQuiz } from "../../services/api";
@@ -149,7 +150,7 @@ export function GameHistoryView({ quizList, onQuizDeleted }: Props) {
                                 </span>
                                 {p.selfie_file_name ? (
                                   <img
-                                    src={`/api/media/${p.selfie_file_name}`}
+                                    src={sanitizeMediaUrl(`/api/media/${p.selfie_file_name}`) ?? undefined}
                                     alt={`${p.nickname}のアバター`}
                                     width={32}
                                     height={32}

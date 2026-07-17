@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { RankingData, RankingViewMode } from "../../types";
 
@@ -195,7 +196,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
                     {entry.selfieUrl ? (
                       <img
-                        src={entry.selfieUrl}
+                        src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
                         alt={`${entry.nickname}のアバター`}
                         width={64}
                         height={64}
@@ -264,7 +265,7 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
                     {entry.selfieUrl ? (
                       <img
-                        src={entry.selfieUrl}
+                        src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
                         alt={`${entry.nickname}のアバター`}
                         width={64}
                         height={64}

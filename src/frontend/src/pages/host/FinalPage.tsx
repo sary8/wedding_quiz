@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { FinalResultData, FinalRankingEntry } from "../../types";
 
@@ -386,7 +387,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
         </motion.div>
         {winner.selfieUrl ? (
           <img
-            src={winner.selfieUrl}
+            src={sanitizeMediaUrl(winner.selfieUrl) ?? undefined}
             alt={`${winner.nickname}のアバター`}
             width={192}
             height={192}
@@ -562,7 +563,7 @@ const BatchRow = memo(function BatchRow({ entry, highlight, variant = "batch" }:
       </span>
       {entry.selfieUrl ? (
         <img
-          src={entry.selfieUrl}
+          src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
           alt={`${entry.nickname}のアバター`}
           width={isFinal ? 48 : 36}
           height={isFinal ? 48 : 36}
@@ -730,7 +731,7 @@ const GroupAvatarBubble = memo(function GroupAvatarBubble({ entry, index }: Grou
     <div className="flex flex-col items-center">
       {entry.selfieUrl ? (
         <img
-          src={entry.selfieUrl}
+          src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
           alt={`${entry.nickname}のアバター`}
           width={80}
           height={80}

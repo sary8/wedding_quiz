@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { sanitizeMediaUrl } from "./sanitizeUrl";
 
 describe("sanitizeMediaUrl", () => {
@@ -44,5 +44,29 @@ describe("sanitizeMediaUrl", () => {
 
   it("不正なURL → null", () => {
     expect(sanitizeMediaUrl("not a url")).toBeNull();
+  });
+
+  it("blob:（ローカルプレビュー用objectURL）→ そのまま返す", () => {
+    expect(sanitizeMediaUrl("blob:http://localhost/abc-123")).toBe("blob:http://localhost/abc-123");
+  });
+
+  describe("VITE_API_URL設定時（SWA+App Serviceの別オリジン構成）", () => {
+    const ORIGINAL = import.meta.env.VITE_API_URL;
+
+    afterEach(() => {
+      import.meta.env.VITE_API_URL = ORIGINAL;
+    });
+
+    it("相対パスはAPIオリジン付き絶対URLに解決される", () => {
+      import.meta.env.VITE_API_URL = "https://quiz-prod.example.azurewebsites.net";
+      expect(sanitizeMediaUrl("/api/media/q_1_abc.jpg")).toBe(
+        "https://quiz-prod.example.azurewebsites.net/api/media/q_1_abc.jpg"
+      );
+    });
+
+    it("絶対URLはそのまま（二重前置しない）", () => {
+      import.meta.env.VITE_API_URL = "https://quiz-prod.example.azurewebsites.net";
+      expect(sanitizeMediaUrl("https://cdn.example.com/a.jpg")).toBe("https://cdn.example.com/a.jpg");
+    });
   });
 });

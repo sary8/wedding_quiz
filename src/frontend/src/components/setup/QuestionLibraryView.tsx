@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import type { QuizSummary, Quiz, QuestionBankItem } from "../../types";
 import { QuizStatus } from "../../types";
 import { getQuiz, listBankQuestions } from "../../services/api";
@@ -169,7 +170,7 @@ export function QuestionLibraryView({ quizList }: Props) {
                       </div>
                       {question.media_url && (
                         <img
-                          src={question.media_url}
+                          src={sanitizeMediaUrl(question.media_url) ?? undefined}
                           alt={`Q${qi + 1}の画像`}
                           className="mt-2 max-h-32 rounded-lg object-contain"
                         />

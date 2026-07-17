@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Question, QuestionBankItem, ChoiceType, QuestionType } from "../../types";
 import { uploadMedia, addQuestion, updateQuestion, deleteQuestion, addBankQuestion, updateBankQuestion, deleteBankQuestion } from "../../services/api";
 import { cn } from "../../utils/cn";
+import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
 import { CHOICE_BG_CLASSES, CHOICE_BORDER_CLASSES, CHOICE_TEXT_CLASSES, CHOICE_BG_LIGHT_CLASSES, CHOICE_LABELS } from "./constants";
 
 type BaseProps = {
@@ -303,7 +304,7 @@ export function QuestionInlineForm(props: Props) {
           <div className="flex items-start gap-3">
             <div className="relative inline-block">
               <img
-                src={previewUrl}
+                src={sanitizeMediaUrl(previewUrl) ?? undefined}
                 alt="プレビュー"
                 width={120}
                 height={80}
@@ -518,7 +519,7 @@ export function QuestionInlineForm(props: Props) {
                       {choiceImageUrls[i] ? (
                         <div className="flex items-center gap-2">
                           <img
-                            src={choiceImageUrls[i]}
+                            src={sanitizeMediaUrl(choiceImageUrls[i]) ?? undefined}
                             alt={`選択肢${CHOICE_LABELS[i]}の画像`}
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                           />
