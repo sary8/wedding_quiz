@@ -55,23 +55,40 @@ Application Insights・Key Vault・Blob Storage移行・負荷テストなどの
 
 #### Backend (Azure App Service)
 
-1. Azure Portal で App Service (B1 Linux) を作成
+1. Azure Portal で App Service (Linux) を **F1 (Free)** で作成
+   - ⚠️ 価格プランはデフォルトで Premium が選択されるため必ず F1 に変更する
+   - ⚠️ リージョンは **Japan West**（Japan East は新しめのサブスクリプションだと
+     VMクォータ0で作成不可のことがある。本プロジェクトは Japan West を正とする）
+   - 作成ウィザードの「デプロイ」タブで **基本認証: 有効**（発行プロファイルに必要）、
+     継続的デプロイ（GitHub連携）は**無効**のまま（リポジトリの既存ワークフローを使うため）
 2. Node.js 22 LTS ランタイムを選択（Node 20 は 2026-04 で EOL のため選択肢から削除済み）
-3. デプロイメント設定:
-   - ソース: GitHub Actions
-   - ブランチ: main
-   - パス: src/backend
+3. 作成後: スタートアップコマンド `npm start` を設定し、環境変数を投入（§3参照）。
+   本番当日・リハーサル日のみ B1 にスケールアップする（約¥65/日）
 
-### 2. GitHub Secrets の設定
+### 2. GitHub Environments の設定
 
-以下のシークレットをGitHubリポジトリに追加：
+dev/prod は **GitHub Environments** で分離する（リポジトリ Settings → Environments）。
+`development` と `production` の2環境を作成し、それぞれに以下を設定する:
+
+**Environment secrets**（環境ごとに同名・別の値）:
 
 ```
-AZURE_STATIC_WEB_APPS_API_TOKEN: Static Web Apps のAPIトークン
-AZURE_WEBAPP_PUBLISH_PROFILE: App Service の発行プロファイル
-DATABASE_URL: TursoのDB URL（libsql://...）※デプロイ時のマイグレーションに使用
-DATABASE_AUTH_TOKEN: Tursoの認証トークン
+AZURE_WEBAPP_PUBLISH_PROFILE:    App Service の発行プロファイル（.PublishSettings の中身）
+AZURE_STATIC_WEB_APPS_API_TOKEN: Static Web Apps のデプロイトークン
+DATABASE_URL:                    TursoのDB URL（libsql://...）※デプロイ時のマイグレーションにも使用
+DATABASE_AUTH_TOKEN:             Tursoの認証トークン
 ```
+
+**Environment variables**:
+
+```
+AZURE_WEBAPP_NAME: App Service のアプリ名（例: quiz-dev / quiz-prod）
+VITE_API_URL:      App Service のURL（末尾スラッシュなし）。フロントのビルド時に埋め込まれる
+```
+
+**デプロイの流れ**: main への push → development に自動デプロイ。
+production へは Actions の手動実行（workflow_dispatch）で環境を選択してデプロイする。
+`production` 環境には **Required reviewers** を設定し、承認なしで本番に出ないようにする。
 
 ### 3. 環境変数の設定
 
@@ -197,9 +214,12 @@ APIサーバー: http://localhost:3001
 
 ### WebSocket接続が失敗する
 
-1. App Service で WebSocket が有効になっているか確認
+1. Linux App Service では WebSocket は**常時有効**（設定トグル自体が存在しない）。
+   トグルを探す必要はない — 失敗する場合は原因は別にある
 2. CORS設定が正しいか確認
 3. 環境変数 `CORS_ORIGIN` が正しく設定されているか確認
+4. フロントの CSP（`src/frontend/staticwebapp.config.json` の `connect-src`）に
+   バックエンドのオリジンが含まれているか確認
 
 ## セキュリティ対策
 
