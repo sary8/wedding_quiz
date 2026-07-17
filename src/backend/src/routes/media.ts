@@ -15,6 +15,22 @@ const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".
 const SAFE_FILENAME_RE = /^[A-Za-z0-9_-]+\.(jpg|jpeg|png|gif|webp|mp4|webm)$/;
 
 /**
+ * ファイル名からストレージ上の格納キー（フォルダ付きパス）を導出する。
+ * ファイル名の接頭辞にコンテキストを符号化しているため、URLは1階層のまま
+ * ストレージ側だけ questions/{quizId}/... のフォルダ構造になる。
+ * 導出できない旧形式の名前はルート直下（後方互換）。
+ */
+export function storageKeyFor(filename: string): string {
+  let m = filename.match(/^q_(\d+|bank)_/);
+  if (m) return `questions/${m[1]}/${filename}`;
+  m = filename.match(/^c_(\d+|bank)_/);
+  if (m) return `choices/${m[1]}/${filename}`;
+  m = filename.match(/^selfie_(\d{6})_/);
+  if (m) return `selfies/${m[1]}/${filename}`;
+  return filename;
+}
+
+/**
  * メディアファイルを削除する。
  * URLパス (/api/media/xxx.jpg) またはファイル名 (xxx.jpg) を受け取る。
  */
@@ -22,7 +38,7 @@ export async function deleteMediaFile(fileNameOrUrl: string | null): Promise<voi
   if (!fileNameOrUrl) return;
   const filename = basename(fileNameOrUrl);
   if (!filename || !SAFE_FILENAME_RE.test(filename)) return;
-  await storage.delete(filename).catch(() => {});
+  await storage.delete(storageKeyFor(filename)).catch(() => {});
 }
 
 // ストレージ使用量チェック（30秒キャッシュ）
@@ -133,8 +149,19 @@ mediaRoutes.post("/upload", async (c) => {
     return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
   }
 
-  const filename = `${nanoid(16)}${ext}`;
-  await storage.save(filename, buffer);
+  // 種別（question/choice）とquizIdをファイル名に符号化し、ストレージ側でフォルダに展開する。
+  // quizId が無い（問題バンク等）場合は scope=bank
+  const kind = body["kind"] === "choice" ? "choice" : "question";
+  const quizIdRaw = body["quizId"];
+  const scope = typeof quizIdRaw === "string" && /^\d+$/.test(quizIdRaw) ? quizIdRaw : "bank";
+  const filename = `${kind === "choice" ? "c" : "q"}_${scope}_${nanoid(16)}${ext}`;
+
+  await storage.save(storageKeyFor(filename), buffer, {
+    kind,
+    quizid: scope,
+    // Azureのblobメタデータ値はASCII限定のため元ファイル名はURLエンコードして保存
+    originalname: encodeURIComponent(file.name).slice(0, 256),
+  });
   // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
   if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
 
@@ -203,8 +230,16 @@ mediaRoutes.post("/selfie", async (c) => {
     return c.json({ error: "ストレージ容量の上限に達しました" }, 413);
   }
 
-  const filename = `selfie_${nanoid(16)}.${ext}`;
-  await storage.save(filename, buffer);
+  // ルームコードをファイル名に符号化し selfies/{roomCode}/ フォルダに展開する
+  // （ルーム検証済みのため実在コード。万一想定外の形式なら旧形式名にフォールバック）
+  const roomSafe = /^[A-Za-z0-9]{1,12}$/.test(body.roomCode) ? body.roomCode : null;
+  const filename = roomSafe
+    ? `selfie_${roomSafe}_${nanoid(16)}.${ext}`
+    : `selfie_${nanoid(16)}.${ext}`;
+  await storage.save(storageKeyFor(filename), buffer, {
+    kind: "selfie",
+    ...(roomSafe ? { roomcode: roomSafe } : {}),
+  });
   roomSelfieBytes.set(body.roomCode, roomUsed + buffer.length);
   // キャッシュTTL内の連続アップロードでも上限チェックが効くよう書き込み分を加算
   if (cachedStorageUsage !== null) cachedStorageUsage += buffer.length;
@@ -240,7 +275,7 @@ mediaRoutes.get("/:filename", async (c) => {
   };
 
   const contentType = contentTypes[ext] || "application/octet-stream";
-  const data = await storage.read(safe);
+  const data = await storage.read(storageKeyFor(safe));
   if (!data) {
     return c.json({ error: "ファイルが見つかりません" }, 404);
   }
