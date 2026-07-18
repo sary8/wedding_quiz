@@ -14,8 +14,8 @@ test.describe("JoinPage（ルームコード入力）", () => {
     await expect(page).toHaveURL("/play");
   });
 
-  test("Wedding Quiz のタイトルが表示される", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Wedding Quiz" })).toBeVisible();
+  test("Quiz Party のタイトルが表示される", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Quiz Party" })).toBeVisible();
   });
 
   test("初期状態で参加ボタンが無効", async ({ page }) => {

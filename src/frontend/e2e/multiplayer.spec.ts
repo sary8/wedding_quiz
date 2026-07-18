@@ -50,12 +50,12 @@ test.describe("マルチプレイヤーフロー @integration", () => {
       // 2. 参加者がJoinPageを開く
       await participantPage.goto("/play");
       await expect(
-        participantPage.getByRole("heading", { name: "Wedding Quiz" })
+        participantPage.getByRole("heading", { name: "Quiz Party" })
       ).toBeVisible({ timeout: 8000 });
 
       // 両方の画面が表示されていることを確認
       await expect(hostPage.getByRole("heading", { name: "クイズ設定" })).toBeVisible();
-      await expect(participantPage.getByRole("heading", { name: "Wedding Quiz" })).toBeVisible();
+      await expect(participantPage.getByRole("heading", { name: "Quiz Party" })).toBeVisible();
     } finally {
       await hostContext.close();
       await participantContext.close();

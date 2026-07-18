@@ -28,7 +28,7 @@ export function AdminLoginForm({ isPinRequired, onAuthenticated }: Props) {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="bg-white rounded-xl shadow-sm p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">Wedding Quiz</h1>
+        <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">Quiz Party</h1>
         <p className="text-gray-500 text-sm text-center mb-6">管理画面にアクセスするには認証が必要です</p>
 
         {error && (

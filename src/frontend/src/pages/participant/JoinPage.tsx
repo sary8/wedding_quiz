@@ -62,11 +62,11 @@ export function JoinPage() {
       {/* タイトル */}
       <header className="text-center mb-10 relative z-10">
         <h1 className="font-script text-7xl text-shimmer mb-2 [text-wrap:balance] drop-shadow-[0_2px_8px_rgba(107,143,113,0.15)]">
-          Wedding Quiz
+          Quiz Party
         </h1>
         <div className="gold-line w-48 mx-auto my-4" />
         <p className="font-serif-wedding text-sage-text/60 tracking-[0.25em] text-sm uppercase">
-          Celebration Game
+          Party Game
         </p>
       </header>
 

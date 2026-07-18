@@ -24,10 +24,10 @@ export function LobbyPage({ roomCode, participants, teams, onStartGame, onBack, 
       {/* タイトル */}
       <header className="text-center mb-10 animate-fade-up">
         <h1 className="font-script text-7xl md:text-8xl text-shimmer mb-3 [text-wrap:balance] drop-shadow-[0_2px_12px_rgba(107,143,113,0.12)]">
-          Wedding Quiz
+          Quiz Party
         </h1>
         <div className="gold-line w-56 mx-auto my-4" />
-        <p className="font-serif-wedding text-sage-text/50 tracking-[0.3em] text-sm uppercase">Celebration Game</p>
+        <p className="font-serif-wedding text-sage-text/50 tracking-[0.3em] text-sm uppercase">Party Game</p>
       </header>
 
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center mb-10 animate-fade-up" style={{ animationDelay: "0.1s" }}>

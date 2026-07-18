@@ -43,8 +43,8 @@ describe("フォントのセルフホスト", () => {
 
 describe("静的アプリシェル（index.html #root 内）", () => {
   it("JoinPage と同じタイトル・カードが先行描画される", () => {
-    expect(html).toContain("Wedding Quiz</h1>");
-    expect(html).toContain("Celebration Game");
+    expect(html).toContain("Quiz Party</h1>");
+    expect(html).toContain("Party Game");
     expect(html).toContain("ルームコード（6桁）");
     expect(html).toContain("参加する</button>");
   });

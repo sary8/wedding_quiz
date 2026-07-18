@@ -18,7 +18,7 @@ export function WaitingPage({ message = "まもなく開始します…", roomCo
 
       {/* タイトル */}
       <h1 className="font-script text-5xl text-primary mb-3 [text-wrap:balance] animate-fade-up">
-        Wedding Quiz
+        Quiz Party
       </h1>
 
       {/* セパレーター */}
