@@ -97,7 +97,9 @@ function seededRandom(seed: number): number {
 
 export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigger, onRevealNext, onDrumRoll, onSpotlight, onShowParticipantResults }: Props) {
   const hasTeamRankings = (data?.teamRankings?.length ?? 0) > 0;
-  const [phase, setPhase] = useState<RevealPhase>(hasTeamRankings ? "teamReveal" : "batchScroll");
+  // 発表順は「個人 → チーム」。まず個人ランキング（batchScroll）から開始し、
+  // チーム戦の場合は個人1位発表（done）の後にホスト操作でチーム発表へ進む
+  const [phase, setPhase] = useState<RevealPhase>("batchScroll");
   const prefersReducedMotion = useReducedMotion();
 
   // バッチスクロール状態
@@ -158,7 +160,7 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     [data?.teamRankings],
   );
 
-  // --- チームランキング発表フェーズ（現状維持） ---
+  // --- チームランキング発表フェーズ（個人発表の後に来る締めの演出） ---
   useEffect(() => {
     if (phase !== "teamReveal" || sortedTeams.length === 0) return;
     let cancelled = false;
@@ -170,8 +172,15 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
           if (!prefersReducedMotion) {
             fireConfetti({ particleCount: 150, spread: 100, colors: ["#ffd700", "#ffec8b", "#f59e0b"] });
           }
+          // チーム戦は全発表の締め。ここで参加者に結果を公開する
+          // （個人結果カードにチーム成績が含まれるため、スクリーンのチーム発表より
+          //   先に参加者スマホへ出さないよう done ではなくこのタイミングで発火）
+          if (!participantResultsSentRef.current) {
+            participantResultsSentRef.current = true;
+            onShowParticipantResultsRef.current?.();
+          }
           scheduleTimeout(() => {
-            if (!cancelled) setPhase("batchScroll");
+            if (!cancelled) setPhase("group");
           }, 3000);
         }
         return;
@@ -305,24 +314,38 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
     revealNextFinal();
   }, [phase, onRevealNext, revealNextFinal]);
 
-  // --- finalReveal: Display側の外部トリガー（ホスト側は直接呼ぶので反応しない） ---
+  // --- done → チーム発表: ホストのボタンクリック（チーム戦のみ） ---
+  const handleTeamRevealClick = useCallback(() => {
+    if (phase !== "done") return;
+    onRevealNext?.();        // Socket経由で Display 側に伝播
+    setPhase("teamReveal");
+  }, [phase, onRevealNext]);
+
+  // --- Display側の外部トリガー（ホスト側は直接呼ぶので反応しない） ---
   useEffect(() => {
     const current = revealTrigger ?? 0;
-    if (current > prevRevealTriggerRef.current && phase === "finalReveal" && isDisplay) {
-      revealNextFinal();
+    if (current > prevRevealTriggerRef.current && isDisplay) {
+      if (phase === "finalReveal") {
+        revealNextFinal();
+      } else if (phase === "done" && hasTeamRankings) {
+        setPhase("teamReveal");
+      }
     }
     prevRevealTriggerRef.current = current;
-  }, [revealTrigger, phase, revealNextFinal, isDisplay]);
+  }, [revealTrigger, phase, revealNextFinal, isDisplay, hasTeamRankings]);
 
-  // --- done → 参加者に結果公開 + 5秒後に group フェーズへ自動遷移 ---
+  // --- done: 個人戦は参加者へ結果公開 + 5秒後に group へ自動遷移。
+  //     チーム戦はここで止め、ホスト操作で teamReveal へ進む（結果公開もチーム発表完了時） ---
   useEffect(() => {
     if (phase !== "done") return;
-    if (participantResultsSentRef.current) return;
-    participantResultsSentRef.current = true;
-    onShowParticipantResultsRef.current?.();
+    if (hasTeamRankings) return;
+    if (!participantResultsSentRef.current) {
+      participantResultsSentRef.current = true;
+      onShowParticipantResultsRef.current?.();
+    }
     const timer = setTimeout(() => setPhase("group"), 5000);
     return () => clearTimeout(timer);
-  }, [phase]);
+  }, [phase, hasTeamRankings]);
 
   if (!data || rankings.length === 0) return null;
 
@@ -401,27 +424,44 @@ export function FinalPage({ data, onReplay, onCloseGame, isDisplay, revealTrigge
         <div className="text-3xl md:text-5xl font-bold mb-2">{winner.nickname}</div>
         <div className="text-2xl md:text-4xl mb-6">{winner.totalScore.toLocaleString()} pts</div>
 
-        {!isDisplay && (
-          <div className="absolute bottom-8 flex gap-4">
-            {onReplay && (
+        {hasTeamRankings ? (
+          // チーム戦: 個人1位の余韻の後、ホスト操作でチーム発表（締め）へ進む
+          <div className="absolute bottom-8">
+            {!isDisplay ? (
               <button
                 type="button"
-                onClick={onReplay}
-                className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                onClick={handleTeamRevealClick}
+                className="px-10 py-4 rounded-2xl bg-amber-500 text-gray-900 text-xl font-extrabold min-h-[44px] hover:bg-amber-400 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
               >
-                もう一度プレイ
+                チーム結果を発表
               </button>
-            )}
-            {onCloseGame && (
-              <button
-                type="button"
-                onClick={onCloseGame}
-                className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                ゲーム終了
-              </button>
+            ) : (
+              <p className="text-lg text-gray-800">Waiting for host…</p>
             )}
           </div>
+        ) : (
+          !isDisplay && (
+            <div className="absolute bottom-8 flex gap-4">
+              {onReplay && (
+                <button
+                  type="button"
+                  onClick={onReplay}
+                  className="px-8 py-4 rounded-xl bg-amber-200/80 text-amber-900 text-lg font-bold min-h-[44px] hover:bg-amber-200 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                >
+                  もう一度プレイ
+                </button>
+              )}
+              {onCloseGame && (
+                <button
+                  type="button"
+                  onClick={onCloseGame}
+                  className="px-8 py-4 rounded-xl bg-primary-light/80 text-primary-dark text-lg font-bold min-h-[44px] hover:bg-primary-light transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  ゲーム終了
+                </button>
+              )}
+            </div>
+          )
         )}
       </div>
     );
