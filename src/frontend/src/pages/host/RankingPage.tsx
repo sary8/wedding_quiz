@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
+import { sanitizeMediaUrl, withThumb } from "../../utils/sanitizeUrl";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { RankingData, RankingViewMode } from "../../types";
 
@@ -39,6 +39,64 @@ function rankColorClass(rank: number): string {
 const MOTION_BAR_INITIAL = { width: 0 } as const;
 const MOTION_BAR_TRANSITION = { type: "spring", stiffness: 60, damping: 15 } as const;
 const MOTION_INSTANT = { duration: 0 } as const;
+
+/**
+ * ランキング行のアバター。spotlight（合計ランキング1ページ目のTop3）のときだけ
+ * 金銀銅リング + グロー + ズーム登場アニメで強調する。行の高さ（w-14/16）は据え置き。
+ */
+function RankAvatar({
+  selfieUrl,
+  nickname,
+  rank,
+  spotlight,
+  reducedMotion,
+}: {
+  selfieUrl: string | null;
+  nickname: string;
+  rank: number;
+  spotlight: boolean;
+  reducedMotion: boolean;
+}) {
+  const base = "w-14 h-14 lg:w-16 lg:h-16 rounded-full shrink-0";
+  const spotlightRing =
+    rank === 1
+      ? "ring-4 ring-amber-400 shadow-[0_0_22px_rgba(251,191,36,0.75)]"
+      : rank === 2
+        ? "ring-4 ring-gray-300 shadow-[0_0_16px_rgba(203,213,225,0.7)]"
+        : "ring-4 ring-amber-700/70 shadow-[0_0_16px_rgba(180,83,9,0.55)]";
+  // Top3を同時にポップイン。delayでstaggerすると dev の StrictMode二重マウントで
+  // initial(scale:0)のまま固定される個体が出るため、確実性を優先してdelayは使わない
+  const anim =
+    spotlight && !reducedMotion
+      ? {
+          initial: { scale: 0, rotate: -12 },
+          animate: { scale: 1, rotate: 0 },
+          transition: { type: "spring" as const, stiffness: 260, damping: 16 },
+        }
+      : {};
+
+  if (selfieUrl) {
+    return (
+      <motion.img
+        {...anim}
+        src={sanitizeMediaUrl(withThumb(selfieUrl)) ?? undefined}
+        alt={`${nickname}のアバター`}
+        width={64}
+        height={64}
+        className={`${base} object-cover ${spotlight ? spotlightRing : `border-2 ${PASTEL_BORDER_CLASSES[rank % PASTEL_BORDER_CLASSES.length]}`}`}
+        loading="lazy"
+      />
+    );
+  }
+  return (
+    <motion.div
+      {...anim}
+      className={`${base} flex items-center justify-center text-lg lg:text-xl font-bold text-gray-900 ${PASTEL_BG_CLASSES[rank % PASTEL_BG_CLASSES.length]} ${spotlight ? spotlightRing : ""}`}
+    >
+      {nickname?.[0] || "?"}
+    </motion.div>
+  );
+}
 
 export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false, rankingPage: externalPage, rankingMode: externalMode, onRankingViewChange }: Props) {
   const teamRankings = data?.teamRankings ?? [];
@@ -114,6 +172,8 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
   const questionTeamMaxScore = questionTeamRankings.reduce((max, t) => Math.max(max, t.totalScore), 1);
 
   const prefersReducedMotion = useReducedMotion();
+  // 合計個人ランキングの1ページ目でだけ Top3 スポットライト演出を出す
+  const isSpotlightMode = currentMode === "individual" && currentPage === 0;
 
   // --- ハンドラ ---
   const emitViewChange = useCallback((mode: RankingViewMode, page: number) => {
@@ -194,20 +254,13 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 return (
                   <div key={entry.participantId} className="flex items-center gap-3">
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
-                    {entry.selfieUrl ? (
-                      <img
-                        src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
-                        alt={`${entry.nickname}のアバター`}
-                        width={64}
-                        height={64}
-                        className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-lg lg:text-xl font-bold text-gray-900 shrink-0`}>
-                        {entry.nickname?.[0] || "?"}
-                      </div>
-                    )}
+                    <RankAvatar
+                      selfieUrl={entry.selfieUrl}
+                      nickname={entry.nickname}
+                      rank={entry.rank}
+                      spotlight={isSpotlightMode && entry.rank <= 3}
+                      reducedMotion={!!prefersReducedMotion}
+                    />
                     <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
@@ -263,20 +316,13 @@ export function RankingPage({ data, onNextQuestion, onEndGame, isDisplay = false
                 return (
                   <div key={entry.participantId} className="flex items-center gap-3">
                     <span className={`w-14 text-4xl lg:text-5xl font-bold text-center shrink-0 [font-variant-numeric:tabular-nums] ${rankColorClass(entry.rank)}`}>{entry.rank}</span>
-                    {entry.selfieUrl ? (
-                      <img
-                        src={sanitizeMediaUrl(entry.selfieUrl) ?? undefined}
-                        alt={`${entry.nickname}のアバター`}
-                        width={64}
-                        height={64}
-                        className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full object-cover border-2 ${PASTEL_BORDER_CLASSES[entry.rank % PASTEL_BORDER_CLASSES.length]} shrink-0`}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full ${PASTEL_BG_CLASSES[entry.rank % PASTEL_BG_CLASSES.length]} flex items-center justify-center text-lg lg:text-xl font-bold text-gray-900 shrink-0`}>
-                        {entry.nickname?.[0] || "?"}
-                      </div>
-                    )}
+                    <RankAvatar
+                      selfieUrl={entry.selfieUrl}
+                      nickname={entry.nickname}
+                      rank={entry.rank}
+                      spotlight={isSpotlightMode && entry.rank <= 3}
+                      reducedMotion={!!prefersReducedMotion}
+                    />
                     <span className="w-[5em] text-2xl lg:text-4xl font-bold overflow-hidden text-ellipsis whitespace-nowrap shrink-0">
                       {entry.nickname}
                     </span>
