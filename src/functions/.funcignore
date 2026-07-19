@@ -1,0 +1,6 @@
+*.test.ts
+__tests__
+.git*
+.vscode
+local.settings.json
+tsconfig.json
