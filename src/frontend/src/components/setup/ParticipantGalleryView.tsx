@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
+import { sanitizeMediaUrl, withThumb } from "../../utils/sanitizeUrl";
 import type { ParticipantWithQuiz } from "../../types";
 import { listAllParticipants, deleteParticipant, deleteParticipantsBulk, deleteAllParticipants } from "../../services/api";
 import { cn } from "../../utils/cn";
@@ -263,7 +263,7 @@ export function ParticipantGalleryView() {
               />
               {p.selfie_file_name ? (
                 <img
-                  src={sanitizeMediaUrl(`/api/media/${p.selfie_file_name}`) ?? undefined}
+                  src={sanitizeMediaUrl(withThumb(`/api/media/${p.selfie_file_name}`)) ?? undefined}
                   alt={`${p.nickname}のアバター`}
                   width={80}
                   height={80}

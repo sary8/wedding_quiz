@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { sanitizeMediaUrl } from "./sanitizeUrl";
+import { sanitizeMediaUrl, withThumb } from "./sanitizeUrl";
 
 describe("sanitizeMediaUrl", () => {
   it("null → null", () => {
@@ -68,5 +68,32 @@ describe("sanitizeMediaUrl", () => {
       import.meta.env.VITE_API_URL = "https://quiz-prod.example.azurewebsites.net";
       expect(sanitizeMediaUrl("https://cdn.example.com/a.jpg")).toBe("https://cdn.example.com/a.jpg");
     });
+  });
+});
+
+describe("withThumb", () => {
+  it("/api/media/xxx → ?v=thumb を付ける", () => {
+    expect(withThumb("/api/media/selfie_1_abc.jpg")).toBe("/api/media/selfie_1_abc.jpg?v=thumb");
+  });
+
+  it("絶対URLの /api/media/ にも付ける", () => {
+    expect(withThumb("https://api.example.com/api/media/x.jpg")).toBe(
+      "https://api.example.com/api/media/x.jpg?v=thumb"
+    );
+  });
+
+  it("既にクエリがあれば & で連結", () => {
+    expect(withThumb("/api/media/x.jpg?foo=1")).toBe("/api/media/x.jpg?foo=1&v=thumb");
+  });
+
+  it("null/undefined/空はそのまま返す", () => {
+    expect(withThumb(null)).toBeNull();
+    expect(withThumb(undefined)).toBeUndefined();
+    expect(withThumb("")).toBe("");
+  });
+
+  it("/api/media/ を含まないURL（blob: や外部）はそのまま", () => {
+    expect(withThumb("blob:http://localhost/abc")).toBe("blob:http://localhost/abc");
+    expect(withThumb("https://cdn.example.com/a.jpg")).toBe("https://cdn.example.com/a.jpg");
   });
 });

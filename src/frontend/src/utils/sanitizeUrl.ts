@@ -26,3 +26,15 @@ export function sanitizeMediaUrl(url: string | null | undefined): string | null 
 
   return null;
 }
+
+/**
+ * メディアURLにサムネイル指定(?v=thumb)を付ける。
+ * /api/media/ を含むURLにのみ付与し、blob: や外部URL・空値はそのまま返す。
+ * sanitizeMediaUrl の前段で使う想定: sanitizeMediaUrl(withThumb(url))。
+ * バックエンドは ?v=thumb でWebPサムネを返し、未生成なら自動でオリジナルにフォールバックする。
+ */
+export function withThumb(url: string | null | undefined): string | null | undefined {
+  if (!url || !url.includes("/api/media/")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=thumb`;
+}

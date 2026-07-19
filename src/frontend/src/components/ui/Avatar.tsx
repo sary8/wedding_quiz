@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { cn } from "../../utils/cn";
-import { sanitizeMediaUrl } from "../../utils/sanitizeUrl";
+import { sanitizeMediaUrl, withThumb } from "../../utils/sanitizeUrl";
 
 type AvatarSize = "sm" | "md" | "lg";
 
@@ -26,7 +26,8 @@ const sizePx: Record<AvatarSize, number> = {
 
 export const Avatar = memo(function Avatar({ src, alt, fallback, size = "md", className }: Props) {
   const fallbackText = fallback || alt.charAt(0).toUpperCase();
-  const safeSrc = sanitizeMediaUrl(src);
+  // アバターは常に小サイズ表示なのでサムネ(WebP)で十分。未生成時はサーバがオリジナルにフォールバック
+  const safeSrc = sanitizeMediaUrl(withThumb(src));
 
   return (
     <div className={cn("relative rounded-full overflow-hidden flex-shrink-0", sizeStyles[size], className)}>
