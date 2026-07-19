@@ -24,6 +24,17 @@ Thumbs.db
 .claude/
 .private/
 
+# 内部・技術・Qiita下書きドキュメント（公開しない。過去履歴には残る）
+docs/article/
+docs/issues/
+docs/manual.md
+docs/pages.md
+docs/deployment.md
+docs/deployment-trial.md
+docs/azure-deployment-roadmap.md
+docs/prod-architecture.drawio
+docs/prod-architecture.drawio.png
+
 # Design system (auto-generated)
 design-system/
 
