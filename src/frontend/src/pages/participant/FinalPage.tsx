@@ -1,16 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { FinalResultData } from "../../types";
 
 type Props = {
   data: FinalResultData | null;
   participantId: number | null;
   resultsRevealed: boolean;
-  onDeleteMyData?: () => void;
-  dataDeleted?: boolean;
 };
 
-export function ParticipantFinalPage({ data, participantId, resultsRevealed, onDeleteMyData, dataDeleted }: Props) {
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+export function ParticipantFinalPage({ data, participantId, resultsRevealed }: Props) {
   const myResult = useMemo(
     () => (data && participantId) ? data.rankings.find((r) => r.participantId === participantId) : null,
     [data, participantId],
@@ -95,47 +92,6 @@ export function ParticipantFinalPage({ data, participantId, resultsRevealed, onD
       </div>
 
       <p className="text-sm mt-8 text-sage-text/80">ご参加ありがとうございました！</p>
-
-      {/* 自己データ削除（プライバシーポリシー記載の機能） */}
-      {onDeleteMyData && (
-        <div className="mt-4 text-center">
-          {dataDeleted ? (
-            <p className="text-xs text-sage-text/60" role="status">
-              あなたのデータ（ニックネーム・自撮り・回答）を削除しました
-            </p>
-          ) : confirmingDelete ? (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-xs text-sage-text/70">
-                ニックネーム・自撮り・回答データを今すぐ削除します。よろしいですか？
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onDeleteMyData}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors duration-200 min-h-[44px]"
-                >
-                  削除する
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDelete(false)}
-                  className="px-4 py-2 rounded-lg bg-white border border-sage-text/20 text-sage-text text-xs hover:bg-sage-text/5 transition-colors duration-200 min-h-[44px]"
-                >
-                  やめる
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-              className="text-xs text-sage-text/50 underline hover:text-sage-text/80 transition-colors duration-200 min-h-[44px]"
-            >
-              自分のデータを今すぐ削除する
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

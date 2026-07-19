@@ -36,7 +36,8 @@ export function PrivacyPolicy() {
         <section className="mb-6">
           <h2 className="text-lg font-semibold text-sage-text mb-2">データの削除</h2>
           <p className="text-sm text-sage-text/80 leading-relaxed">
-            参加者は、ゲーム終了後の画面からご自身のデータを即時削除することができます。
+            クイズ終了後、すべてのデータは最大1時間で自動的に削除されます。
+            個別の削除をご希望の場合は、主催者にお申し出ください。
           </p>
         </section>
 

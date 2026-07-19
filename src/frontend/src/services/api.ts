@@ -299,18 +299,6 @@ export function getRoomInfo(roomCode: string) {
   return request<{ teamMode: boolean; teams: TeamInfo[] }>(`/quizzes/room/${roomCode}/info`);
 }
 
-// 参加者自身のデータ削除（プライバシーポリシー記載の自己データ削除機能）
-export async function deleteMyParticipantData(participantToken: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/quizzes/participants/me`, {
-    method: "DELETE",
-    headers: { "X-Participant-Token": participantToken },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `HTTP ${res.status}`);
-  }
-}
-
 // Media
 export function uploadSelfie(base64Data: string, roomCode: string) {
   return request<{ url: string; filename: string }>("/media/selfie", {

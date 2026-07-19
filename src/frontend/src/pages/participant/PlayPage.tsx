@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 import type { QuestionData, QuestionResultData, RankingData, FinalResultData, ParticipantInfo, TeamInfo } from "../../types";
-import { uploadSelfie, getRoomInfo, deleteMyParticipantData } from "../../services/api";
+import { uploadSelfie, getRoomInfo } from "../../services/api";
 import { ProfilePage } from "./ProfilePage";
 import { WaitingPage } from "./WaitingPage";
 import { AnswerPage } from "./AnswerPage";
@@ -32,7 +32,6 @@ export function PlayPage() {
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [roomTeams, setRoomTeams] = useState<TeamInfo[] | undefined>(undefined);
   const [roomNotFound, setRoomNotFound] = useState(false);
-  const [myDataDeleted, setMyDataDeleted] = useState(false);
 
   // 瞬断→自動再接続時に joinRoom を再送するための情報。参加時の nickname/teamId を
   // 保持しておく（サーバーは token で参加者を特定するが、joinRoom 入口の
@@ -234,23 +233,6 @@ export function PlayPage() {
     [roomCode, emit, isJoining]
   );
 
-  // 自身のデータ削除（プライバシーポリシー記載の自己データ削除）
-  const handleDeleteMyData = useCallback(async () => {
-    if (!roomCode) return;
-    const token = sessionStorage.getItem(`quiz_token_${roomCode}`);
-    if (!token) {
-      setAnswerError("削除用のトークンが見つかりません");
-      return;
-    }
-    try {
-      await deleteMyParticipantData(token);
-      sessionStorage.removeItem(`quiz_token_${roomCode}`);
-      setMyDataDeleted(true);
-    } catch (e) {
-      setAnswerError(e instanceof Error ? e.message : "データの削除に失敗しました");
-    }
-  }, [roomCode]);
-
   // currentQuestion全体ではなくquestionIdのみ依存（rerender-dependencies）
   const questionId = currentQuestion?.questionId;
 
@@ -349,8 +331,6 @@ export function PlayPage() {
             data={finalData}
             participantId={participantId}
             resultsRevealed={resultsRevealed}
-            onDeleteMyData={handleDeleteMyData}
-            dataDeleted={myDataDeleted}
           />
         </>
       );
