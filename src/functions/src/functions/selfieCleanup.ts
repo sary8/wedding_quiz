@@ -41,6 +41,6 @@ export async function selfieCleanup(_myTimer: Timer, context: InvocationContext)
 }
 
 app.timer("selfieCleanup", {
-  schedule: "0 0 3 * * *", // 毎日 03:00（WEBSITE_TIME_ZONE=Tokyo Standard Time でJST）
+  schedule: "0 0 3 * * *", // 毎日 03:00（UTC基準。Flex=Linux のため WEBSITE_TIME_ZONE は不使用）
   handler: selfieCleanup,
 });

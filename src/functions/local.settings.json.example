@@ -4,10 +4,10 @@
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "StorageConnection__blobServiceUri": "https://<account>.blob.core.windows.net",
+    "StorageConnection__queueServiceUri": "https://<account>.queue.core.windows.net",
     "STORAGE_ACCOUNT": "<account>",
     "STORAGE_CONTAINER": "media",
     "THUMBNAIL_WIDTH": "320",
-    "SELFIE_RETENTION_DAYS": "7",
-    "WEBSITE_TIME_ZONE": "Tokyo Standard Time"
+    "SELFIE_RETENTION_DAYS": "7"
   }
 }
