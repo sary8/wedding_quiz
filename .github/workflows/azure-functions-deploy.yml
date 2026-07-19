@@ -1,0 +1,66 @@
+name: Azure Functions Deploy
+
+# 手動実行（workflow_dispatch）で production の Function App にデプロイする。
+# Phase 3 の OIDC 資産（id-quiz-deploy / environment:production のフェデレーション資格情報）を流用。
+#
+# 必要な GitHub 設定（production environment の Variables）:
+#   AZURE_CLIENT_ID / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID  … Phase 3 で設定済みを流用
+#   AZURE_FUNCTIONAPP_NAME                                     … 今回作成する Function App 名（新規追加）
+# 注意: OIDC の ID（id-quiz-deploy）に Function App リソースへのデプロイ権限
+#       （Website Contributor 等）が必要。App Service だけにスコープしている場合は Function App も対象に含める。
+#
+# sharp はネイティブ依存。ubuntu-latest(=linux-x64) で npm ci して node_modules ごとデプロイするため
+# Oryx リモートビルドは使わない（azure-backend-deploy と同じ方針）。
+
+on:
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC 認証（azure/login）に必要
+      contents: read
+    environment:
+      name: production
+    defaults:
+      run:
+        working-directory: src/functions
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: src/functions/package-lock.json
+
+      - name: Install, test, build
+        run: npm ci && npm test && npm run build
+
+      # 実行時に不要な devDependencies（typescript/vitest 等）を除去。sharp は dependencies なので残る
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # package は repo ルート相対。.funcignore でテスト/tsconfig/local.settings を除外し、
+      # dist + node_modules(prod) + package.json + host.json をデプロイする
+      - name: Deploy to Azure Functions
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
+          package: src/functions
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
