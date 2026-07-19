@@ -31,6 +31,18 @@ export function storageKeyFor(filename: string): string {
 }
 
 /**
+ * ファイル名から、対応するサムネイル（WebP）のストレージキーを導出する。
+ * Functions側 (src/functions の thumbnailKeyFor) と同じ規約:
+ * thumbnails/{storageKeyの拡張子を.webpに} 。
+ * 例: selfie_123456_abc.jpg → thumbnails/selfies/123456/selfie_123456_abc.webp
+ */
+export function thumbnailStorageKeyFor(filename: string): string {
+  const key = storageKeyFor(filename);
+  const withoutExt = key.replace(/\.[^./]+$/, "");
+  return `thumbnails/${withoutExt}.webp`;
+}
+
+/**
  * メディアファイルを削除する。
  * URLパス (/api/media/xxx.jpg) またはファイル名 (xxx.jpg) を受け取る。
  */
@@ -273,6 +285,32 @@ mediaRoutes.get("/:filename", async (c) => {
     ".mp4": "video/mp4",
     ".webm": "video/webm",
   };
+
+  // ?v=thumb: サムネ(WebP)を優先。未生成ならオリジナルにフォールバック。
+  // フォールバック時は immutable にしない（Functionがサムネ生成後、自然に切り替わるよう短命キャッシュ）
+  if (c.req.query("v") === "thumb") {
+    const thumb = await storage.read(thumbnailStorageKeyFor(safe));
+    if (thumb) {
+      return new Response(new Uint8Array(thumb), {
+        headers: {
+          "Content-Type": "image/webp",
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "Cross-Origin-Resource-Policy": "cross-origin",
+        },
+      });
+    }
+    const original = await storage.read(storageKeyFor(safe));
+    if (!original) {
+      return c.json({ error: "ファイルが見つかりません" }, 404);
+    }
+    return new Response(new Uint8Array(original), {
+      headers: {
+        "Content-Type": contentTypes[ext] || "application/octet-stream",
+        "Cache-Control": "public, max-age=60",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+      },
+    });
+  }
 
   const contentType = contentTypes[ext] || "application/octet-stream";
   const data = await storage.read(storageKeyFor(safe));

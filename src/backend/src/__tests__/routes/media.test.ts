@@ -8,7 +8,7 @@ vi.mock("../../services/quizService.js", () => ({
   getQuizByRoom: vi.fn(),
 }));
 
-import { mediaRoutes, deleteMediaFile, storageKeyFor } from "../../routes/media.js";
+import { mediaRoutes, deleteMediaFile, storageKeyFor, thumbnailStorageKeyFor } from "../../routes/media.js";
 import { getQuizByRoom } from "../../services/quizService.js";
 
 const mockGetQuizByRoom = vi.mocked(getQuizByRoom);
@@ -25,6 +25,9 @@ afterAll(async () => {
     // フォルダ付きキーにも対応するため実装側の削除経路を使う
     await deleteMediaFile(file).catch(() => {});
   }
+  // サムネ配信テストで作ったフォルダを掃除（deleteMediaFileはオリジナルしか消さないため）
+  await rm(join(UPLOAD_DIR, "thumbnails"), { recursive: true, force: true }).catch(() => {});
+  await rm(join(UPLOAD_DIR, "selfies"), { recursive: true, force: true }).catch(() => {});
 });
 
 function trackFile(filename: string) {
@@ -48,6 +51,20 @@ describe("storageKeyFor", () => {
   it("旧形式はルート直下（後方互換）", () => {
     expect(storageKeyFor("V1StGXR8z5jdHi.png")).toBe("V1StGXR8z5jdHi.png");
     expect(storageKeyFor("selfie_V1StGXR8z5jdHi.jpg")).toBe("selfie_V1StGXR8z5jdHi.jpg");
+  });
+});
+
+describe("thumbnailStorageKeyFor", () => {
+  it("セルフィー → thumbnails/selfies/{room}/...webp", () => {
+    expect(thumbnailStorageKeyFor("selfie_123456_abc.jpg")).toBe(
+      "thumbnails/selfies/123456/selfie_123456_abc.webp"
+    );
+  });
+  it("問題画像 → thumbnails/questions/{quizId}/...webp（拡張子はwebpに）", () => {
+    expect(thumbnailStorageKeyFor("q_12_abc.png")).toBe("thumbnails/questions/12/q_12_abc.webp");
+  });
+  it("旧形式（ルート直下）→ thumbnails/...webp", () => {
+    expect(thumbnailStorageKeyFor("V1StGXR8z5.png")).toBe("thumbnails/V1StGXR8z5.webp");
   });
 });
 
@@ -269,6 +286,41 @@ describe("media routes", () => {
       const res = await mediaRoutes.request("/nonexistent_file.jpg", {
         method: "GET",
       });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("GET /:filename?v=thumb", () => {
+    it("サムネがあれば image/webp + immutable で返す", async () => {
+      const filename = "selfie_654321_hasthumb.jpg";
+      await mkdir(join(UPLOAD_DIR, "selfies", "654321"), { recursive: true });
+      await writeFile(join(UPLOAD_DIR, storageKeyFor(filename)), Buffer.from("orig"));
+      await mkdir(join(UPLOAD_DIR, "thumbnails", "selfies", "654321"), { recursive: true });
+      await writeFile(join(UPLOAD_DIR, thumbnailStorageKeyFor(filename)), Buffer.from("thumb-webp"));
+      trackFile(filename);
+
+      const res = await mediaRoutes.request(`/${filename}?v=thumb`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("image/webp");
+      expect(res.headers.get("Cache-Control")).toContain("immutable");
+      expect(Buffer.from(await res.arrayBuffer()).toString()).toBe("thumb-webp");
+    });
+
+    it("サムネが無ければオリジナルに短命キャッシュ(max-age=60)でフォールバック", async () => {
+      const filename = "selfie_654321_nothumb.jpg";
+      await mkdir(join(UPLOAD_DIR, "selfies", "654321"), { recursive: true });
+      await writeFile(join(UPLOAD_DIR, storageKeyFor(filename)), Buffer.from("orig-only"));
+      trackFile(filename);
+
+      const res = await mediaRoutes.request(`/${filename}?v=thumb`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("image/jpeg");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
+      expect(Buffer.from(await res.arrayBuffer()).toString()).toBe("orig-only");
+    });
+
+    it("サムネもオリジナルも無い → 404", async () => {
+      const res = await mediaRoutes.request("/selfie_654321_missing.jpg?v=thumb");
       expect(res.status).toBe(404);
     });
   });
