@@ -48,5 +48,8 @@ export async function selfieThumbnail(blob: Buffer, context: InvocationContext):
 app.storageBlob("selfieThumbnail", {
   path: "%STORAGE_CONTAINER%/selfies/{room}/{name}",
   connection: "StorageConnection",
+  // Flex Consumption は BlobTrigger のソースに EventGrid のみ対応（ポーリング型は不可）。
+  // 別途、Storageアカウントに Blob Created の Event Grid サブスクリプションが必要。
+  source: "EventGrid",
   handler: selfieThumbnail,
 });
